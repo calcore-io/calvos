@@ -1,0 +1,659 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Sep 29 14:39:09 2020
+
+@author: Carlos Calvillo
+"""
+
+import pyexcel as pe
+import math
+from lxml import etree as ET
+import xml.dom.minidom
+import re
+import time
+import warnings
+import os
+import shutil
+import pathlib as pl
+
+import logging
+import calvos.common.logsys as lg
+
+#==============================================================================
+# Settin up logging
+#==============================================================================
+
+log = lg.log_system
+
+log.add_logger("cg")
+
+#==============================================================================
+# Functions, data for code generation
+#==============================================================================
+
+MCU_word_size = 32
+Compiler_max_size = 32
+
+#dt in this context stands for "data type" prefix
+
+dt = {"uint8"   :   "T_UBYTE",     "int8"   :   "T_BYTE", \
+      "uint16"  :   "T_UWORD",     "int16"  :   "T_WORD", \
+      "uint32"  :   "T_ULONG",     "int32"  :   "T_LONG", \
+      "uint64"  :   "T_UDLONG",    "int64"  :   "T_DLONG",
+      "float"   :   "T_FLOAT",    "double"  :   "T_DFLOAT"}
+
+# { "type key" : [size, "i(integer)|f(float)", True(signed)|False(unsigned)]}
+dt_info = {"uint8" : [8, "i", False],   "int8" : [8, "i", True], \
+          "uint16" : [16, "i", False],  "int16" : [16, "i", True], \
+          "uint32" : [32, "i", False],  "int32" : [32, "i", True], \
+          "uint64" : [64, "i", False],  "int64" : [64, "i", True], \
+          "float" : [32, "f", False],   "double" : [64, "f", True]}
+
+#gl in this context stands for "general parameter"
+gp = {"px_enum"    :    "E_",   "px_enum_el"    :   "E_",
+      "sx_enum"    :    "",     "sx_enum_el"    :   "",
+      "px_struct"  :    "S_",   "px_struct_el"  :   "S_",
+      "sx_struct"  :    "",     "sx_struct_el"  :   "",
+      "px_type"    :    "T_",   "sx_type"       :   "",
+      "little_endian"   :   False,  "MCU_id"    :   "AVR",
+      "MCU_word_lenght" :   32,     "Compiler"  :   "",       
+      "includes"   :    "",     "gen_typedef"   :   True}
+
+#==============================================================================
+# Prefixes to use for signal parts.
+gen_part_prefixes = ["","part_", "ele_"]
+PRFX_DEFAULT = 0
+    
+#==============================================================================
+def calculate_base_type_len(data_size):
+    """ Returns the size of the "base" data type that can contain the input data size """
+    return_type_len = None
+    if data_size > 0 and data_size <= 8:
+        return_type_len = 8
+    elif data_size > 8 and data_size <= 16:
+        return_type_len = 16
+    elif data_size > 16 and data_size <= 32:
+        return_type_len = 32
+    elif data_size > 32 and data_size <= 64:
+        return_type_len = 64
+    else:
+        #TODO: warning
+        return_type_len = 0 
+    return return_type_len
+
+#==============================================================================
+#get_dtk -> "get data type key" (previously "g_dt_k")
+def get_dtk(size, d_type = "i", is_signed = False):
+    """ Returns the "key" of the data type specified in the input.
+    
+    Args:
+        size (int): size of the data type, should be bigger than 0 and smaller
+            than or equal to 64.
+        d_type (str): input tha tells if data type is integer (value "i"),
+            or is of float type (value "f"). If not specified will assume "i".
+        is_signed: "True" if data type is signed, "False" if unsigned. If
+            not specified will assume "False".
+    
+    Returns:
+        str: Returns the Key corresponding to the speinput data type if it is 
+            a valid specification. This key is taken from the "dt_info" 
+            dictionary. If input specification is not valid returns "none".
+    """
+    return_value = None
+    
+    if size > 0 and size <= 64:
+        
+        container_size = calculate_base_type_len(size)
+        
+        for data_type_key in dt_info:
+            if dt_info[data_type_key][0] == container_size \
+            and dt_info[data_type_key][1] == d_type \
+            and dt_info[data_type_key][2] == is_signed:
+                return_value = data_type_key
+                break
+        
+        #TODO: Warning-> "Passed data type information (Size = ", size, ",
+        # type = ", d_type, ", signed = ", is_signed,") is not valid."
+        
+    else:
+        #TODO: Warning-> "Passed data size: ", size, " shall be between 1 - 64."
+        pass
+    
+    return return_value
+
+#==============================================================================
+def get_dtv(size, d_type = "i", is_signed = False):
+    """ Returns the "value" of the data type specified in the input.
+    
+    Args:
+        size (int): size of the data type, should be bigger than 0 and smaller
+            than or equal to 64.
+        d_type (str): input tha tells if data type is integer (value "i"),
+            or is of float type (value "f"). If not specified will assume "i".
+        is_signed: "True" if data type is signed, "False" if unsigned. If
+            not specified will assume "False".
+    
+    Returns:
+        str: Returns the data type string value as configured in "dt_info" 
+            dictionary. If input specification is not valid returns "none".
+    """
+    return_value = None
+    
+    if size > 0 and size <= 64:
+        
+        container_size = calculate_base_type_len(size)
+        
+        for data_type_key in dt_info:
+            if dt_info[data_type_key][0] == container_size \
+            and dt_info[data_type_key][1] == d_type \
+            and dt_info[data_type_key][2] == is_signed:
+                return_value = dt[data_type_key] 
+                break
+        
+        #TODO: Warning-> "Passed data type information (Size = ", size, ",
+        # type = ", d_type, ", signed = ", is_signed,") is not valid."
+        
+    else:
+        #TODO: Warning-> "Passed data size: ", size, " shall be between 1 - 64." 
+        pass
+    
+    return return_value
+
+#==============================================================================
+def update_type_param(parameter, value):
+    """ Update the given data type parameter with the given value """
+    if parameter in dt:
+        dt.update({parameter : value})
+    else:
+        pass
+        #TODO: warning?
+
+#==============================================================================
+def update_general_param(parameter, value):
+    """ Update the given data type parameter with the given value """
+    if parameter in gp:
+        gp.update({parameter : value})
+    else:
+        pass
+        #TODO: warning?
+
+#==============================================================================
+def get_param_category(parameter):
+    """ Returns "1" if parameter is "type", "2" if it is "general" and None otherwise """
+    return_value = None
+    if parameter in dt:
+        return_value = 1
+    elif parameter in gp: 
+        return_value = 2
+    else:
+        pass
+    
+    return return_value
+
+#==============================================================================
+def parse_codegen_spreadsheet(input_file):
+    """ Parses an spreadsheet containing code generation parameters. """
+    book = pe.get_book(file_name=str(input_file))
+
+    # -----------------------
+    # Parse selected Setup
+    # -----------------------
+    working_sheet = book["Setup"]
+    setup = working_sheet[0,1]
+    
+    working_sheet.name_columns_by_row(2)
+    setup_found = False
+    for row in working_sheet:
+        # Check if selected setup exists. If it does extract the rest of the
+        # setuo datam, otherwise, warn the user.
+        if setup == row[working_sheet.colnames.index("Setup Name")]:
+            # Setup name found
+            setup_found = True
+            break
+    
+    if setup_found:
+        params_set = row[working_sheet.colnames.index("Parameters Set")]
+        compiler_name = row[working_sheet.colnames.index("Compiler")]
+        MCU_name = row[working_sheet.colnames.index("MCU")]
+        settings_name = row[working_sheet.colnames.index("Settings")]
+        
+        # -----------------------
+        # Parse Parameters
+        # -----------------------
+        # Check if parameter set exists
+        working_sheet = book["Parameters"]
+        working_sheet.name_columns_by_row(0)
+        #print(working_sheet.colnames)
+        
+        if params_set in working_sheet.colnames:
+            # Parameter set exists, continue processing parameters...
+            for row in working_sheet:
+            # Check if parameter exist. If it does, update the value, otherwise
+            # warn the user.
+                param = row[working_sheet.colnames.index("Parameter")]
+                param_category = get_param_category(param)
+                if param_category == 1:
+                    # Parameter is of "data type" type. Update value if it is not
+                    # empty.
+                    param_value = str(row[working_sheet.colnames.index(params_set)])
+                    if param_value != "":
+                        #print("Updating: ", param, ", ", param_value)
+                        dt.update({param : param_value})
+                elif param_category == 2:
+                    # Parameter is of "general" type. Update value if it is not
+                    # empty.
+                    param_value = str(row[working_sheet.colnames.index(params_set)])
+                    if param_value != "":
+                        #print("Updating: ", param, ", ", param_value)
+                        dt.update({param : param_value})
+                else:
+                    # Parameter not defined internally.
+                    log.warning("cg", \
+                        "Parameter \"%s\" is meaningless. Parameter is ignored." % param)
+                    
+                    warnings.warn("Parameter \"" + param \
+                      + "\" meaningless. Parameter is ignored.", \
+                      UserWarning) 
+        else:
+            warnings.warn("Selected Parameters Set \"" + params_set \
+                      + "\" of setup \"" + setup + "\" not found in input file. " \
+                      + "Will assume default values for all parameters.", \
+                      UserWarning) 
+    else:
+        warnings.warn("Selected setup: \"" + setup \
+                      + "\" not found in setup names.", UserWarning)    
+
+#==============================================================================
+# General utilities
+#==============================================================================  
+
+#==============================================================================              
+def is_valid_identifier(input_string):
+    """ Validates if the input string is a C-language identifier.
+    
+    Args:
+        input_string (str): input string to be checked.
+    
+    Returns:
+        Boolean: Returns True if input string has a C-language identifier syntax,
+        returns False otherwise.
+    """
+    identifier = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*\Z", re.UNICODE)
+    return re.match(identifier, input_string)
+
+#==============================================================================
+def is_hex_string(input_string):
+    """ Validates if the input string is an hexadecimal number starting with 0x. 
+    
+    Args:
+        input_string (str): input string to be checked.
+    
+    Returns:
+        Boolean: Returns True if input string is hexadecimal number,
+            returns False otherwise.
+    """
+    hex_number = re.compile(r"^(?:0x)[0-9a-fA-F]+\Z", re.UNICODE)
+    return re.match(hex_number, input_string)
+
+#==============================================================================
+def get_valid_number(input_string):
+    """ Returns the decimal number from the input string in dec or hex. 
+    
+    Args:
+        input_string (str): input string to be checked.
+    
+    Returns:
+        return_value: Integer value corresponding to the input string.
+    """
+    return_value = None
+    if str(input_string).isnumeric():
+        return_value = input_string
+    else:
+        #Check if string is hexadecimal
+        if is_hex_string(input_string):
+            #Remove 0x prefix
+            input_string = input_string[2:]
+            #convert to decimal
+            return_value = int(input_string,16)
+    #Return value (None if no valid dec or hex number in input string)
+    return return_value
+        
+#==============================================================================
+def ranges_overlap(range1_init, range1_end, range2_init, range2_end):
+    """ Returns true if the input ranges overlap each other """
+    return_value = False
+    if (range2_init >= range1_init and \
+        range2_init <= range1_end) or \
+       (range2_end >= range1_init and \
+        range2_end <= range1_end):
+        #Ranges do overlap each other
+        return_value = True
+    return return_value
+
+#==============================================================================
+def parse_special_string(input_string):
+    """ Returns a dictionary of the parsed special string input.
+    
+    Parses an string with following format:
+        'identifier1 (number1), identifier2, identifier3 (number3), ...'
+    and returns a dictionary with the same data:
+        {{identifier1 : number1},
+         {identifier2 : None},
+         {identifier3 : number3}}
+    Throw warnings if the input string doesn't comply with above's format.
+    Note: identifiers can't be duplicated otherwise a warning will be thrown.
+    
+    Args:
+        input_string (str): input string to be parsed.
+    
+    Returns:
+        return_dictionary: dictionary equivalent to the parsed input string.
+    """
+    return_dictionary = {}
+    #Elements separator is a comma
+    string_elements = input_string.split(",")
+    
+    if len(string_elements) == 0:
+        #Error, string_elements can't be of size 0.
+        warnings.warn("Invalid input string format", UserWarning)
+    if len(string_elements) > 0 and string_elements[0] != "":
+        # Navigate through each eleement and check syntax
+        # Valid syntax is: "text1 (number1)" or "text1"
+        for string_element in string_elements:
+            #Check format compliance
+            regex = re.compile(r"(.+)\((.+)\)")
+            regex_matches = re.findall(regex,str(string_element))                
+            if len(regex_matches) == 0:
+                #No parentheses found, means user didn't pass an explicit
+                #numeric value. Now check if at least the symbol string is found
+                #Remove leading and trailing spaces
+                string_element = str(string_element).strip()
+                #Check compliance with C-language identifier
+                if is_valid_identifier(string_element):
+                    #Valid symbol string, check if it is duplicated
+                    if string_element not in return_dictionary:
+                        #Not duplitacted symbol string, add it to the output
+                        return_dictionary.update({string_element : None})
+                    else:
+                        #warning, duplicated symbol string
+                        warnings.warn("Duplicated symbol: \"" \
+                            + string_element + "\" ignored.", UserWarning)
+                else:
+                    #warning, invalid input string
+                    warnings.warn("Invalid input string format. Symbols shall" \
+                        + " comply with C-language identifier syntax.", \
+                        UserWarning)
+            else:
+                #First captured group should be the symbol string
+                symbol_string = regex_matches[0][0]
+                symbol_string = str(symbol_string).strip()
+                #Second captured group should be the symbol numeric value
+                symbol_value = regex_matches[0][1]
+                symbol_value = str(symbol_value).strip()   
+                #Validate symbol string
+                if is_valid_identifier(symbol_string):
+                    #Valid symbol string, check if it is duplicated
+                    if symbol_string not in return_dictionary:
+                        #Not duplicated symbol string, now validate symbol value
+                        #TODO: maybe using get_valid_number?
+                        if symbol_value.isnumeric():
+                            #Valid symbol value. Add the entry to the output
+                            return_dictionary.update({symbol_string : symbol_value})
+                        else:
+                            warnings.warn("Invalid symbol numeric value: \"" \
+                                + symbol_value + "\" of symbol: \"" \
+                                + symbol_string + "\". Element ignored.", \
+                                SyntaxWarning) 
+                    else:
+                        warnings.warn("Duplicated symbol: \"" \
+                            + string_element + "\" ignored.", UserWarning)
+                else:
+                    warnings.warn("Invalid input string format. Symbols shall" \
+                        + " comply with C-language identifier syntax.", \
+                        UserWarning)
+    else:
+        #error, enum value string not valid
+        warnings.warn("Invalid input string format", UserWarning)
+    return return_dictionary
+
+#==============================================================================
+def get_special_string(input_dictionary):
+    """ Returns a special string based on the input dictionary.
+    
+    Returns an string with following format:
+        'identifier1 (number1), identifier2, identifier3 (number3), ...'
+    based on the input dictionary with the same data:
+        {{identifier1 : number1},
+         {identifier2 : None},
+         {identifier3 : number3}}
+    
+    Args:
+        input_string (str): input string to be parsed.
+    
+    Returns:
+        return_dictionary: dictionary equivalent to the parsed input string.
+    """
+    output_string = ""
+    if len(input_dictionary) > 0:
+        for key in input_dictionary:
+            output_string = output_string + str(key)
+            if input_dictionary[key] is not None:
+                output_string = output_string + " (" + str(input_dictionary[key]) + ")"
+            output_string = output_string + ", "
+        output_string = output_string[:-2]
+    return output_string
+    
+#==============================================================================
+def get_local_time_formatted(self):
+    """ Gets current local time and returns it in a formatted string """
+    curren_time = time.localtime() # Gets current local time
+    return_string = str(curren_time[1])+"." \
+                + str(curren_time[2])+"." \
+                + str(curren_time[0])+"::" \
+                + str(curren_time[3])+":" \
+                + str(curren_time[4])+":" \
+                + str(curren_time[5])
+    return return_string
+
+#==============================================================================
+
+def string_to_path(path_string):
+    ''' Returns a "path" object for the given string. '''
+    # libpath requires regular diagonal, not reverse diagonal
+    if type(path_string) is not str:
+        path_string = str(path_string)
+    path_string = path_string.replace("\\", "/")
+    
+    return pl.Path(path_string)
+    
+def folder_exists(path):
+    ''' Returns "True" if the given path is an existing folder. '''
+    return_value = False
+    
+    if type(path) is str:
+        path = string_to_path(path)
+     
+    if path.exists() and path.is_dir():
+        return_value = True
+    
+    return return_value
+
+def delete_folder_contents(folder):
+    """ Deletes contents of the given folder.
+    """
+    if folder_exists(folder) is True:
+        for filename in os.listdir(folder):
+            file_path = os.path.join(folder, filename)
+            try:
+                if os.path.isfile(file_path) or os.path.islink(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    delete_folder_contents(file_path)
+                    shutil.rmtree(file_path)
+                    log.info("cg",'Deleted element %s' % file_path)
+            except Exception as e:
+                log.error("cg",'Failed to delete folder %s. Reason: %s' % (file_path, e))
+                print('Failed to delete folder %s. Reason: %s' % (file_path, e))
+
+def create_folder(folder):
+    """ Creates the specified folder.
+    """
+    if folder_exists(folder) is False:
+        try:
+            folder.mkdir()
+            print("Folder created: ",folder)
+            log.info("cg","Folder created: %s" % folder)
+        except Exception as e:
+            log.error("cg",'Failed to create folder %s. Reason: %s' % (folder, e))
+            print('Failed to create folder %s. Reason: %s' % (folder, e))
+    else:
+        log.info("cg","Folder to be created %s already exists." % folder)
+# def create_file(file_name):
+#     """ Creates the specified folder.
+#     """
+#     try:
+#         folder.mkdir()
+#         print("folder created: ",folder)
+#     except Exception as e:
+#         print('Failed to create folder %s. Reason: %s' % (folder, e))
+        
+def delete_file(file_name):
+    """ deletes the specified file.
+    """
+    try:
+        os.unlink(file_name)
+    except Exception as e:
+        log.error("cg",'Failed to delete %s. Reason: %s' % (file_name, e))
+        print('Failed to delete %s. Reason: %s' % (file_name, e))
+        
+def file_exists(file_name):
+    """ Returns True if the specified file exists.
+    """
+    return_value = False
+    file_name = string_to_path(file_name)
+    if file_name.is_file() is True:
+        return_value = True
+        
+    return return_value
+
+
+class GenParam():
+    """ . """
+    def __init__(self, name, param_data = None, default_idx = 0, description = ""):
+        self.name = str(name)
+        self.description = description
+        self.pl = []    # Parameter body as a list
+        self.pd = {}    # Parameter body as dictionary
+        self.pg = None  # Generic type
+        self.DEFAULT = 0
+        self.type = None   # 0 - generic, 1 - list, 2 - dictionary
+        
+        
+        if type(param_data) is list:
+            self.pl = param_data
+            self.PL_DEFAULT = default_idx
+            self.type = 1
+        elif type(param_data) is dict:
+            self.pd = param_data
+            if default_idx is str:
+                self.PD_DEFAULT = default_idx # A key is expected for dictionaries
+            else:
+                # TODO: flag error, a default index string is required
+                pass
+            self.type = 2
+        else:
+            self.pg = param_data
+            self.type = 0
+            
+        
+    def get_idx(self, index = None):
+        """ Get param data value. """
+        return_value = None
+        if index == None:
+            index == self.DEFAULT
+            
+        if self.type == 0:
+            return_value = self.pg
+        elif self.type == 1 and index < len(self.pl):
+            return_value = self.pl[index]
+        elif self.type == 2 and index in self.pd:
+            #TODO: Check if it is Ok to check None "in" dictionary
+            return_value = self.pd[index]
+        else:
+            pass
+        
+        return return_value
+    
+    def set_idx(self, index, value):
+        """ . """
+        if self.type == 0:
+            self.pg = value
+        elif self.type == 1 and index < len(self.pl):
+            self.pl[index] = value
+        elif self.type == 2 and index in self.pd:
+            self.pd.update({index : value})
+        else:
+            #TODO: flag error setting value
+            pass
+    
+    def get_len(self):
+        """ Get param data lenght. """
+        return_value = None
+        
+        if self.type == 0:
+            return_value = 1
+        elif self.type == 1:
+            return_value = len(self.pl)
+        elif self.type == 2 and index in self.pd:
+            return_value = len(self.pd)
+        else:
+            pass
+        
+        return return_value
+        
+class GenParams():
+    """ . """
+    def __init__(self, name, calvos_module = None, description = ""):
+        self.name = str(name)
+        self.module = calvos_module
+        self.description = description
+        
+        self.p = {} # Param objects
+    
+    def add_p(self, name, param_data = None, default_idx = 0, \
+                      description = ""):
+        """ Adds a new parameter with the specified data.
+        """
+        self.p.update({name : GenParam(name, param_data, default_idx, description)})
+        
+    def get_p(self, name, idx = None):
+        """ Gets the value of the specified parameter and index.
+        """
+        return_data = None
+        if name in self.p:
+            return_data = self.p[name].get_idx(idx)
+            
+        return return_data
+    
+    def get_len(self,name):
+        """ . """
+        return_data = None
+        if name in self.p:
+            return_data = self.p[name].get_len()
+        
+        return return_data
+
+
+
+def load_input(input_file, input_type, params):
+    """ Loads input file and returns the corresponding object. """
+    del input_type, params # Unused parameters
+    
+    parse_codegen_spreadsheet(input_file)
+    # This function for this specific module returns a dummy object.
+    return 0
+
+def generate(input_object, out_path, working_path, calvos_path, params):
+    """ Generate C code for the given object """
+    del input_object, out_path, working_path, calvos_path, params # Unused parameter
+    #This function doesn't do anything for this specific module.

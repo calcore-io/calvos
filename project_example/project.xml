@@ -1,0 +1,41 @@
+<?xml version="1.0" ?>
+<CalvosProject>
+	<Name></Name>
+	<Desc/>
+	<Version/>
+	<Date/>
+	<AutoDate></AutoDate>
+	<AutoFile></AutoFile>
+	<Components>
+		<Component type="codegen">
+			<Name>A codegen component</Name>
+			<Desc/>
+			<Input type="ods">"usr_in/Code_Generation_Setup.ods"</Input>
+			<Params>
+				<Param name="test">Value</Param>
+			</Params>
+		</Component>
+		<Component type="CAN">
+			<Name>A CAN component</Name>
+			<Desc/>
+			<Input type="ods">"usr_in/CAN_Network_Definition.ods"</Input>
+			<Params>
+			</Params>
+		</Component>
+		<Component type="CAN">
+			<Name></Name>
+			<Desc/>
+			<Input type="ods">"usr_in/CAN_Network_Definition.ods"</Input>
+			<Params>
+			</Params>
+		</Component>
+	</Components>
+	<Params>
+		<Param id="log_level">INFO</Param>
+	</Params>
+	<Metadata>
+		<TemplateName>calvOS Project</TemplateName>
+		<TemplateVersion>1.0.0</TemplateVersion>
+		<TemplateDesc/>
+	</Metadata>
+</CalvosProject>

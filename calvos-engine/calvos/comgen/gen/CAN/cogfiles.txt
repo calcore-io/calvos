@@ -1,0 +1,2 @@
+gen\cog_comgen_CAN_signals.h -o ..\comgen_CAN_signals.h -d -D calvos_path="D:\Carlos\calvOS" -D input_worksheet="D:\Carlos\calvOS\usr_in\template_CAN_Network_Definition.ods" -D codegen_input="D:\Carlos\calvOS\usr_in\template_Code_Generation_Setup.ods"
+gen\cog_comgen_CAN_node_network.h -o ..\out\comgen_CAN_node_networkX.h -d -D calvos_path="D:\Carlos\calvOS" -D input_worksheet="D:\Carlos\calvOS\usr_in\template_CAN_Network_Definition.ods" -D codegen_input="D:\Carlos\calvOS\usr_in\template_Code_Generation_Setup.ods"

@@ -1,0 +1,129 @@
+<?xml version="1.0" ?>
+<ProjectDefinitions>
+	<Components>
+		<Component type="codegen" instances="1">
+			<Title>Code Generation Settings</Title>
+			<Desc>Defines settings/parameters for the code generation</Desc>
+			<Module>common.codegen</Module>
+			<Params>
+				<Param name="project_path_output">Value</Param>
+				<Param name="project_path_working_dir">Value</Param>
+				<Param name="comgen_CAN_path_gen">Value</Param>
+			</Params>
+		</Component>
+		<Component type="CAN" instances="">
+			<Title>CAN Network</Title>
+			<Desc>Implements a Controller Area Network (CAN)</Desc>
+			<Module>comgen.CAN</Module>
+			<ProcessorFunction>processor</ProcessorFunction>
+			<Params>
+				<Param name="project_path_output">Value</Param>
+				<Param name="project_path_working_dir">Value</Param>
+				<Param name="comgen_CAN_path_gen">Value</Param>
+			</Params>
+		</Component>
+	</Components>
+	<Params>
+		<Categories>
+			<Category id="ProjectPaths">
+				<Name>Project Paths</Name>
+				<Desc>Project paths</Desc>
+			</Category>
+			<Category id="General">
+				<Name>General Parameters</Name>
+				<Desc>General Parameters</Desc>
+			</Category>
+		</Categories>
+<!-- For scalar types 
+		<Param id="" type="scalar|enum|string" category="General">
+			<Name/>
+			<Desc/>
+			<Default></Default>For scalar types
+			<Min/>
+			<Max/>
+			<Resolution/>
+			<Offset/>
+			<Unit/>
+			<Min/>   Min characters 
+			<Max/>
+			 For enum types 
+			<Enumeration multiple_selection="yes|no">
+				<Entry name="Blabla1">Entry Value1</Entry>
+				<Entry name="Blabla2">Entry Value2</Entry>
+				<Entry name="Blabla3">Entry Value3</Entry>
+			</Enumeration>
+		</Param>
+-->
+		<Param id="project_inputs" type="string" category="ProjectPaths">/
+			<Name>Path of project inputs</Name>
+			<Desc>Paths shall use "/" (linux style) and not "\" (windows style).
+Use (project_path) to point to the current project path.
+  For example -> (project_path)/my_subfolder
+  Another example -> c:/my_project_folder/my_sub_folder
+Default value is -> (project_path)/usr_in</Desc>
+			<Default>(project_path)/usr_in</Default>
+		</Param>
+		<Param id="project_output" type="string" category="ProjectPaths">/
+			<Name>Path of project outputs</Name>
+			<Desc> Path where the generated code will be placed.
+Paths shall use "/" (linux style) and not "\" (windows style).
+Use (project_path) to point to the current project path.
+  For example -> (project_path)/my_subfolder
+  Another example -> c:/my_project_folder/my_sub_folder
+Default value is -> (project_path)/out</Desc>
+			<Default>(project_path)/out</Default>
+		</Param>
+		<Param id="project_working_dir" type="string" category="ProjectPaths">/
+			<Name>Path of project working directory</Name>
+			<Desc>Path used for storage of temporary files generated during project processing.
+Paths shall use "/" (linux style) and not "\" (windows style).
+Use (project_path) to point to the current project path.
+  For example -> (project_path)/my_subfolder
+  Another example -> c:/my_project_folder/my_sub_folder
+Default value is -> (project_path)/out/working_dir</Desc>
+			<Default>(project_path)/out/working_dir</Default>
+		</Param>
+		<Param id="project_docs" type="string" category="ProjectPaths">/
+			<Name>Path of project documents</Name>
+			<Desc>Path used for storing the calvos documentation.
+Paths shall use "/" (linux style) and not "\" (windows style).
+Use (project_path) to point to the current project path.
+  For example -> (project_path)/my_subfolder
+  Another example -> c:/my_project_folder/my_sub_folder
+Default value is -> (project_path)/out/doc</Desc>
+			<Default>(project_path)/out/doc</Default>
+		</Param>
+		<Param id="calvos_path" type="string" category="ProjectPaths">/
+			<Name>Path of calvos python package</Name>
+			<Desc>Path where the calvos python package is located.
+This path depends on each user's setup.
+Paths shall use "/" (linux style) and not "\" (windows style).
+Use (project_path) to point to the current project path.
+  For example -> (project_path)/my_subfolder
+  Another example -> c:/my_project_folder/my_sub_folder</Desc>
+			<Default></Default>
+		</Param>
+		<Param id="log_level" type="enum" category="General">
+			<Name>Logging Level</Name>
+			<Desc>Defines the level of logging to be used. Options are:
+ - DEBUG: Will log events starting from debugging messages and upwards.
+ - INFO: Will log info events and upwards.
+ - WARNING: Will log warning events and upwards. 
+ - ERROR: Will log error events and upwards. 
+ - CRITICAL: Will log only critical events.</Desc>
+			<Enumeration multiple_selection="no">
+				<Entry name="DEBUG">0</Entry>
+				<Entry name="INFO">1</Entry>
+				<Entry name="WARNING">2</Entry>
+				<Entry name="ERROR">3</Entry>
+				<Entry name="CRITICAL">4</Entry>
+			</Enumeration>
+			<Default>INFO</Default>
+		</Param>
+	</Params>
+	<Metadata>
+		<TemplateName>Project Definitions</TemplateName>
+		<TemplateVersion>0.1.0</TemplateVersion>
+		<TemplateDesc/>
+	</Metadata>
+</ProjectDefinitions>

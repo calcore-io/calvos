@@ -1,0 +1,423 @@
+\hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n}{}\doxysection{calvos.\+comgen.\+C\+A\+N.\+Network\+\_\+\+C\+AN Class Reference}
+\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n}\index{calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}}
+\doxysubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_1_1_enum_type}{Enum\+Type}}
+\item 
+class \mbox{\hyperlink{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_1_1_message}{Message}}
+\item 
+class \mbox{\hyperlink{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_1_1_message_structure}{Message\+Structure}}
+\item 
+class \mbox{\hyperlink{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_1_1_node}{Node}}
+\item 
+class \mbox{\hyperlink{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_1_1_signal}{Signal}}
+\end{DoxyCompactItemize}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+def \mbox{\hyperlink{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a5a532ee7a7ce8ae2a78fd3669b7036cb}{\+\_\+\+\_\+init\+\_\+\+\_\+}} (self, name, description=\char`\"{}\char`\"{}, version=\char`\"{}\char`\"{}, date=\char`\"{}\char`\"{})
+\item 
+def \mbox{\hyperlink{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_ae31cddde84ca9be3805c19fa38aaad09}{add\+\_\+enum\+\_\+type}} (self, name, enum\+\_\+string, description=None)
+\item 
+def \mbox{\hyperlink{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a168c2a0b049efcf00fffefcbe9fd31ae}{remove\+\_\+enum\+\_\+type}} (self, name)
+\item 
+def \mbox{\hyperlink{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a24097087a03e519f66d7b91d2bca2ec4}{add\+\_\+node}} (self, name, description)
+\item 
+def \mbox{\hyperlink{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_acda410d8b29fb720aa01e1ac4f26e76e}{remove\+\_\+node}} (self, name)
+\item 
+def \mbox{\hyperlink{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a34bcee6771af38dcd6489d18877630ec}{add\+\_\+message}} (self, name, msg\+\_\+id, length, extended\+\_\+id=False, tx\+\_\+type=None, tx\+\_\+period=None, tx\+\_\+baf\+\_\+repeats=None, description=\char`\"{}\char`\"{})
+\item 
+def \mbox{\hyperlink{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a066d22434dd80dbf4f833963433d9db3}{add\+\_\+tx\+\_\+message\+\_\+to\+\_\+node}} (self, node\+\_\+name, message\+\_\+name)
+\item 
+def \mbox{\hyperlink{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_ad694c10e58e2e52e2e668ee5ecd5c53c}{add\+\_\+rx\+\_\+message\+\_\+to\+\_\+subscribers}} (self, message\+\_\+name, subscribers\+\_\+string)
+\item 
+def \mbox{\hyperlink{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a24ce31bb2b1e5ed9e3bb764a0d62f7df}{add\+\_\+rx\+\_\+messages\+\_\+to\+\_\+node}} (self, node\+\_\+name, message\+\_\+name, timeout\+\_\+ms)
+\item 
+def \mbox{\hyperlink{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a516f55e3abf37bfbb66c51c676bc9397}{get\+\_\+message\+\_\+direction}} (self, node\+\_\+name, message\+\_\+name)
+\item 
+def \mbox{\hyperlink{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_ab5083a89d89d288eed71f24d0ab06523}{get\+\_\+signals\+\_\+of\+\_\+message}} (self, message\+\_\+name)
+\item 
+def \mbox{\hyperlink{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a17ef0fbe4ed187e5c359914722876642}{message\+\_\+layout\+\_\+is\+\_\+cannonical}} (self, message\+\_\+name)
+\item 
+def \mbox{\hyperlink{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a525dde49a395db9b87741696e17d4c46}{get\+\_\+messages\+\_\+structures}} (self)
+\item 
+def \mbox{\hyperlink{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a35a994e373958c10f0f85107e1c2b476}{add\+\_\+signal}} (self, name, lenght, description=\char`\"{}\char`\"{})
+\item 
+def \mbox{\hyperlink{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a32a406b4d734440cf58128615acf0d8a}{add\+\_\+signal\+\_\+to\+\_\+message}} (self, message\+\_\+name, signal\+\_\+name, start\+\_\+byte, start\+\_\+bit)
+\item 
+\mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a5f4a34291f7c71818f05880c7f6c1b4b}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a5f4a34291f7c71818f05880c7f6c1b4b}} 
+def {\bfseries set\+\_\+signal\+\_\+data\+\_\+type} (self, signal\+\_\+name, data\+\_\+type)
+\item 
+def \mbox{\hyperlink{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a3c1f605b16dcbcbc375e196e763eae64}{get\+\_\+signal\+\_\+conveyor\+\_\+message}} (self, signal\+\_\+name)
+\item 
+def \mbox{\hyperlink{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a18d15523c3f9b7d4a2f4ae2563dd6beb}{get\+\_\+sorted\+\_\+signals\+\_\+by\+\_\+layout}} (self, grouped\+\_\+by\+\_\+message=False)
+\item 
+def \mbox{\hyperlink{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a06f6304504c1c5c462fb881326d36538}{sort\+\_\+signals\+\_\+by\+\_\+layout}} (self)
+\item 
+def \mbox{\hyperlink{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a60a54f0c6ce0843ca18404c390852c4c}{fragment\+\_\+signal}} (signal\+\_\+name, abs\+\_\+start\+\_\+bit, abs\+\_\+end\+\_\+bit, nominal\+\_\+type\+\_\+len=8, leading\+\_\+type\+\_\+len=None, trailing\+\_\+type\+\_\+len=None)
+\item 
+\mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a34fb5b8b42e61076143c6b126f7a0512}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a34fb5b8b42e61076143c6b126f7a0512}} 
+def {\bfseries gen\+\_\+\+X\+ML} (self, output\+\_\+file=None, gen\+\_\+types=True, gen\+\_\+nodes=True, gen\+\_\+messages=True, gen\+\_\+signals=True)
+\item 
+def \mbox{\hyperlink{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_ac4f4f401ef69061cec2379086343f45b}{cog\+\_\+generator}} (self, input\+\_\+file, network\+\_\+name, node\+\_\+name, out\+\_\+dir, work\+\_\+dir, gen\+\_\+path, pickle, variables=None)
+\item 
+def \mbox{\hyperlink{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a938d9e60631323d25396dd17d65f82b1}{gen\+\_\+code}} (self, out\+\_\+dir, work\+\_\+dir, gen\+\_\+path, node\+\_\+names=None, single\+\_\+network=False)
+\item 
+def \mbox{\hyperlink{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a56dc7b1ab698325115b0523c3413a8b6}{parse\+\_\+spreadsheet\+\_\+ods}} (self, input\+\_\+file)
+\end{DoxyCompactItemize}
+\doxysubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+def \mbox{\hyperlink{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a583770ae438827c6d3277316f714a35d}{split\+\_\+signal}} (abs\+\_\+start\+\_\+bit, abs\+\_\+end\+\_\+bit, nominal\+\_\+type\+\_\+len=8, leading\+\_\+type\+\_\+len=None, trailing\+\_\+type\+\_\+len=None)
+\end{DoxyCompactItemize}
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a15412ee46aa42de396089f89abc5498a}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a15412ee46aa42de396089f89abc5498a}} 
+{\bfseries name}
+\item 
+\mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_af83b82f01f3e56c0733b78dee059cb02}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_af83b82f01f3e56c0733b78dee059cb02}} 
+{\bfseries description}
+\item 
+\mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_aa6bfe24f82ab94a22f8daf73df87b216}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_aa6bfe24f82ab94a22f8daf73df87b216}} 
+{\bfseries version}
+\item 
+\mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a9ae81d035fb3b25af33f368e15752014}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a9ae81d035fb3b25af33f368e15752014}} 
+{\bfseries date}
+\item 
+\mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a9437b6ed8e9e13722ab50c31aa10fe72}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a9437b6ed8e9e13722ab50c31aa10fe72}} 
+{\bfseries enum\+\_\+types}
+\item 
+\mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a62e00bdf845a5017f585097e66f91393}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a62e00bdf845a5017f585097e66f91393}} 
+{\bfseries custom\+\_\+types}
+\item 
+\mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_afbb33ef48bba39f15c958c00902c6e7d}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_afbb33ef48bba39f15c958c00902c6e7d}} 
+{\bfseries nodes}
+\item 
+\mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_ae495b7ebc62701dc2b047ddcd12ed7ca}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_ae495b7ebc62701dc2b047ddcd12ed7ca}} 
+{\bfseries messages}
+\item 
+\mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a042e3d7313204dcd364f02d4cdf0da00}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a042e3d7313204dcd364f02d4cdf0da00}} 
+{\bfseries signals}
+\item 
+\mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a2b93fc9b39bd279906802aef498882a1}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a2b93fc9b39bd279906802aef498882a1}} 
+{\bfseries gP}
+\item 
+\mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_aefdf097f066c0b89d4f7de90746f2114}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_aefdf097f066c0b89d4f7de90746f2114}} 
+{\bfseries metadata\+\_\+gen\+\_\+source\+\_\+file}
+\end{DoxyCompactItemize}
+\doxysubsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_ad2c52eef31cda7e13588a2167e22c0d2}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_ad2c52eef31cda7e13588a2167e22c0d2}} 
+string {\bfseries metadata\+\_\+template\+\_\+name} = \char`\"{}T\+BD\char`\"{}
+\item 
+\mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_ac9e407029e1078d0a00aa534bf61f8d4}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_ac9e407029e1078d0a00aa534bf61f8d4}} 
+string {\bfseries metadata\+\_\+template\+\_\+version} = \char`\"{}1.\+0\char`\"{}
+\item 
+\mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a3ba1cef361d403fa92377bdd48b2f01e}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a3ba1cef361d403fa92377bdd48b2f01e}} 
+string {\bfseries metadata\+\_\+template\+\_\+description} = \char`\"{}\char`\"{}
+\item 
+\mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a7b5dfa1e7c8380d30552e9c75c5f6caf}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a7b5dfa1e7c8380d30552e9c75c5f6caf}} 
+string {\bfseries metadata\+\_\+gen\+\_\+source\+\_\+file} = \char`\"{}\char`\"{}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+\begin{DoxyVerb}Class to model a CAN Network. 
+
+Args:
+    name (str): Name of the network
+    description (str): Description of the network (optional)
+    version (str): Version of the network (optional)
+    date (str): Date corresponding to the version of the network (optional)
+    
+Attributes:
+    enum_types: List of user defined enumerated types
+    custom_types: List of user defined non-enumerated types
+    nodes: List of user defined network nodes
+    messages: List of user defined network messages
+    signals: List of user defined network signals
+\end{DoxyVerb}
+ 
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a5a532ee7a7ce8ae2a78fd3669b7036cb}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a5a532ee7a7ce8ae2a78fd3669b7036cb}} 
+\index{calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}!\_\_init\_\_@{\_\_init\_\_}}
+\index{\_\_init\_\_@{\_\_init\_\_}!calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}}
+\doxysubsubsection{\texorpdfstring{\_\_init\_\_()}{\_\_init\_\_()}}
+{\footnotesize\ttfamily def calvos.\+comgen.\+C\+A\+N.\+Network\+\_\+\+C\+A\+N.\+\_\+\+\_\+init\+\_\+\+\_\+ (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{name,  }\item[{}]{description = {\ttfamily \char`\"{}\char`\"{}},  }\item[{}]{version = {\ttfamily \char`\"{}\char`\"{}},  }\item[{}]{date = {\ttfamily \char`\"{}\char`\"{}} }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Class constructor \end{DoxyVerb}
+ 
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_ae31cddde84ca9be3805c19fa38aaad09}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_ae31cddde84ca9be3805c19fa38aaad09}} 
+\index{calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}!add\_enum\_type@{add\_enum\_type}}
+\index{add\_enum\_type@{add\_enum\_type}!calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}}
+\doxysubsubsection{\texorpdfstring{add\_enum\_type()}{add\_enum\_type()}}
+{\footnotesize\ttfamily def calvos.\+comgen.\+C\+A\+N.\+Network\+\_\+\+C\+A\+N.\+add\+\_\+enum\+\_\+type (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{name,  }\item[{}]{enum\+\_\+string,  }\item[{}]{description = {\ttfamily None} }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Adds a new enumerated type to the network. 
+
+Parameters
+----------
+    name : str
+      Name of the enumerated type to be added to the network.
+    enum_string : str
+      Definition of the enumerated type to be added. This string needs
+      to comply with the following syntax:
+  "symbol1 (int1), symbol2 (int2), symbol3 (int3), ..."
+      - symbolX is a C-like identifier for the given enumerated symbol
+      - (int1): explicit value to be assigned to symbolX -optional-
+    
+      Explicit values for symbols are optional so next are valid 
+      examples of enum_string:
+  "symbol1, symbol2, symbol3, ..."
+  "symbol1, symbol2 (int2), symbol3, ..."
+    description : str, optional
+      Description of the enumerated type
+      
+Yields
+------
+    If all passed parameters are valid, a new EnumType object with name
+    "name" and description "description will be added to this network 
+    with the symbols/values defined in "enum_string".
+\end{DoxyVerb}
+ \mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a34bcee6771af38dcd6489d18877630ec}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a34bcee6771af38dcd6489d18877630ec}} 
+\index{calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}!add\_message@{add\_message}}
+\index{add\_message@{add\_message}!calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}}
+\doxysubsubsection{\texorpdfstring{add\_message()}{add\_message()}}
+{\footnotesize\ttfamily def calvos.\+comgen.\+C\+A\+N.\+Network\+\_\+\+C\+A\+N.\+add\+\_\+message (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{name,  }\item[{}]{msg\+\_\+id,  }\item[{}]{length,  }\item[{}]{extended\+\_\+id = {\ttfamily False},  }\item[{}]{tx\+\_\+type = {\ttfamily None},  }\item[{}]{tx\+\_\+period = {\ttfamily None},  }\item[{}]{tx\+\_\+baf\+\_\+repeats = {\ttfamily None},  }\item[{}]{description = {\ttfamily \char`\"{}\char`\"{}} }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Adds a new message to the network \end{DoxyVerb}
+ \mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a24097087a03e519f66d7b91d2bca2ec4}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a24097087a03e519f66d7b91d2bca2ec4}} 
+\index{calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}!add\_node@{add\_node}}
+\index{add\_node@{add\_node}!calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}}
+\doxysubsubsection{\texorpdfstring{add\_node()}{add\_node()}}
+{\footnotesize\ttfamily def calvos.\+comgen.\+C\+A\+N.\+Network\+\_\+\+C\+A\+N.\+add\+\_\+node (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{name,  }\item[{}]{description }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Adds a new Node to the network. \end{DoxyVerb}
+ \mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_ad694c10e58e2e52e2e668ee5ecd5c53c}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_ad694c10e58e2e52e2e668ee5ecd5c53c}} 
+\index{calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}!add\_rx\_message\_to\_subscribers@{add\_rx\_message\_to\_subscribers}}
+\index{add\_rx\_message\_to\_subscribers@{add\_rx\_message\_to\_subscribers}!calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}}
+\doxysubsubsection{\texorpdfstring{add\_rx\_message\_to\_subscribers()}{add\_rx\_message\_to\_subscribers()}}
+{\footnotesize\ttfamily def calvos.\+comgen.\+C\+A\+N.\+Network\+\_\+\+C\+A\+N.\+add\+\_\+rx\+\_\+message\+\_\+to\+\_\+subscribers (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{message\+\_\+name,  }\item[{}]{subscribers\+\_\+string }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Adds the given message to the list of subscriber nodes. \end{DoxyVerb}
+ \mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a24ce31bb2b1e5ed9e3bb764a0d62f7df}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a24ce31bb2b1e5ed9e3bb764a0d62f7df}} 
+\index{calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}!add\_rx\_messages\_to\_node@{add\_rx\_messages\_to\_node}}
+\index{add\_rx\_messages\_to\_node@{add\_rx\_messages\_to\_node}!calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}}
+\doxysubsubsection{\texorpdfstring{add\_rx\_messages\_to\_node()}{add\_rx\_messages\_to\_node()}}
+{\footnotesize\ttfamily def calvos.\+comgen.\+C\+A\+N.\+Network\+\_\+\+C\+A\+N.\+add\+\_\+rx\+\_\+messages\+\_\+to\+\_\+node (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{node\+\_\+name,  }\item[{}]{message\+\_\+name,  }\item[{}]{timeout\+\_\+ms }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}. \end{DoxyVerb}
+ \mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a35a994e373958c10f0f85107e1c2b476}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a35a994e373958c10f0f85107e1c2b476}} 
+\index{calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}!add\_signal@{add\_signal}}
+\index{add\_signal@{add\_signal}!calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}}
+\doxysubsubsection{\texorpdfstring{add\_signal()}{add\_signal()}}
+{\footnotesize\ttfamily def calvos.\+comgen.\+C\+A\+N.\+Network\+\_\+\+C\+A\+N.\+add\+\_\+signal (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{name,  }\item[{}]{lenght,  }\item[{}]{description = {\ttfamily \char`\"{}\char`\"{}} }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Adds a new signal to the network. \end{DoxyVerb}
+ \mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a32a406b4d734440cf58128615acf0d8a}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a32a406b4d734440cf58128615acf0d8a}} 
+\index{calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}!add\_signal\_to\_message@{add\_signal\_to\_message}}
+\index{add\_signal\_to\_message@{add\_signal\_to\_message}!calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}}
+\doxysubsubsection{\texorpdfstring{add\_signal\_to\_message()}{add\_signal\_to\_message()}}
+{\footnotesize\ttfamily def calvos.\+comgen.\+C\+A\+N.\+Network\+\_\+\+C\+A\+N.\+add\+\_\+signal\+\_\+to\+\_\+message (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{message\+\_\+name,  }\item[{}]{signal\+\_\+name,  }\item[{}]{start\+\_\+byte,  }\item[{}]{start\+\_\+bit }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Adds a signal to a message with the speficied layout information. \end{DoxyVerb}
+ \mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a066d22434dd80dbf4f833963433d9db3}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a066d22434dd80dbf4f833963433d9db3}} 
+\index{calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}!add\_tx\_message\_to\_node@{add\_tx\_message\_to\_node}}
+\index{add\_tx\_message\_to\_node@{add\_tx\_message\_to\_node}!calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}}
+\doxysubsubsection{\texorpdfstring{add\_tx\_message\_to\_node()}{add\_tx\_message\_to\_node()}}
+{\footnotesize\ttfamily def calvos.\+comgen.\+C\+A\+N.\+Network\+\_\+\+C\+A\+N.\+add\+\_\+tx\+\_\+message\+\_\+to\+\_\+node (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{node\+\_\+name,  }\item[{}]{message\+\_\+name }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Sets the publisher node of the specified message. \end{DoxyVerb}
+ \mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_ac4f4f401ef69061cec2379086343f45b}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_ac4f4f401ef69061cec2379086343f45b}} 
+\index{calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}!cog\_generator@{cog\_generator}}
+\index{cog\_generator@{cog\_generator}!calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}}
+\doxysubsubsection{\texorpdfstring{cog\_generator()}{cog\_generator()}}
+{\footnotesize\ttfamily def calvos.\+comgen.\+C\+A\+N.\+Network\+\_\+\+C\+A\+N.\+cog\+\_\+generator (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{input\+\_\+file,  }\item[{}]{network\+\_\+name,  }\item[{}]{node\+\_\+name,  }\item[{}]{out\+\_\+dir,  }\item[{}]{work\+\_\+dir,  }\item[{}]{gen\+\_\+path,  }\item[{}]{pickle,  }\item[{}]{variables = {\ttfamily None} }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Invoke cog generator for the specified file.
+\end{DoxyVerb}
+ \mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a60a54f0c6ce0843ca18404c390852c4c}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a60a54f0c6ce0843ca18404c390852c4c}} 
+\index{calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}!fragment\_signal@{fragment\_signal}}
+\index{fragment\_signal@{fragment\_signal}!calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}}
+\doxysubsubsection{\texorpdfstring{fragment\_signal()}{fragment\_signal()}}
+{\footnotesize\ttfamily def calvos.\+comgen.\+C\+A\+N.\+Network\+\_\+\+C\+A\+N.\+fragment\+\_\+signal (\begin{DoxyParamCaption}\item[{}]{signal\+\_\+name,  }\item[{}]{abs\+\_\+start\+\_\+bit,  }\item[{}]{abs\+\_\+end\+\_\+bit,  }\item[{}]{nominal\+\_\+type\+\_\+len = {\ttfamily 8},  }\item[{}]{leading\+\_\+type\+\_\+len = {\ttfamily None},  }\item[{}]{trailing\+\_\+type\+\_\+len = {\ttfamily None} }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Fragments a signal based on its size and layout information.
+
+    If signal is
+\end{DoxyVerb}
+ \mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a938d9e60631323d25396dd17d65f82b1}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a938d9e60631323d25396dd17d65f82b1}} 
+\index{calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}!gen\_code@{gen\_code}}
+\index{gen\_code@{gen\_code}!calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}}
+\doxysubsubsection{\texorpdfstring{gen\_code()}{gen\_code()}}
+{\footnotesize\ttfamily def calvos.\+comgen.\+C\+A\+N.\+Network\+\_\+\+C\+A\+N.\+gen\+\_\+code (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{out\+\_\+dir,  }\item[{}]{work\+\_\+dir,  }\item[{}]{gen\+\_\+path,  }\item[{}]{node\+\_\+names = {\ttfamily None},  }\item[{}]{single\+\_\+network = {\ttfamily False} }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Generates C code for the given network.
+\end{DoxyVerb}
+ \mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a516f55e3abf37bfbb66c51c676bc9397}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a516f55e3abf37bfbb66c51c676bc9397}} 
+\index{calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}!get\_message\_direction@{get\_message\_direction}}
+\index{get\_message\_direction@{get\_message\_direction}!calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}}
+\doxysubsubsection{\texorpdfstring{get\_message\_direction()}{get\_message\_direction()}}
+{\footnotesize\ttfamily def calvos.\+comgen.\+C\+A\+N.\+Network\+\_\+\+C\+A\+N.\+get\+\_\+message\+\_\+direction (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{node\+\_\+name,  }\item[{}]{message\+\_\+name }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Gets the direction ('Tx', 'Rx' or None) for the given node. \end{DoxyVerb}
+ \mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a525dde49a395db9b87741696e17d4c46}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a525dde49a395db9b87741696e17d4c46}} 
+\index{calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}!get\_messages\_structures@{get\_messages\_structures}}
+\index{get\_messages\_structures@{get\_messages\_structures}!calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}}
+\doxysubsubsection{\texorpdfstring{get\_messages\_structures()}{get\_messages\_structures()}}
+{\footnotesize\ttfamily def calvos.\+comgen.\+C\+A\+N.\+Network\+\_\+\+C\+A\+N.\+get\+\_\+messages\+\_\+structures (\begin{DoxyParamCaption}\item[{}]{self }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Gets layout structure of all messages.
+
+return
+    array of MessageStructure objects.\end{DoxyVerb}
+ \mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a3c1f605b16dcbcbc375e196e763eae64}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a3c1f605b16dcbcbc375e196e763eae64}} 
+\index{calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}!get\_signal\_conveyor\_message@{get\_signal\_conveyor\_message}}
+\index{get\_signal\_conveyor\_message@{get\_signal\_conveyor\_message}!calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}}
+\doxysubsubsection{\texorpdfstring{get\_signal\_conveyor\_message()}{get\_signal\_conveyor\_message()}}
+{\footnotesize\ttfamily def calvos.\+comgen.\+C\+A\+N.\+Network\+\_\+\+C\+A\+N.\+get\+\_\+signal\+\_\+conveyor\+\_\+message (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{signal\+\_\+name }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Returns the name of the conveyor message of a signal. \end{DoxyVerb}
+ \mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_ab5083a89d89d288eed71f24d0ab06523}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_ab5083a89d89d288eed71f24d0ab06523}} 
+\index{calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}!get\_signals\_of\_message@{get\_signals\_of\_message}}
+\index{get\_signals\_of\_message@{get\_signals\_of\_message}!calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}}
+\doxysubsubsection{\texorpdfstring{get\_signals\_of\_message()}{get\_signals\_of\_message()}}
+{\footnotesize\ttfamily def calvos.\+comgen.\+C\+A\+N.\+Network\+\_\+\+C\+A\+N.\+get\+\_\+signals\+\_\+of\+\_\+message (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{message\+\_\+name }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Returns a list of signals mapped to the given message.
+\end{DoxyVerb}
+ \mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a18d15523c3f9b7d4a2f4ae2563dd6beb}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a18d15523c3f9b7d4a2f4ae2563dd6beb}} 
+\index{calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}!get\_sorted\_signals\_by\_layout@{get\_sorted\_signals\_by\_layout}}
+\index{get\_sorted\_signals\_by\_layout@{get\_sorted\_signals\_by\_layout}!calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}}
+\doxysubsubsection{\texorpdfstring{get\_sorted\_signals\_by\_layout()}{get\_sorted\_signals\_by\_layout()}}
+{\footnotesize\ttfamily def calvos.\+comgen.\+C\+A\+N.\+Network\+\_\+\+C\+A\+N.\+get\+\_\+sorted\+\_\+signals\+\_\+by\+\_\+layout (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{grouped\+\_\+by\+\_\+message = {\ttfamily False} }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Sorts the signals in this network according to their layout \end{DoxyVerb}
+ \mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a17ef0fbe4ed187e5c359914722876642}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a17ef0fbe4ed187e5c359914722876642}} 
+\index{calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}!message\_layout\_is\_cannonical@{message\_layout\_is\_cannonical}}
+\index{message\_layout\_is\_cannonical@{message\_layout\_is\_cannonical}!calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}}
+\doxysubsubsection{\texorpdfstring{message\_layout\_is\_cannonical()}{message\_layout\_is\_cannonical()}}
+{\footnotesize\ttfamily def calvos.\+comgen.\+C\+A\+N.\+Network\+\_\+\+C\+A\+N.\+message\+\_\+layout\+\_\+is\+\_\+cannonical (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{message\+\_\+name }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Returns true if message layout doesn't need bitfields.
+\end{DoxyVerb}
+ \mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a56dc7b1ab698325115b0523c3413a8b6}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a56dc7b1ab698325115b0523c3413a8b6}} 
+\index{calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}!parse\_spreadsheet\_ods@{parse\_spreadsheet\_ods}}
+\index{parse\_spreadsheet\_ods@{parse\_spreadsheet\_ods}!calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}}
+\doxysubsubsection{\texorpdfstring{parse\_spreadsheet\_ods()}{parse\_spreadsheet\_ods()}}
+{\footnotesize\ttfamily def calvos.\+comgen.\+C\+A\+N.\+Network\+\_\+\+C\+A\+N.\+parse\+\_\+spreadsheet\+\_\+ods (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{input\+\_\+file }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}parses an spreadsheet (ods format) to generate this network. \end{DoxyVerb}
+ \mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a168c2a0b049efcf00fffefcbe9fd31ae}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a168c2a0b049efcf00fffefcbe9fd31ae}} 
+\index{calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}!remove\_enum\_type@{remove\_enum\_type}}
+\index{remove\_enum\_type@{remove\_enum\_type}!calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}}
+\doxysubsubsection{\texorpdfstring{remove\_enum\_type()}{remove\_enum\_type()}}
+{\footnotesize\ttfamily def calvos.\+comgen.\+C\+A\+N.\+Network\+\_\+\+C\+A\+N.\+remove\+\_\+enum\+\_\+type (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{name }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Removes the specified node from the network.
+
+Parameters
+----------
+    name : str
+\end{DoxyVerb}
+ \mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_acda410d8b29fb720aa01e1ac4f26e76e}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_acda410d8b29fb720aa01e1ac4f26e76e}} 
+\index{calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}!remove\_node@{remove\_node}}
+\index{remove\_node@{remove\_node}!calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}}
+\doxysubsubsection{\texorpdfstring{remove\_node()}{remove\_node()}}
+{\footnotesize\ttfamily def calvos.\+comgen.\+C\+A\+N.\+Network\+\_\+\+C\+A\+N.\+remove\+\_\+node (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{name }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Removes the specified node from the network. \end{DoxyVerb}
+ \mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a06f6304504c1c5c462fb881326d36538}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a06f6304504c1c5c462fb881326d36538}} 
+\index{calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}!sort\_signals\_by\_layout@{sort\_signals\_by\_layout}}
+\index{sort\_signals\_by\_layout@{sort\_signals\_by\_layout}!calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}}
+\doxysubsubsection{\texorpdfstring{sort\_signals\_by\_layout()}{sort\_signals\_by\_layout()}}
+{\footnotesize\ttfamily def calvos.\+comgen.\+C\+A\+N.\+Network\+\_\+\+C\+A\+N.\+sort\+\_\+signals\+\_\+by\+\_\+layout (\begin{DoxyParamCaption}\item[{}]{self }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Sorts the signals in this network object by their layout information. \end{DoxyVerb}
+ \mbox{\Hypertarget{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a583770ae438827c6d3277316f714a35d}\label{classcalvos_1_1comgen_1_1_c_a_n_1_1_network___c_a_n_a583770ae438827c6d3277316f714a35d}} 
+\index{calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}!split\_signal@{split\_signal}}
+\index{split\_signal@{split\_signal}!calvos.comgen.CAN.Network\_CAN@{calvos.comgen.CAN.Network\_CAN}}
+\doxysubsubsection{\texorpdfstring{split\_signal()}{split\_signal()}}
+{\footnotesize\ttfamily def calvos.\+comgen.\+C\+A\+N.\+Network\+\_\+\+C\+A\+N.\+split\+\_\+signal (\begin{DoxyParamCaption}\item[{}]{abs\+\_\+start\+\_\+bit,  }\item[{}]{abs\+\_\+end\+\_\+bit,  }\item[{}]{nominal\+\_\+type\+\_\+len = {\ttfamily 8},  }\item[{}]{leading\+\_\+type\+\_\+len = {\ttfamily None},  }\item[{}]{trailing\+\_\+type\+\_\+len = {\ttfamily None} }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+\begin{DoxyVerb}Fragments a signal based on its layout information.
+
+Fragmentation of a signal may occur if signal crosses "type lenght" 
+boundaries.
+Signal could have a leading, nominal or tail sets of parts/fragments.
+  - Leading fragments: fragments based on signal absolute bit position 
+    and splitted according to the defined "trailing_type_len" lenght.
+  - Nominal fragments: fragments based on signal absolute bit position
+    and splitted according to the defined "nominal_type_len" lenght.
+  - Tailing fragments: fragments based on signal absolute bit position
+    and splitted according to the defined "trailing_type_len" lenght.
+    
+Parameters
+----------
+    abs_start_bit : int
+      The absolute start bit of a signal as per its layout definition
+      of the signal's conveyor message.
+    abs_end_bit : int
+      The absolute end bit occupied by the signal as per its layout 
+      definition of the signal's conveyor message.    
+    nominal_type_len : int, optional
+      Type lenght used to fragment the signal into its nominal parts.
+      If no value is passed, will assume nominal_type_len as 8 bits.
+    leading_type_len : int, optional
+      Type lenght used to fragment the signal into its leading parts.
+      If no value is passed, leading_type_len will assume same value
+      as nominal_type_len.
+    trailing_type_len : int, optional
+      Type lenght used to fragment the signal into its leading parts.
+      If no value is passed, trailing_type_len will assume same value
+      as nominal_type_len.
+       
+Returns
+-------
+list
+    Will return a list (return_list) of lists with follwing format:
+return_list -> [leading_list, nominal_list, trailing_list]
+    - leading_list is a list of the form:
+[leading_part_1, leading_part_2, ...]
+      If no leading_part is identified then leading_list will be "None".
+    - nominal_list is a list of the form:
+[nominal_part_1, nominal_part_2, ...]
+      If no nominal_parts is identified then nominal_list will be "None".
+    - trailing_list is a list of the form:
+[trailing_part_1, trailing_part_2, ...]
+      If no tailing_parts is identified then trailing_list will be "None".
+    
+    Each element xxxx_part is a number conveying the lenght in bits 
+    of the given part. This number is always nominal_type_len for the
+    nominal parts but can be smaller than or equal to 
+    leading_type_len/trailing_type_len for the leading/trailing parts
+    correspondingly.
+    
+    Example:
+Signal_A start bit = 3, end bit = 28,
+
+for nominal_type_len = leading_type_len = trailing_type_len= 8
+return_list -> [[5],[8,8],[7]]
+
+for nominal_type_len=16, leading_type_len=trailing_type_len=8
+return_list -> [[5],[16],[7]]
+
+for nominal_type_len=trailing_type_len=8, leading_type_len=16
+return_list -> [[13],[8],[7]]
+
+Signal_B start bit = 8, end bit = 15,
+
+for nominal_type_len = leading_type_len = trailing_type_len= 8
+return_list -> [None,[8],None]
+\end{DoxyVerb}
+ 
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+G\+:/devproj/calvos/calvos-\/engine/calvos/comgen/C\+A\+N.\+py\end{DoxyCompactItemize}
