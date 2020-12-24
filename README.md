@@ -1,4 +1,6 @@
 # calvos
+<img src="doc/templates/logo_full_bw_small.png">
+
 Open Source SW Utilities for Embedded Systems
 
 ## Overview
