@@ -2,3 +2,5 @@
 __pycache__/
 calvos-engine/calvos/rwsd.py
 calvos-engine/calvos/test.py
+project_example/log.log
+project_example/out/
