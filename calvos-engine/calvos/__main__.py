@@ -20,13 +20,14 @@ It defines classes_and_methods
 import sys
 import os
 import pathlib as pl
+import logging
 import traceback
 
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = 0.1
+__version__ = '0.1.0'
 __date__ = '2020-12-18'
 __updated__ = '2020-12-18'
 
@@ -44,6 +45,7 @@ class CLIError(Exception):
     def __unicode__(self):
         return self.msg
 
+
 def string_to_path(path_string):
     ''' Returns a "path" object for the given string. '''
     # pathlib requires regular diagonal, not reverse diagonal
@@ -52,7 +54,6 @@ def string_to_path(path_string):
     return pl.Path(path_string)
     
     
-
 def folder_exists(path):
     ''' Returns "True" if the given path is an existing folder. '''
     return_value = False
@@ -64,6 +65,7 @@ def folder_exists(path):
         return_value = True
     
     return return_value
+
 
 def file_exists(path):
     ''' Returns "True" if the given path is an existing file. '''
@@ -115,27 +117,19 @@ USAGE
     try:
         # Setup argument parser
         parser = ArgumentParser(description=program_license, formatter_class=RawDescriptionHelpFormatter)
-        parser.add_argument("-r", "--recursive", dest="recurse", action="store_true", help="recurse into subfolders [default: %(default)s]")
-        parser.add_argument("-v", "--verbose", dest="verbose", action="count", help="set verbosity level [default: %(default)s]")
-        parser.add_argument("-i", "--include", dest="include", help="only include paths matching this regex pattern. Note: exclude is given preference over include. [default: %(default)s]", metavar="RE" )
-        parser.add_argument("-e", "--exclude", dest="exclude", help="exclude paths matching this regex pattern. [default: %(default)s]", metavar="RE" )
+        parser.add_argument("-p","--project", dest="project", required=True, \
+            help="Mandatory. Full path with file name of the calvos project to be processed")
+        parser.add_argument("-c","--calvos", dest="calvos", required=False, \
+            help="Path where the calvos python package is located. If not provided, will look from installed python packages.")
+        parser.add_argument("-l","--log", dest="log_level", required=False, \
+            help="Logging level: 0 - Debug, 1 - Info, 2 - Warning, 3 - Error. Default is 1 - Info.")
         parser.add_argument('-V', '--version', action='version', version=program_version_message)
-        #parser.add_argument(dest="paths", help="paths to folder(s) with source file(s) [default: %(default)s]", metavar="path", nargs='+')
-        
-        parser.add_argument("-p","--project", dest="project", help="Full path with file name of the calvos project to be processed")
-        parser.add_argument("-calvos","--calvos", dest="calvos", help="Path where the calvos python package is located")
 
         # Process arguments
         args = parser.parse_args()
-
-        #paths = args.paths
-        verbose = args.verbose
-        recurse = args.recurse
-        inpat = args.include
-        expat = args.exclude
-        
         project = args.project
         calvos = args.calvos
+        log_level = args.log_level
         
         arguments_OK = True
         
@@ -154,6 +148,7 @@ USAGE
             else:
                 arguments_OK = False
                 print("Error: folder: ", calvos_path, " doesn't exists.")
+                return 2
         else:
             # Gather calvos package path. It will be needed later on for finding
             # cog files, etc.
@@ -167,11 +162,8 @@ USAGE
             if calvos_entry_found is False:
                 arguments_OK = False
                 print("Error: not finding calvos package path")
+                return 2
         
-        print(calvos_path)
-        
-
-
         if project is not None:
             project_file = string_to_path(project)
             if file_exists(project_file):
@@ -181,22 +173,42 @@ USAGE
             else:
                 arguments_OK = False
                 print("Error: file: ", project_file, " doesn't exists.")
-         
+
+        if log_level is not None:
+            if int(log_level) == 0:
+                log_level = logging.DEBUG
+            elif int(log_level) == 1:
+                log_level = logging.INFO
+            elif int(log_level) == 2:
+                log_level = logging.WARNING
+            elif int(log_level) == 3:
+                log_level = logging.ERROR
+            else:
+                arguments_OK = False
+                print('Error: argument -l shall be from 0 to 3. Provided value: "%s"',log_level)
+                return 2
+        else:
+            log_level = logging.INFO        
+
         if arguments_OK is True:
             #==============================================================================
             # Setup logging system
             #==============================================================================
             import calvos.common.logsys as lg
-            import logging
              
-            log_output_file = project_path / "log_test.log"
+            log_output_file = project_path / "log.log"
             if file_exists(log_output_file):
                 log_output_file.unlink()
              
-            lg.log_system = lg.Log(logging.DEBUG, log_output_file)
+            lg.log_system = lg.Log(log_level, log_output_file)
             log = lg.log_system
             log.add_logger("main")
             log.info("main","======= Started calvOS project processing. =======")
+            
+            prueba = 1
+            prueba2 = 2
+            
+            log.info("main", ("testing" + " concatenation: " + str(prueba) +", "+ str(prueba2)) )
              
             #==============================================================================
             # calvOS project folders
@@ -236,29 +248,13 @@ USAGE
             calvos_project.load_project()
             
             calvos_project.process_project()
-                   
                      
             log.info("main","======= Finished calvOS project processing. =======")
             for counter_name, counts in log.counters.items():
                 log.info("main", "\"" + counter_name + "\" messages : " + str(counts))
               
-              
             logging.shutdown()
    
-                    
-#         if verbose > 0:
-#             print("Verbose mode on")
-#             if recurse:
-#                 print("Recursive mode on")
-#             else:
-#                 print("Recursive mode off")
-
-        if inpat and expat and inpat == expat:
-            raise CLIError("include and exclude pattern are equal! Nothing will be processed.")
-
-#         for inpath in paths:
-#             ### do something with inpath ###
-#             print(inpath)
         return 0
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
@@ -281,9 +277,9 @@ USAGE
 
 if __name__ == "__main__":
     if DEBUG:
-        sys.argv.append("-h")
-        sys.argv.append("-v")
-        sys.argv.append("-r")
+        sys.argv.append("-p")
+        sys.argv.append("-c")
+        sys.argv.append("-l")
     if TESTRUN:
         import doctest
         doctest.testmod()

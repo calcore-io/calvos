@@ -6,11 +6,8 @@ Created on Sun Dec  6 00:19:28 2020
 """
 
 import logging
-import sys
-import os
 from lxml import etree as ET
 import xml.dom.minidom
-import pathlib as pl 
 
 # #TODO: Solve how to pass the log file path dynamically to this module
 # def _delete_file(file_name):

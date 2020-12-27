@@ -10,18 +10,11 @@ import pyexcel as pe
 import math
 from lxml import etree as ET
 import xml.dom.minidom
-import re
-import time
-import warnings
 import pickle as pic
-import glob
 import cogapp as cog
-import pathlib as plib
 
 import calvos.common.codegen as cg
 import calvos.common.logsys as lg
-from pickle import TRUE
-
 
 # --------------------------------------------------------------------------------------------------
 # Definitions for the logging system
@@ -45,7 +38,7 @@ def log_error(message):
     
 def log_critical(message):
     log.critical(LOGGER_LABEL, message)
-# -----------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
 
 def say_hello():
     print("Hello, I'm CAN")
@@ -260,9 +253,12 @@ class Network_CAN:
             leading_list.append(None)
             nominal_list.append(None)
             trailing_list.append(None)
-            warnings.warn("End bit shall be greather or equal to the start bit." \
-                            + " Current start bit: " + str(abs_start_bit)
-                            + " Current end bit: " + str(abs_end_bit), UserWarning)
+            log_warn(('End bit shall be greater than or equal to the start bit.' \
+                    + ' Current start bit: "%s", current end bit: "%s"') \
+                    % (str(abs_start_bit), str(abs_end_bit)) )
+#             log_warn(("End bit shall be greather or equal to the start bit." \
+#                             + " Current start bit: " + str(abs_start_bit)
+#                             + " Current end bit: " + str(abs_end_bit), UserWarning)
         
         return_list.append(leading_list)
         return_list.append(nominal_list)
@@ -310,18 +306,15 @@ class Network_CAN:
                 #empty object
                 if len(self.enum_types[name].enum_entries) == 0:
                     self.enum_types.pop(name)
-                    warnings.warn("Enum type: \"" + name + \
-                          "\" not well formed. Removed from the network.", \
-                          UserWarning)    
+                    log_warn(("Enum type: \"" + name + \
+                          "\" not well formed. Removed from the network."))    
             else:
-                warnings.warn("Duplicated Enum Type: \"" + name + \
-                          "\" not added to the network.", \
-                          UserWarning)
+                log_warn(("Duplicated Enum Type: \"" + name + \
+                          "\" not added to the network."))
         else:
             #Warning, invalid node name
-            warnings.warn("Invalid Enum Type: \"" + name + \
-                          "\". Enum Types must comply with C-language identifier syntax.", \
-                          UserWarning)
+            log_warn(("Invalid Enum Type: \"" + name + \
+                          "\". Enum Types must comply with C-language identifier syntax."))
         
     #===============================================================================================
     def remove_enum_type(self, name):
@@ -333,9 +326,7 @@ class Network_CAN:
         """
         if name not in self.nodes:
             #Node doesn't exist
-            warnings.warn("Enum Type \"" + name + \
-                      "\" doesn't exist", \
-                      UserWarning)
+            log_warn(("Enum Type \"" + name + "\" doesn't exist"))
         else:
             self.nodes.pop(name)
     
@@ -348,15 +339,13 @@ class Network_CAN:
                 #Create new node object in the network
                 self.nodes.update({name : self.Node(name, description)})
             else:
-                warnings.warn("Duplicated Node: \"" + name + \
-                          "\" not added to the network.", \
-                          UserWarning)
+                log_warn(("Duplicated Node: \"" + name + \
+                    "\" not added to the network."))
         else:
             #Warning, invalid node name
 #            print("Invalid node: "+name)
-            warnings.warn("Invalid node name: \"" + name + \
-                          "\". Node names must comply with C-language identifier syntax.", \
-                          UserWarning)
+            log_warn(("Invalid node name: \"" + name + \
+                "\". Node names must comply with C-language identifier syntax."))
     
     #=============================================================================================== 
     def remove_node(self, name):
@@ -365,9 +354,7 @@ class Network_CAN:
             self.nodes.pop(name)
         else:
             #Node doesn't exist
-            warnings.warn("Node \"" + name + \
-                      "\" doesn't exist", \
-                      UserWarning)
+            log_warn(("Node \"" + name + "\" doesn't exist"))
     
     #===============================================================================================        
     def add_message(self, name, msg_id, length, extended_id = False, \
@@ -392,22 +379,18 @@ class Network_CAN:
                             self.Message(name, msg_id, length, extended_id, tx_type, \
                                          tx_period, tx_baf_repeats, description)} )
                     else:
-                        warnings.warn("Duplicated Message Id: \"" + str(msg_id) \
-                              + "\". Message \"" + name + "\" not added to the network.", \
-                              UserWarning)
+                        log_warn(("Duplicated Message Id: \"" + str(msg_id) \
+                              + "\". Message \"" + name + "\" not added to the network."))
                 else:
-                    warnings.warn("Invalid Message Id: \"" + str(msg_id) \
-                          + "\". Message \"" + name + "\" not added to the network.", \
-                          UserWarning)
+                    log_warn(("Invalid Message Id: \"" + str(msg_id) \
+                          + "\". Message \"" + name + "\" not added to the network."))
             else:
-                warnings.warn("Duplicated Message: \"" + name + \
-                          "\" not added to the network.", \
-                          UserWarning)
+                log_warn(("Duplicated Message: \"" + name + \
+                          "\" not added to the network."))
         else:
             #Warning, invalid message name
-            warnings.warn("Invalid Message name: \"" + name + \
-                          "\". Message names must comply with C-language identifier syntax.", \
-                          UserWarning)
+            log_warn(("Invalid Message name: \"" + name + \
+                          "\". Message names must comply with C-language identifier syntax."))
     
     #===============================================================================================
     def add_tx_message_to_node(self, node_name, message_name):
@@ -420,18 +403,16 @@ class Network_CAN:
                     # Add publisher to the given message
                     self.messages[message_name].set_publisher(node_name)
                 else:
-                    warnings.warn("Message: \"" + message_name \
+                    log_warn(("Message: \"" + message_name \
                                   + "\" already assigned for TX to node: \"" \
                                   + self.messages[message_name].get_publisher() \
-                                  + "\". No change performed.", UserWarning)
+                                  + "\". No change performed."))
             else:
-                warnings.warn("Message: \"" + message_name \
-                          + "\" not defined. Define first the message in the network", \
-                          UserWarning)
+                log_warn(("Message: \"" + message_name \
+                          + "\" not defined. Define first the message in the network"))
         else:
-            warnings.warn("Node: \"" + node_name \
-                          + "\" not defined. Define first the node in the network", \
-                          UserWarning)
+            log_warn(("Node: \"" + node_name \
+                          + "\" not defined. Define first the node in the network"))
         
 #    def remove_tx_message_to_node(self, node_name, message_name):
 #        
@@ -461,16 +442,14 @@ class Network_CAN:
                             self.nodes[node].add_subscriber(message_name, \
                                       temporal_entries[node])
                         else:
-                            warnings.warn("Message \"" + message_name + \
+                            log_warn(("Message \"" + message_name + \
                                       "\" already published by node \"" + node \
                                       + "\", message can't be published " \
-                                      + "and subscribed by same node.", UserWarning)       
+                                      + "and subscribed by same node."))       
                     else:
-                        warnings.warn("Node \"" + node + \
-                                      "\" not defined.", UserWarning)
+                        log_warn(("Node \"" + node + "\" not defined."))
         else:
-            warnings.warn("Message \"" + message_name + \
-                  "\" not defined.", UserWarning)
+            log_warn(("Message \"" + message_name + "\" not defined."))
     
     #===============================================================================================
     def add_rx_messages_to_node(self, node_name, message_name, timeout_ms):
@@ -481,17 +460,15 @@ class Network_CAN:
                 #Message exists, add subscriber to Node
                 self.nodes[node_name].add_subscriber(message_name,timeout_ms)
             else:
-                warnings.warn("Message \"" + message_name + \
-                              "\" not defined.", UserWarning)
+                log_warn(("Message \"" + message_name + "\" not defined."))
         else:
-            warnings.warn("Node \"" + node_name + \
-                  "\" not defined.", UserWarning)
+            log_warn(("Node \"" + node_name + "\" not defined."))
 
     #===============================================================================================
     def get_message_direction(self, node_name, message_name):
         """ Gets the direction ('Tx', 'Rx' or None) for the given node. """
         return_value = None
-        if node_name in self.nodes and message_name in self-messages:
+        if node_name in self.nodes and message_name in self.messages:
             if self.messages[message_name].publisher is not None:
                 if self.messages[message_name].publisher == node_name:
                     # This message is a TX message for the given node
@@ -775,12 +752,11 @@ class Network_CAN:
                                     # All prefixes exhausted. Use a disruptive
                                     # one so that it is evident and user can
                                     # manually name the signal parts in the C code.
-                                    warnings.warn("Can't generate unique name" \
+                                    log_warn(("Can't generate unique name" \
                                        + " for part "+ fragment_name \
                                        + "\" of signal \"" + signal_name \
                                        + "\" since it duplicates with existing" \
-                                       + "signal in same message.", \
-                                      UserWarning)
+                                       + "signal in same message."))
                                     
                                     prefix = "#"
                                     fragment_name = str(signal_name) + "_" \
@@ -788,13 +764,12 @@ class Network_CAN:
                                     
                                     break;
                                 else:
-                                    warnings.warn("Signal part \"" + fragment_name \
+                                    log_warn(("Signal part \"" + fragment_name \
                                        + "\" of signal \"" + signal_name \
                                        + "\" duplicates with name of existing " \
                                        + "signal in same message." \
                                        + " Attempting with prefix \"" \
-                                       + cg.gen_part_prefixes[prefix_idx] \
-                                       + "\"", UserWarning)
+                                       + cg.gen_part_prefixes[prefix_idx] + "\""))
                                     
                                     # Try new prefix
                                     prefix = cg.gen_part_prefixes[prefix_idx]
@@ -887,12 +862,11 @@ class Network_CAN:
                                                     # All prefixes exhausted. Use a disruptive
                                                     # one so that it is evident and user can
                                                     # manually name the signal parts in the C code.
-                                                    warnings.warn("Can't generate unique name" \
+                                                    log_warn(("Can't generate unique name" \
                                                        + " for part "+ fragment_name \
                                                        + "\" of signal \"" + signal_name \
                                                        + "\" since it duplicates with existing" \
-                                                       + "signal in same message.", \
-                                                      UserWarning)
+                                                       + "signal in same message."))
                                                     
                                                     prefix = "#"
                                                     fragment_name = str(signal_name) + "_" \
@@ -900,13 +874,12 @@ class Network_CAN:
                                                     
                                                     break;
                                                 else:
-                                                    warnings.warn("Signal part \"" + fragment_name \
+                                                    log_warn(("Signal part \"" + fragment_name \
                                                        + "\" of signal \"" + signal_name \
                                                        + "\" duplicates with name of existing " \
                                                        + "signal in same message." \
                                                        + " Attempting with prefix \"" \
-                                                       + cg.gen_part_prefixes[prefix_idx] \
-                                                       + "\"", UserWarning)
+                                                       + cg.gen_part_prefixes[prefix_idx] + "\""))
                                                     
                                                     # Try new prefix
                                                     prefix = cg.gen_part_prefixes[prefix_idx]
@@ -969,14 +942,12 @@ class Network_CAN:
                 self.signals.update( {name : \
                                       self.Signal(name, lenght, description)} )
             else:
-                warnings.warn("Duplicated Signal: \"" + name + \
-                          "\" not added to the network.", \
-                          UserWarning)
+                log_warn(("Duplicated Signal: \"" + name + \
+                          "\" not added to the network."))
         else:
             #Warning, invalid signal name
-            warnings.warn("Invalid signal name: \"" + name + \
-                          "\". Signal names must comply with C-language identifier syntax.", \
-                          UserWarning)
+            log_warn(("Invalid signal name: \"" + name + \
+                      "\". Signal names must comply with C-language identifier syntax."))
     
     #===============================================================================================        
     def add_signal_to_message(self, message_name, signal_name, start_byte, start_bit):
@@ -997,9 +968,9 @@ class Network_CAN:
                                             + self.signals[signal_name].len - 1
                     #Check if signal fits in the message
                     if new_absolute_end_bit >= (self.messages[message_name].len * 8):
-                        warnings.warn("Signal \"" + signal_name \
+                        log_warn(("Signal \"" + signal_name \
                                       + "\" doesn't fit in message \"" \
-                                      + message_name + "\".", UserWarning)
+                                      + message_name + "\"."))
                     else:
                         #check if signal space is not occupied by other signals
                         space_occupied = False
@@ -1017,9 +988,9 @@ class Network_CAN:
                                                        new_absolute_start_bit, \
                                                        new_absolute_end_bit) is True:
                                     space_occupied = True
-                                    warnings.warn("Signal \"" + signal_name \
+                                    log_warn(("Signal \"" + signal_name \
                                       + "\" overlaps with signal \"" \
-                                      + signal.name + "\".", UserWarning)
+                                      + signal.name + "\"."))
                                     break
                         if space_occupied is False:
                             # If signal is of array type (data_types_list[ARRAY]) 
@@ -1039,24 +1010,24 @@ class Network_CAN:
                                 self.signals[signal_name].set_layout_info(start_byte, \
                                                start_bit)
                             else:
-                                warnings.warn("Signal \"" + signal_name \
+                                log_warn(("Signal \"" + signal_name \
                                       + "\" is of array type and its start bit " \
                                       + "is not byte aligned or its lenght " \
                                       + "is not a multiple of 8-bits (1 byte)." \
-                                      + "Signal not added to the network.", UserWarning)
+                                      + "Signal not added to the network."))
                         else:
-                            warnings.warn("Signal \"" + signal_name \
+                            log_warn(("Signal \"" + signal_name \
                                       + "\" Can't be added to message \"" \
-                                      + message_name + "\" with current layout.", UserWarning)
+                                      + message_name + "\" with current layout."))
                 else:
-                    warnings.warn("Wrong paratemer(s) for start_byte/start_bit/signal_lenght :" \
+                    log_warn(("Wrong paratemer(s) for start_byte/start_bit/signal_lenght :" \
                                  + str(start_byte) + "/" + str(start_bit) + "/" \
                                  + str(self.signals[signal_name].len) \
-                                 + " for signal \"" + signal_name + "\".", UserWarning) 
+                                 + " for signal \"" + signal_name + "\".")) 
             else:
-                warnings.warn("Signal \"" + signal_name + "\" not defined.", UserWarning)
+                log_warn(("Signal \"" + signal_name + "\" not defined."))
         else:
-            warnings.warn("Message \"" + message_name + "\" not defined.", UserWarning)
+            log_warn(("Message \"" + message_name + "\" not defined."))
             
     #===============================================================================================    
     def set_signal_data_type(self, signal_name, data_type):
@@ -1072,9 +1043,9 @@ class Network_CAN:
                     self.signals[signal_name].data_type = data_type 
                 else:
                     # Data type not defined.
-                    warnings.warn("Undefined singal type: \"" + data_type \
+                    log_warn(("Undefined singal type: \"" + data_type \
                                      + "\" for signal \"" \
-                                     + signal_name + "\".", UserWarning)
+                                     + signal_name + "\"."))
     
     #===============================================================================================
     def get_signal_conveyor_message(self, signal_name):
@@ -1098,8 +1069,8 @@ class Network_CAN:
                 if self.signals[signal].message is not None:
                     sorted_signals_list.append({signal : self.signals[signal]})
                 else:
-                    warnings.warn("Signal: \"" + signal \
-                            + "\" doesn't have a publishing message.", UserWarning)
+                    log_warn(("Signal: \"" + signal \
+                            + "\" doesn't have a publishing message."))
                 
             # Sort signals by their messages
             sorted_signals_list = \
@@ -1122,8 +1093,6 @@ class Network_CAN:
                 counter += 1
                 signal_object = list(signal.values())[0]
                 signal_name = list(signal.keys())[0]
-                
-#                print("=== current msg: ",current_message ,"new msg: ",signal_object.message)
                 
                 # Check if we have changed to another message or not
                 if signal_object.message == current_message:
@@ -1169,16 +1138,10 @@ class Network_CAN:
                     signals_of_a_message.append({signal_name : signal_object})
                 if sort_and_append:
                     # 1) Sort the list
-                    
-#                    print("Pre SORT\n-----------------")
-#                    print(signals_of_a_message)
                     signals_of_a_message = \
                         sorted(signals_of_a_message, \
                                key= lambda signal_entry : \
                                list(signal_entry.values())[0].start_byte)
-#                    print("POST SORT\n-----------------")
-#                    print(signals_of_a_message)
-#                    print("-----------------")
                     # Now sort by byte and bit  
                     # ------------------------
                     # Now sort each byte by start_bit
@@ -1690,8 +1653,8 @@ class Network_CAN:
                 else:
                     pass
         else:
-            warnings.warn("Invalid input. No C-Code will be generated for " 
-                          + "network: " + self.name + ".", UserWarning)
+            log_warn(("Invalid input. No C-Code will be generated for " 
+                          + "network: " + self.name + "."))
         
     #===============================================================================================    
     def parse_spreadsheet_ods(self,input_file):
@@ -1753,14 +1716,14 @@ class Network_CAN:
                 if str(message_publisher) != "":
                     self.add_tx_message_to_node(message_publisher,message_name)
                 else:
-                    warnings.warn("Message \"" + message_name 
-                                  + "\" doesn't have a defined publisher.", SyntaxWarning)
+                    log_warn(("Message \"" + message_name 
+                                  + "\" doesn't have a defined publisher."))
                 
                 if str(message_subscribers) != "":
                     self.add_rx_message_to_subscribers(message_name, message_subscribers)
                 else:
-                    warnings.warn("Message \"" + message_name 
-                                  + "\" doesn't have subscribers.", SyntaxWarning)
+                    log_warn(("Message \"" + message_name 
+                                  + "\" doesn't have subscribers."))
         
         # -----------------------
         # Parse Signals
@@ -1789,8 +1752,8 @@ class Network_CAN:
                 if signal_type != "":
                     self.set_signal_data_type(signal_name, signal_type)
                 else:
-                    warnings.warn("Signal \"" + signal_name 
-                              + "\" doesn't have a defined data type.", SyntaxWarning)
+                    log_warn(("Signal \"" + signal_name 
+                              + "\" doesn't have a defined data type."))
                 # Add signal to the specified message if any
                 if signal_conv_msg != "":
                     if cg.is_valid_identifier(str(signal_conv_msg)):
@@ -1798,11 +1761,11 @@ class Network_CAN:
                         self.add_signal_to_message(signal_conv_msg, signal_name, \
                                                 signal_start_byte, signal_start_bit)
                     else:
-                        warnings.warn("Wrong conveyor message \"" + signal_conv_msg \
-                            + "\" for signal \"" + signal_name + "\".", SyntaxWarning)
+                        log_warn(("Wrong conveyor message \"" + signal_conv_msg \
+                            + "\" for signal \"" + signal_name + "\"."))
                 else:
-                    warnings.warn("Signal \"" + signal_name 
-                                  + "\" doesn't have a defined coveyor message.", SyntaxWarning)        
+                    log_warn(("Signal \"" + signal_name 
+                                  + "\" doesn't have a defined coveyor message."))        
                 # Add extra information paraemters of the signal (no warnings if empty)
                 if str(signal_init_val) != "":
                     self.signals[signal_name].init_value = signal_init_val
@@ -1838,8 +1801,8 @@ class Network_CAN:
             if enum_symbol in self.enum_entries:
                 self.enum_entries.pop(str(enum_symbol))
             else:
-                warnings.warn("enum symbol \"" + enum_symbol + \
-                      "\" doesn't exist", UserWarning)
+                log_warn(("enum symbol \"" + enum_symbol + \
+                      "\" doesn't exist"))
     
     #===============================================================================================
     class Node:
@@ -1856,8 +1819,8 @@ class Network_CAN:
             if message_name not in self.subscribed_messages:
                 self.subscribed_messages.update({message_name : timeout_ms}) 
             else:
-                warnings.warn("Message \"" + message_name + \
-                      "\" already subscribed to node." + self.name, UserWarning)
+                log_warn(("Message \"" + message_name + \
+                      "\" already subscribed to node." + self.name))
     
     #===============================================================================================      
     class Message:
@@ -1870,17 +1833,17 @@ class Network_CAN:
             
             self.id = cg.get_valid_number(msg_id)
             if self.id is None:
-                warnings.warn("Wrong ID value: \"" + msg_id \
+                log_warn(("Wrong ID value: \"" + msg_id \
                               + "\" of message \"" + self.name \
-                              + "\". Assumed ID 'None'.", UserWarning)
+                              + "\". Assumed ID 'None'."))
             
             self.len = cg.get_valid_number(length)
             if self.len is None:
                 #Assume None for message ID.
                 self.len = 8
-                warnings.warn("Wrong lenght value: \"" + length \
+                log_warn(("Wrong lenght value: \"" + length \
                               + "\" of message \"" + self.name \
-                              + "\". Assumed lenght of 8 bytes.", UserWarning)
+                              + "\". Assumed lenght of 8 bytes."))
 
             if extended_id is False:
                 self.extended_id = False
@@ -1891,9 +1854,9 @@ class Network_CAN:
                 #If no tx type was given, assume default one
                 self.tx_type = tx_type_list[DEFAULT]
                 #warn user    
-                warnings.warn("No Tx type given for message: \"" + self.name \
+                log_warn(("No Tx type given for message: \"" + self.name \
                                 + "\". Assumed default one: \"" \
-                                + self.tx_type + "\"", UserWarning)
+                                + self.tx_type + "\""))
             else:
                 if tx_type in tx_type_list:
                     self.tx_type = tx_type
@@ -1903,12 +1866,12 @@ class Network_CAN:
                     for tx_type_element in tx_type_list:
                         allowed_tx_types = allowed_tx_types + tx_type_element + ", " 
                     #warn user    
-                    warnings.warn("Wrong Tx type: \"" + tx_type + "\" of message: \"" \
+                    log_warn(("Wrong Tx type: \"" + tx_type + "\" of message: \"" \
                                     + self.name \
                                     + "\". \n Please use on the following: " \
                                     + allowed_tx_types
                                     + ".\n. Assummed default tx type: "
-                                    + tx_type_list[DEFAULT], UserWarning)
+                                    + tx_type_list[DEFAULT]))
                     #Sef default tx type
                     self.tx_type = tx_type_list[DEFAULT]
             
@@ -1920,9 +1883,9 @@ class Network_CAN:
                     self.tx_period = tx_period
                 else:
                     #Assume None for message ID.
-                    warnings.warn("Wrong Tx period value: \"" + tx_period \
+                    log_warn(("Wrong Tx period value: \"" + tx_period \
                                  + "\" of message \"" \
-                                 + self.name + "\".", UserWarning)
+                                 + self.name + "\"."))
             else:
                 self.tx_period = tx_period
             
@@ -1933,9 +1896,9 @@ class Network_CAN:
                     self.tx_baf_repeats = tx_baf_repeats
                 else:
                     #Assume None for Baf repeats.
-                    warnings.warn("Wrong BAF repeats value: \"" + tx_baf_repeats \
+                    log_warn(("Wrong BAF repeats value: \"" + tx_baf_repeats \
                                  + "\" of message \"" \
-                                 + self.name + "\".", UserWarning)
+                                 + self.name + "\"."))
             else:
                 self.tx_baf_repeats = tx_baf_repeats
 
@@ -2001,9 +1964,8 @@ class Network_CAN:
             if cg.is_valid_identifier(message_name):
                 self.message = message_name
             else:
-                warnings.warn("Invalid message name: \"" + message_name + \
-                  "\". Message names must comply with C-language identifier syntax.", \
-                  UserWarning)
+                log_warn(("Invalid message name: \"" + message_name + \
+                  "\". Message names must comply with C-language identifier syntax."))
         
         #===========================================================================================
         def set_layout_info(self, start_byte, start_bit):
@@ -2012,17 +1974,15 @@ class Network_CAN:
             if temporal_start_byte is not None:
                 self.start_byte = temporal_start_byte
             else:
-                warnings.warn("Wrong Start Byte parameter: \"" + str(start_byte) \
-                              + "\" for signal \"" + self.name \
-                              + "\".", UserWarning)
+                log_warn(("Wrong Start Byte parameter: \"" + str(start_byte) \
+                              + "\" for signal \"" + self.name + "\"."))
                 
             temporal_start_bit = cg.get_valid_number(start_bit)
             if temporal_start_bit is not None:
                 self.start_bit = temporal_start_bit
             else:
-                warnings.warn("Wrong Start Byte parameter: \"" + str(start_bit) \
-                              + "\" for signal \"" + self.name \
-                              + "\".", UserWarning)
+                log_warn(("Wrong Start Byte parameter: \"" + str(start_bit) \
+                              + "\" for signal \"" + self.name + "\"."))
         
         #===========================================================================================
         def set_data_len(self, length):
@@ -2030,9 +1990,9 @@ class Network_CAN:
             if temporal_len != None and temporal_len > 0 and temporal_len <= 64:
                 self.len = temporal_len
             else:
-                warnings.warn("Wrong lenght parameter: \"" + str(length) \
+                log_warn(("Wrong lenght parameter: \"" + str(length) \
                               + "\" for signal \"" + self.name \
-                              + "\". No change performed.", UserWarning)
+                              + "\". No change performed."))
         
         #===========================================================================================
         def is_array(self):

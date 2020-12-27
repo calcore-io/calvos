@@ -4,16 +4,8 @@ Created on Thu Nov 12 23:03:34 2020
 
 @author: Carlos Calvillo
 """
-import sys
-import cogapp as cog
-import pathlib as pl      
-import logging
-import os
 import xml.etree.ElementTree as ET
-
-
 import importlib
-
 
 import calvos.common.codegen as cg
 import calvos.common.logsys as lg
@@ -161,13 +153,13 @@ class Project:
                         if entry_id not in enum_values:
                             enum_values.update( {entry_id : entry.text} )
                         else:
-                            log_warn( ('Duplicated entry id %s for parameter id %s. ' \
+                            log_warn(('Duplicated entry id %s for parameter id %s. ' \
                                      +' Only first occurrence was taken.') \
                                        % (entry_id, param_id))
                     
                     # Check if enum default is a valid entry
                     if param_default != "" and param_default not in enum_values:
-                        log_warn( ('Default value "%s" for parameter id "%s" is not ' \
+                        log_warn(('Default value "%s" for parameter id "%s" is not ' \
                                  + 'a valid value as per the enumerated values.') \
                                  % (param_default, param_id))
                     
@@ -243,8 +235,7 @@ class Project:
                 self.components_definitions.update( \
                     {component_type : comp_definition })
             else:
-                log.warning("proj", \
-                            "Component type invalid or duplicated.")
+                log_warn("Component type invalid or duplicated.")
    
     #===============================================================================================    
     def add_component(self, type_name, \
@@ -262,7 +253,7 @@ class Project:
             
             self.components.append(component)
         else:
-            log.warning("proj","Undefined component type '%s'. Component not added." % type_name)
+            log_warn("Undefined component type '%s'. Component not added." % type_name)
     
     #===============================================================================================  
     def load_project(self):
@@ -464,8 +455,7 @@ class Project:
             """ Removes a parameter from this component. """
             result = self.params.pop(param_name, None)
             if result is None:
-                log.warning("proj", \
-                          "Parameter \"%s\" to be removed didn't exist." % param_name)
+                log_warn("Parameter \"%s\" to be removed didn't exist." % param_name)
         
         #===========================================================================================
         def set_input(self, input_file, input_type = IN_TYPE_XML):
@@ -476,8 +466,7 @@ class Project:
                 self.input_type = input_type
             else:
                 self.input_type = None
-                log.error("proj", \
-                          "Wrong input type parameter for project component: %s" % input_type)
+                log_error("Wrong input type parameter for project component: %s" % input_type)
         
         #===========================================================================================
         def set_object(self, component_object):

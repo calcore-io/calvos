@@ -6,26 +6,37 @@ Created on Tue Sep 29 14:39:09 2020
 """
 
 import pyexcel as pe
-import math
-from lxml import etree as ET
-import xml.dom.minidom
 import re
 import time
-import warnings
 import os
 import shutil
 import pathlib as pl
 
-import logging
 import calvos.common.logsys as lg
 
-#==============================================================================
-# Settin up logging
-#==============================================================================
+# --------------------------------------------------------------------------------------------------
+# Definitions for the logging system
+# --------------------------------------------------------------------------------------------------
+LOGGER_LABEL = "cg"
 
 log = lg.log_system
+log.add_logger(LOGGER_LABEL)
 
-log.add_logger("cg")
+def log_debug(message):
+    log.debug(LOGGER_LABEL, message)
+    
+def log_info(message):
+    log.info(LOGGER_LABEL, message)
+    
+def log_warn(message):
+    log.warning(LOGGER_LABEL, message)
+    
+def log_error(message):
+    log.error(LOGGER_LABEL, message)
+    
+def log_critical(message):
+    log.critical(LOGGER_LABEL, message)
+# --------------------------------------------------------------------------------------------------
 
 #==============================================================================
 # Functions, data for code generation
@@ -248,20 +259,15 @@ def parse_codegen_spreadsheet(input_file):
                         dt.update({param : param_value})
                 else:
                     # Parameter not defined internally.
-                    log.warning("cg", \
-                        "Parameter \"%s\" is meaningless. Parameter is ignored." % param)
-                    
-                    warnings.warn("Parameter \"" + param \
-                      + "\" meaningless. Parameter is ignored.", \
-                      UserWarning) 
+                    log_warn(("Parameter \"" + param \
+                      + "\" meaningless. Parameter is ignored.")) 
         else:
-            warnings.warn("Selected Parameters Set \"" + params_set \
+            log_warn(("Selected Parameters Set \"" + params_set \
                       + "\" of setup \"" + setup + "\" not found in input file. " \
-                      + "Will assume default values for all parameters.", \
-                      UserWarning) 
+                      + "Will assume default values for all parameters.")) 
     else:
-        warnings.warn("Selected setup: \"" + setup \
-                      + "\" not found in setup names.", UserWarning)    
+        log_warn(("Selected setup: \"" + setup \
+                      + "\" not found in setup names."))    
 
 #==============================================================================
 # General utilities
@@ -355,7 +361,7 @@ def parse_special_string(input_string):
     
     if len(string_elements) == 0:
         #Error, string_elements can't be of size 0.
-        warnings.warn("Invalid input string format", UserWarning)
+        log_warn("Invalid input string format")
     if len(string_elements) > 0 and string_elements[0] != "":
         # Navigate through each eleement and check syntax
         # Valid syntax is: "text1 (number1)" or "text1"
@@ -376,13 +382,12 @@ def parse_special_string(input_string):
                         return_dictionary.update({string_element : None})
                     else:
                         #warning, duplicated symbol string
-                        warnings.warn("Duplicated symbol: \"" \
-                            + string_element + "\" ignored.", UserWarning)
+                        log_warn(("Duplicated symbol: \"" \
+                            + string_element + "\" ignored."))
                 else:
                     #warning, invalid input string
-                    warnings.warn("Invalid input string format. Symbols shall" \
-                        + " comply with C-language identifier syntax.", \
-                        UserWarning)
+                    log_warn(("Invalid input string format. Symbols shall" \
+                        + " comply with C-language identifier syntax."))
             else:
                 #First captured group should be the symbol string
                 symbol_string = regex_matches[0][0]
@@ -400,20 +405,18 @@ def parse_special_string(input_string):
                             #Valid symbol value. Add the entry to the output
                             return_dictionary.update({symbol_string : symbol_value})
                         else:
-                            warnings.warn("Invalid symbol numeric value: \"" \
+                            log_warn(("Invalid symbol numeric value: \"" \
                                 + symbol_value + "\" of symbol: \"" \
-                                + symbol_string + "\". Element ignored.", \
-                                SyntaxWarning) 
+                                + symbol_string + "\". Element ignored.")) 
                     else:
-                        warnings.warn("Duplicated symbol: \"" \
-                            + string_element + "\" ignored.", UserWarning)
+                        log_warn(("Duplicated symbol: \"" \
+                            + string_element + "\" ignored."))
                 else:
-                    warnings.warn("Invalid input string format. Symbols shall" \
-                        + " comply with C-language identifier syntax.", \
-                        UserWarning)
+                    log_warn(("Invalid input string format. Symbols shall" \
+                        + " comply with C-language identifier syntax."))
     else:
         #error, enum value string not valid
-        warnings.warn("Invalid input string format", UserWarning)
+        log_warn("Invalid input string format")
     return return_dictionary
 
 #==============================================================================
@@ -490,10 +493,9 @@ def delete_folder_contents(folder):
                 elif os.path.isdir(file_path):
                     delete_folder_contents(file_path)
                     shutil.rmtree(file_path)
-                    log.info("cg",'Deleted element %s' % file_path)
+                    log_debug('Deleted element %s' % file_path)
             except Exception as e:
-                log.error("cg",'Failed to delete folder %s. Reason: %s' % (file_path, e))
-                print('Failed to delete folder %s. Reason: %s' % (file_path, e))
+                log_error('Failed to delete folder %s. Reason: %s' % (file_path, e))
 
 def create_folder(folder):
     """ Creates the specified folder.
@@ -502,12 +504,13 @@ def create_folder(folder):
         try:
             folder.mkdir()
             print("Folder created: ",folder)
-            log.info("cg","Folder created: %s" % folder)
+            log_debug("Folder created: %s" % folder)
         except Exception as e:
-            log.error("cg",'Failed to create folder %s. Reason: %s' % (folder, e))
+            log_error('Failed to create folder %s. Reason: %s' % (folder, e))
             print('Failed to create folder %s. Reason: %s' % (folder, e))
     else:
-        log.info("cg","Folder to be created %s already exists." % folder)
+        log_info("Folder to be created '%s' already exists." % folder)
+        
 # def create_file(file_name):
 #     """ Creates the specified folder.
 #     """
@@ -523,8 +526,7 @@ def delete_file(file_name):
     try:
         os.unlink(file_name)
     except Exception as e:
-        log.error("cg",'Failed to delete %s. Reason: %s' % (file_name, e))
-        print('Failed to delete %s. Reason: %s' % (file_name, e))
+        log_error('Failed to delete %s. Reason: %s' % (file_name, e))
         
 def file_exists(file_name):
     """ Returns True if the specified file exists.
@@ -604,7 +606,7 @@ class GenParam():
             return_value = 1
         elif self.type == 1:
             return_value = len(self.pl)
-        elif self.type == 2 and index in self.pd:
+        elif self.type == 2:
             return_value = len(self.pd)
         else:
             pass

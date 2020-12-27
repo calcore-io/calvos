@@ -1,0 +1,25 @@
+2020-12-27 17:02:36,534 - main - INFO - ======= Started calvOS project processing. =======
+2020-12-27 17:02:36,534 - main - INFO - testing concatenation: 1, 2
+2020-12-27 17:02:36,635 - main - INFO - Setting up project folders.
+2020-12-27 17:02:36,636 - cg - INFO - Folder to be created 'G:\devproj\github\calvos\calvos\project_example\out' already exists.
+2020-12-27 17:02:36,643 - main - INFO - ======= Loading project infrastructure. =======
+2020-12-27 17:02:36,643 - main - INFO - Create instance for project in "G:\devproj\github\calvos\calvos\project_example\project.xml"
+2020-12-27 17:02:36,643 - proj - INFO - Loading project parameters and component definitions...
+2020-12-27 17:02:36,644 - proj - INFO - Loading completed.
+2020-12-27 17:02:36,644 - proj - INFO - Loading project components...
+2020-12-27 17:02:36,644 - proj - INFO - Loading completed.
+2020-12-27 17:02:36,644 - proj - INFO - Loading data for component "A codegen component" of type "codegen".
+2020-12-27 17:02:36,689 - cg - WARNING - Parameter "constant_case" meaningless. Parameter is ignored.
+2020-12-27 17:02:36,689 - proj - INFO - Generating code for component "A codegen component" of type "codegen".
+2020-12-27 17:02:36,689 - proj - INFO - Loading data for component "A CAN component" of type "CAN".
+2020-12-27 17:02:36,768 - proj - INFO - Generating code for component "A CAN component" of type "CAN".
+2020-12-27 17:02:36,772 - CAN - WARNING - Signal part "MNUsignal_2" of signal "MNUsignal" duplicates with name of existing signal in same message. Attempting with prefix "part_"
+2020-12-27 17:02:36,776 - proj - INFO - Loading data for component "" of type "CAN".
+2020-12-27 17:02:36,835 - proj - INFO - Generating code for component "" of type "CAN".
+2020-12-27 17:02:36,838 - CAN - WARNING - Signal part "MNUsignal_2" of signal "MNUsignal" duplicates with name of existing signal in same message. Attempting with prefix "part_"
+2020-12-27 17:02:36,843 - main - INFO - ======= Finished calvOS project processing. =======
+2020-12-27 17:02:36,843 - main - INFO - "debug" messages : 6
+2020-12-27 17:02:36,843 - main - INFO - "info" messages : 18
+2020-12-27 17:02:36,843 - main - INFO - "warning" messages : 3
+2020-12-27 17:02:36,843 - main - INFO - "error" messages : 0
+2020-12-27 17:02:36,843 - main - INFO - "critical" messages : 0
