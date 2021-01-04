@@ -1,10 +1,16 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Thu Sep  3 21:37:18 2020
+""" Communication Generator for CAN Network.
 
-@author: Carlos Calvillo
-"""
+calvos.comgen.CAN models a network for Controller Area Network (CAN)
+protocol.
 
+@author:     Carlos Calvillo
+@copyright:  2020 Carlos Calvillo. All rights reserved.
+@license:    GPL v3
+"""
+__version__ = '0.1.0'
+__date__ = '2020-08-03'
+__updated__ = '2020-12-18'
     
 import pyexcel as pe
 import math
@@ -25,18 +31,28 @@ log = lg.log_system
 log.add_logger(LOGGER_LABEL)
 
 def log_debug(message):
+    """ Wrapper for logging a debug message. """
+    
     log.debug(LOGGER_LABEL, message)
     
 def log_info(message):
+    """ Wrapper for logging an info message. """
+    
     log.info(LOGGER_LABEL, message)
     
 def log_warn(message):
+    """ Wrapper for logging a warning message. """
+    
     log.warning(LOGGER_LABEL, message)
     
 def log_error(message):
+    """ Wrapper for logging an error message. """
+    
     log.error(LOGGER_LABEL, message)
     
 def log_critical(message):
+    """ Wrapper for logging a critical error message. """
+    
     log.critical(LOGGER_LABEL, message)
 # --------------------------------------------------------------------------------------------------
 
@@ -77,18 +93,20 @@ class Network_CAN:
         signals : list
             List of user defined network signals
     """
-    
-    metadata_template_name = "TBD"
-    metadata_template_version = "0.1.0"
-    metadata_template_description = ""
-    metadata_gen_source_file = ""
+    metadata = {"templateName" : "Network_CAN",
+                "templateVersion" : __version__,
+                "templateDesc": "Models a CAN Network"}
     
     #===============================================================================================    
-    def __init__(self, name, description = "", version = "", date = ""):
+    def __init__(self, id_string = "", name = "", description = "", version = "", date = ""):
         """ Class constructor.
+        
         Parameters
         ----------
-            name : str
+            id : str
+                Identifier for the network. Shall be short since it will be used
+                as part of the name for various functions/macros in code generation
+            name : str, optional
                 Name of the network
             description : str, optional
                 Description of the network
@@ -97,6 +115,8 @@ class Network_CAN:
             date : str, optional
                 Date corresponding to the version of the network (user defined)
          """
+        self.id_string = id_string
+        
         self.name = str(name)
         
         self.description = str(description)
@@ -121,7 +141,8 @@ class Network_CAN:
             ["","p_","part_","_"], 0, \
             "List of prefixes to use for naming signal parts when fragmented.")
         
-    
+        # Last input file used to fill-out data for this object
+        self.input_file = None
         
     #===============================================================================================
     @staticmethod
@@ -129,15 +150,15 @@ class Network_CAN:
         nominal_type_len = 8, leading_type_len = None, trailing_type_len = None):
         """ Fragments a signal based on its layout information.
         
-        Fragmentation of a signal may occur if signal crosses "type lenght" 
+        Fragmentation of a signal may occur if signal crosses "type length" 
         boundaries.
         Signal could have a leading, nominal or tail sets of parts/fragments.
           - Leading fragments: fragments based on signal absolute bit position 
-            and splitted according to the defined "trailing_type_len" lenght.
+            and splitted according to the defined "trailing_type_len" length.
           - Nominal fragments: fragments based on signal absolute bit position
-            and splitted according to the defined "nominal_type_len" lenght.
+            and splitted according to the defined "nominal_type_len" length.
           - Tailing fragments: fragments based on signal absolute bit position
-            and splitted according to the defined "trailing_type_len" lenght.
+            and splitted according to the defined "trailing_type_len" length.
             
         Parameters
         ----------
@@ -148,21 +169,21 @@ class Network_CAN:
               The absolute end bit occupied by the signal as per its layout 
               definition of the signal's conveyor message.    
             nominal_type_len : int, optional
-              Type lenght used to fragment the signal into its nominal parts.
+              Type length used to fragment the signal into its nominal parts.
               If no value is passed, will assume nominal_type_len as 8 bits.
             leading_type_len : int, optional
-              Type lenght used to fragment the signal into its leading parts.
+              Type length used to fragment the signal into its leading parts.
               If no value is passed, leading_type_len will assume same value
               as nominal_type_len.
             trailing_type_len : int, optional
-              Type lenght used to fragment the signal into its leading parts.
+              Type length used to fragment the signal into its leading parts.
               If no value is passed, trailing_type_len will assume same value
               as nominal_type_len.
        
         Returns
         -------
         list
-            Will return a list (return_list) of lists with follwing format:
+            Will return a list (return_list) of lists with following format:
                 return_list -> [leading_list, nominal_list, trailing_list]
             - leading_list is a list of the form:
                 [leading_part_1, leading_part_2, ...]
@@ -174,7 +195,7 @@ class Network_CAN:
                 [trailing_part_1, trailing_part_2, ...]
               If no tailing_parts is identified then trailing_list will be "None".
             
-            Each element xxxx_part is a number conveying the lenght in bits 
+            Each element xxxx_part is a number conveying the length in bits 
             of the given part. This number is always nominal_type_len for the
             nominal parts but can be smaller than or equal to 
             leading_type_len/trailing_type_len for the leading/trailing parts
@@ -256,9 +277,6 @@ class Network_CAN:
             log_warn(('End bit shall be greater than or equal to the start bit.' \
                     + ' Current start bit: "%s", current end bit: "%s"') \
                     % (str(abs_start_bit), str(abs_end_bit)) )
-#             log_warn(("End bit shall be greather or equal to the start bit." \
-#                             + " Current start bit: " + str(abs_start_bit)
-#                             + " Current end bit: " + str(abs_end_bit), UserWarning)
         
         return_list.append(leading_list)
         return_list.append(nominal_list)
@@ -266,6 +284,26 @@ class Network_CAN:
         
         return return_list
 
+    #===============================================================================================
+    def set_id(self, id_string):
+        """ Sets the network identifier.
+        Parameters
+        ----------
+            id_string : str
+                String to be written to the Network id.
+        
+        Yields
+        ------
+            Throws a warning if the passed id_string argument doesn't comply to
+            C-language identifier syntax.
+        """
+        if cg.is_valid_identifier(id) is True:
+            self.id_string = id_string
+        else:
+            log_warn(("Network identifier '%s' is invalid. It shall comply with "
+                      + "language identifiers syntax. Network id not modified.")
+                      % id)
+    
     #===============================================================================================    
     def add_enum_type(self, name, enum_string, description = None):
         """ Adds a new enumerated type to the network. 
@@ -634,7 +672,7 @@ class Network_CAN:
                 # Get default prefix to use for parts of fragmented signals
                 prefix = cg.gen_part_prefixes[cg.PRFX_DEFAULT]
                 
-                # Calculate base data type lenght to use for the bitfield of
+                # Calculate base data type length to use for the bitfield of
                 # this message.
                 if (message_len % 2) != 0:
                     # If message len is odd then use bytes
@@ -645,7 +683,7 @@ class Network_CAN:
                     base_type_len = 32
                 else:
                     # Should never get here (msg len can't be > 8 bytes)
-                    #TODO: warning. Wrong lenght of message message_name
+                    #TODO: warning. Wrong length of message message_name
                     pass
                 
                 # Append new message structure to the return data
@@ -711,7 +749,7 @@ class Network_CAN:
                         # bit of the message.
                         next_start_bit = message_len * 8
                     else:
-                        # Get start bit and lenght of next signal
+                        # Get start bit and length of next signal
                         next_start_bit = \
                             (list(list_by_message[counter].values())[0].start_byte * 8) \
                             + list(list_by_message[counter].values())[0].start_bit
@@ -1268,7 +1306,7 @@ class Network_CAN:
             self.signals = sorted_signals.copy()
             
     #=============================================================================================== 
-    #TODO: check usage and implementaiton of function "fragment_signal"
+    #TODO: check usage and implementation of function "fragment_signal"
     def fragment_signal(self, signal_name, abs_start_bit, abs_end_bit, \
             nominal_type_len = 8, leading_type_len = None, trailing_type_len = None):
         """ Fragments a signal based on its size and layout information.
@@ -1324,14 +1362,17 @@ class Network_CAN:
         XML_level_1 = ET.Element("Name")
         XML_level_1.text = self.name
         XML_root.append(XML_level_1)
+        XML_level_1 = ET.Element("Id")
+        XML_level_1.text = self.id_string
+        XML_root.append(XML_level_1)
         XML_level_1 = ET.Element("Desc")
         XML_level_1.text = self.description
         XML_root.append(XML_level_1)
         XML_level_1 = ET.Element("Version")
-        XML_level_1.text = self.version
+        XML_level_1.text = str(self.version)
         XML_root.append(XML_level_1)
         XML_level_1 = ET.Element("Date")
-        XML_level_1.text = self.date
+        XML_level_1.text = str(self.date)
         XML_root.append(XML_level_1)
         
         if gen_types is True:
@@ -1523,14 +1564,18 @@ class Network_CAN:
         #Generate Metdata
         XML_level_1 = ET.SubElement(XML_root,"Metadata")
         
-        XML_level_2 = ET.SubElement(XML_level_1,"TemplateName")
-        XML_level_2.text = Network_CAN.metadata_template_name
-        XML_level_2 = ET.SubElement(XML_level_1,"TemplateVersion")
-        XML_level_2.text = Network_CAN.metadata_template_version
-        XML_level_2 = ET.SubElement(XML_level_1,"TemplateDesc")
-        XML_level_2.text = Network_CAN.metadata_template_description
-    
-#        XML_root.append(XML_level_1)
+        for data_name, data_value in Network_CAN.metadata.items():
+            XML_level_2 = ET.SubElement(XML_level_1,data_name)
+            XML_level_2.text = data_value
+            
+        XML_root.append(XML_level_1)
+        
+#         XML_level_2 = ET.SubElement(XML_level_1,"TemplateName")
+#         XML_level_2.text = Network_CAN.metadata_template_name
+#         XML_level_2 = ET.SubElement(XML_level_1,"TemplateVersion")
+#         XML_level_2.text = Network_CAN.metadata_template_version
+#         XML_level_2 = ET.SubElement(XML_level_1,"TemplateDesc")
+#         XML_level_2.text = Network_CAN.metadata_template_description
     
         print("Generating XML...")
         XML_string = ET.tostring(XML_root)
@@ -1632,12 +1677,9 @@ class Network_CAN:
         self.cog_generator(cog_file_name, network_name, None, out_dir, \
                              work_dir, gen_path, cog_serialized_network_file)
         
-        
-
-        
         # Delete pickle file
         # ------------------
-        print("INFO: deleting picke file")
+        print("INFO: deleting pickle file")
         cg.delete_file(cog_serialized_network_file)
         
         #TODO: Logic for ensuring the current network is meaningful, e.g., is no emtpy, etc.
@@ -1661,19 +1703,34 @@ class Network_CAN:
         """ parses an spreadsheet (ods format) to generate this network. """
         book = pe.get_book(file_name=str(input_file))
         self.metadata_gen_source_file = str(input_file)
+        
+        self.input_file = cg.string_to_path(input_file)
+        
+        # -----------------------
+        # Parse Network Data
+        # -----------------------
+        working_sheet = book["Network_and_Nodes"]
+                
+        self.name = working_sheet[0,1]
+        self.id_string = working_sheet[1,1]
+        self.description = working_sheet[2,1]
+        self.version = working_sheet[3,1]
+        self.date = working_sheet[4,1]
 
         # -----------------------
         # Parse Network Nodes
         # -----------------------
-        working_sheet = book["Nodes"]
-        working_sheet.name_columns_by_row(0)
+        NODES_TITLE_ROW = 6 # Row where the node's titles are located
+        working_sheet.name_columns_by_row(NODES_TITLE_ROW)
         
-        for row in working_sheet:
-            name = row[working_sheet.colnames.index("Node Name")]
-            #Skip rows with no node defined
-            if str(name) != "": 
-                description = row[working_sheet.colnames.index("Description")]
-                self.add_node(name, description)  
+        for idx, row in enumerate(working_sheet):
+            # Ignore rows that are before the "node's" title row
+            if idx >= NODES_TITLE_ROW:
+                name = row[working_sheet.colnames.index("Node Name")]
+                # Skip rows with no node defined
+                if str(name) != "": 
+                    description = row[working_sheet.colnames.index("Description")]
+                    self.add_node(name, description)  
         
         # -----------------------
         # Parse Enum Types
@@ -2021,6 +2078,8 @@ class CodeGen():
     PRFX_DEFAULT = 0
 
 
+input_file_name = None # Used for determining name of output network xml file.
+
 #===================================================================================================
 def load_input(input_file, input_type, params):
     """ Loads input file and returns the corresponding object.
@@ -2045,11 +2104,13 @@ def load_input(input_file, input_type, params):
     """
     del input_type, params # Unused parameters
     try:
-        return_object = Network_CAN("TestNW") 
-        return_object.parse_spreadsheet_ods(str(input_file)) 
+        return_object = Network_CAN() 
+        return_object.parse_spreadsheet_ods(input_file)
+        input_file_name = input_file.stem
+        print("DEBUG:::: IN ", input_file_name)
     except Exception as e:
         return_object = None
-        log_warn('Failed to process input file "%s". Reason: %s' % (input_file, e))
+        log_error('Failed to process input file "%s". Reason: %s' % (input_file, e))
     finally:
         return return_object    
     
@@ -2080,7 +2141,13 @@ def generate(input_object, out_path, working_path, calvos_path, params = {}):
     """
     del params # Unused parameter
     #TODO: Check for required parameters
+#     try:
     cog_files_path = calvos_path / "comgen" / "gen" / "CAN"
     input_object.gen_code(out_path, working_path, cog_files_path)
-    
+    # Generate XML
+    xml_output_file = out_path / (str(input_object.input_file.stem) + ".xml")
+    print("DEBUG:::: ", xml_output_file)
+    input_object.gen_XML(xml_output_file)
+#     except Exception as e:
+#         log_error('Failed to generate code. Reason: %s' % e)
         

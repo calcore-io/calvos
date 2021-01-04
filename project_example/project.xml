@@ -16,13 +16,6 @@
 			</Params>
 		</Component>
 		<Component type="CAN">
-			<Name>A CAN component</Name>
-			<Desc/>
-			<Input type="ods">"usr_in/CAN_Network_Definition.ods"</Input>
-			<Params>
-			</Params>
-		</Component>
-		<Component type="CAN">
 			<Name></Name>
 			<Desc/>
 			<Input type="ods">"usr_in/CAN_Network_Definition.ods"</Input>

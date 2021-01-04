@@ -6,6 +6,7 @@ Created on Sun Dec  6 00:19:28 2020
 """
 
 import logging
+import traceback
 from lxml import etree as ET
 import xml.dom.minidom
 
@@ -167,7 +168,10 @@ class Log:
         """ """
         self.loggers[name].logger.error(message)
         self.counters["error"] += 1
-    
+        trace = traceback.format_exc()
+        self.loggers[name].logger.error(trace)
+        traceback.print_exc()
+
     def critical(self, name, message):
         """ """
         self.loggers[name].logger.critical(message)

@@ -1,9 +1,17 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Thu Nov 12 23:03:34 2020
+""" CalvOS Project Manager.
+
+Module for managing a calvos project.
 
 @author: Carlos Calvillo
+@copyright:  2020 Carlos Calvillo. All rights reserved.
+@license:    GPL v3
 """
+
+__version__ = '0.1.0'
+__date__ = '2020-11-12'
+__updated__ = '2020-11-12'
+
 import xml.etree.ElementTree as ET
 import importlib
 
