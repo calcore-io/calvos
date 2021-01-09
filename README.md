@@ -3,7 +3,7 @@
 Open Source SW Utilities for Embedded Systems
 
 ## Overview
-CalvOS system is an open-source (GPL v3 license) software development framework for embedded systems in C programming language. CalvOS auto-generates C code based on user defined inputs for aspects like network interaction layers, input processing, output generation, filtering, MCU configurations, operating system integration, etc.
+CalvOS system is (under construction) an open-source (GPL v3 license) set of software utilities for the development of embedded systems in C programming language. CalvOS auto-generates C code based on user defined inputs for aspects like network interaction layers, input processing, output generation, filterings, etc.
 
 This generated source code can be incorporated into the rest of the user’s application code to form the final desired application.
 
