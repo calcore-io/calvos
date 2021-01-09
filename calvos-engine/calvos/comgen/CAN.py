@@ -381,7 +381,6 @@ class Network_CAN:
                     "\" not added to the network."))
         else:
             #Warning, invalid node name
-#            print("Invalid node: "+name)
             log_warn(("Invalid node name: \"" + name + \
                 "\". Node names must comply with C-language identifier syntax."))
     
@@ -544,22 +543,26 @@ class Network_CAN:
         """ Returns true if message layout doesn't need bitfields.
         """
         is_cannonical = True
+        # TODO: Change definition? To add that cannonical also need signals to match
+        # native data types, e.g., a 3 bytes signal is NOT cannonical
         # Message layout is considered cannonical if:
         # - All signals have a size which is multiple of a byte, and
         # - All signals absolute start bit is multiple of a byte
-        signals = self.get_signals_of_message(message_name)
-        if signals is not None:
-            for signal in signals:
-                abs_start_bit = (signal.start_byte * 8) + signal.start_bit
-                if (signal.len % 8 != 0) or (abs_start_bit % 8 != 0):
-                    # Signal doesn't start at a bit position multiple of 8
-                    # or its size is not multiple of 8.
-                    is_cannonical = False
-                    break
+        if message_name in self.messages:
+            signals = self.get_signals_of_message(message_name)
+            if signals is not None:
+                for signal in signals:
+                    
+                    if self.signal_layout_is_cannonical(signal.name) is False:
+                        is_cannonical = False
+                        break
+            else:
+                #TODO: warning, message has no mapped signals
+                log_warn("Message '%s' has no mapped signals." % message_name)
+                is_cannonical = None
         else:
-            #TODO: warning, message has no mapped signals
-            is_cannonical = None
-        
+            log_warn("Message '%s' is not defined in network id '%s'" 
+                     % (message_name, self.id_string))
         return is_cannonical
             
 
@@ -716,7 +719,6 @@ class Network_CAN:
                     for field in splited_signal:
                         for each_unit in field:
                             if each_unit is not None:
-#                                print("        Reserved")
                                 # Append signal fragment to the message structure
                                 return_data[-1].signals.append(\
                                      self.MessageStructure.SignalStructure("reserved"))
@@ -765,7 +767,6 @@ class Network_CAN:
                         # Create directly a fragment for each byte of the array.
                         array_bytes = int(signal_len / 8)
                         for array_byte in range(array_bytes):
-#                            print("        Array")
                             # Append signal fragment to the message structure
                             return_data[-1].signals.append(\
                                  self.MessageStructure.SignalStructure(str(signal_name)))
@@ -777,11 +778,6 @@ class Network_CAN:
                             # Check if fragment name doesn't duplicate a signal
                             # name, if so, try different part prefixes.
                             prefix_idx = 0
-#                            print("------ fragment_name: ",fragment_name)
-#                            test_str = ""
-#                            for test_sig in msg_signals:
-#                                test_str += test_sig.name + ", "
-#                            print("------ msg_signals: ", test_str)
                             while fragment_name in msg_signals:
                                 # Fragment name duplicates an existing signal name
                                 # try different part prefix
@@ -855,7 +851,6 @@ class Network_CAN:
                             and splited_signal[2][0] is None:
                                 # If signal has only "leading field" it doesn't actually need
                                 # to be fragmented but a bit field needs to be used for it.
-#                                print("        Only leading")
                                 # Append signal fragment to the message structure
                                 return_data[-1].signals.append(\
                                      self.MessageStructure.SignalStructure(str(signal_name)))
@@ -872,7 +867,6 @@ class Network_CAN:
                                     # and third field is the "trailing field".
                                     for unit_len in field:
                                         if unit_len is not None:
-#                                            print("        Fragment")
                                             # Append signal fragment to the message structure
                                             return_data[-1].signals.append( \
                                                  self.MessageStructure.SignalStructure( \
@@ -886,11 +880,6 @@ class Network_CAN:
                                             # Check if fragment name doesn't duplicate a signal
                                             # name, if so, try different part prefixes.
                                             prefix_idx = 0
-#                                            print("------ fragment_name: ",fragment_name)
-#                                            test_str = ""
-#                                            for test_sig in msg_signals:
-#                                                test_str += test_sig.name + ", "
-#                                            print("------ msg_signals: ", test_str)
                                             
                                             while fragment_name in msg_signals:
                                                 # Fragment name duplicates an existing signal name
@@ -934,7 +923,6 @@ class Network_CAN:
                         else:                           
                             # Signal doesn't need to be fragmented
                             # Append signal to the message structure
-#                            print("        Not fragmented")
                             return_data[-1].signals.append( \
                                  self.MessageStructure.SignalStructure(str(signal_name)))
                             # Set data of added fragment 
@@ -956,7 +944,6 @@ class Network_CAN:
                         for field in splited_signal:
                             for unit_len in field:
                                 if unit_len is not None:
-#                                    print("        Reserved End")
                                     # Append signal fragment to the message structure
                                     return_data[-1].signals.append( \
                                          self.MessageStructure.SignalStructure("reserved"))
@@ -1065,7 +1052,8 @@ class Network_CAN:
             else:
                 log_warn(("Signal \"" + signal_name + "\" not defined."))
         else:
-            log_warn(("Message \"" + message_name + "\" not defined."))
+            log_warn(("Message \"" + message_name + "\" associated to signal \"" \
+                      + signal_name + "\" is not defined."))
             
     #===============================================================================================    
     def set_signal_data_type(self, signal_name, data_type):
@@ -1296,7 +1284,7 @@ class Network_CAN:
                 return_list = list_of_list_of_signals
             
             return return_list
-    
+                
     #===============================================================================================
     def sort_signals_by_layout(self):     
         """ Sorts the signals in this network object by their layout information. """
@@ -1304,6 +1292,27 @@ class Network_CAN:
         if len(sorted_signals) > 0:
             self.signals.clear()
             self.signals = sorted_signals.copy()
+    
+    #===============================================================================================
+    def signal_layout_is_cannonical(self, signal_name):
+        """ Returns true if signal layout is cannonical.
+        """
+        # TODO: Change input argument from "signal_name" to "signaL_object" same for other 
+        # similar functions...
+        is_cannonical = True
+        
+        if signal_name in self.signals:
+            signal = self.signals[signal_name]
+            abs_start_bit = (signal.start_byte * 8) + signal.start_bit
+            if (signal.len % 8 != 0) or (abs_start_bit % 8 != 0):
+                # Signal doesn't start at a bit position multiple of 8
+                # or its size is not multiple of 8.
+                is_cannonical = False
+        else:
+            log_warn("Signal '%s' not defined in network with id '%s'"
+                     % (signal_name, self.id_string))
+        
+        return is_cannonical  
             
     #=============================================================================================== 
     #TODO: check usage and implementation of function "fragment_signal"
@@ -1359,6 +1368,11 @@ class Network_CAN:
         #GEnerate Network root node and its information
         XML_root = ET.Element("Network")
         XML_root.set("protocol","CAN")
+        
+        XML_comment = ET.Comment('CAN Network description for calvOS system')
+        XML_root.addprevious(XML_comment)
+        XML_root.insert(1, XML_comment)
+        
         XML_level_1 = ET.Element("Name")
         XML_level_1.text = self.name
         XML_root.append(XML_level_1)
@@ -1570,13 +1584,6 @@ class Network_CAN:
             
         XML_root.append(XML_level_1)
         
-#         XML_level_2 = ET.SubElement(XML_level_1,"TemplateName")
-#         XML_level_2.text = Network_CAN.metadata_template_name
-#         XML_level_2 = ET.SubElement(XML_level_1,"TemplateVersion")
-#         XML_level_2.text = Network_CAN.metadata_template_version
-#         XML_level_2 = ET.SubElement(XML_level_1,"TemplateDesc")
-#         XML_level_2.text = Network_CAN.metadata_template_description
-    
         print("Generating XML...")
         XML_string = ET.tostring(XML_root)
         
@@ -1601,13 +1608,13 @@ class Network_CAN:
         comgen_CAN_cog_input_file = gen_path / input_file
         #remove "cog_" prefix to output file names
         comgen_CAN_cog_output_file = out_dir / (input_file[4:])
-        #substitute network name if found (NWNAME)
+        #substitute network name if found (NWID)
         if network_name is not None:
             comgen_CAN_cog_output_file = \
-                str(comgen_CAN_cog_output_file).replace('NWNAME',network_name)
+                str(comgen_CAN_cog_output_file).replace('NWID',network_name)
         else:
             comgen_CAN_cog_output_file = \
-                str(comgen_CAN_cog_output_file).replace('NWNAME_','')
+                str(comgen_CAN_cog_output_file).replace('NWID','')
         #substitute node name if found (NODENAME)
         if node_name is not None:
             comgen_CAN_cog_output_file = \
@@ -1649,7 +1656,7 @@ class Network_CAN:
         if single_network is True:
             network_name = None
         else:
-            network_name = self.name
+            network_name = self.id_string
         
         # Create temporal file with network object pickle.
         # ------------------------------------------------
@@ -1666,14 +1673,14 @@ class Network_CAN:
         #----------------------------------------------------------------------
         # Generate signal file(s)
         #----------------------------------------------------------------------
-        cog_file_name = "cog_comgen_CAN_NWNAME_network.h"
+        cog_file_name = "cog_comgen_CAN_NWID_network.h"
         self.cog_generator(cog_file_name, network_name, None, out_dir, \
                              work_dir, gen_path, cog_serialized_network_file)
         
         #----------------------------------------------------------------------
         # Generate Messages file(s)
         #----------------------------------------------------------------------
-        cog_file_name = "cog_comgen_CAN_NWNAME_messages.h"
+        cog_file_name = "cog_comgen_CAN_NWID_messages.h"
         self.cog_generator(cog_file_name, network_name, None, out_dir, \
                              work_dir, gen_path, cog_serialized_network_file)
         
@@ -1877,7 +1884,7 @@ class Network_CAN:
                 self.subscribed_messages.update({message_name : timeout_ms}) 
             else:
                 log_warn(("Message \"" + message_name + \
-                      "\" already subscribed to node." + self.name))
+                      "\" already subscribed to node \"" + self.name + "\""))
     
     #===============================================================================================      
     class Message:
@@ -2107,7 +2114,6 @@ def load_input(input_file, input_type, params):
         return_object = Network_CAN() 
         return_object.parse_spreadsheet_ods(input_file)
         input_file_name = input_file.stem
-        print("DEBUG:::: IN ", input_file_name)
     except Exception as e:
         return_object = None
         log_error('Failed to process input file "%s". Reason: %s' % (input_file, e))
@@ -2146,7 +2152,6 @@ def generate(input_object, out_path, working_path, calvos_path, params = {}):
     input_object.gen_code(out_path, working_path, cog_files_path)
     # Generate XML
     xml_output_file = out_path / (str(input_object.input_file.stem) + ".xml")
-    print("DEBUG:::: ", xml_output_file)
     input_object.gen_XML(xml_output_file)
 #     except Exception as e:
 #         log_error('Failed to generate code. Reason: %s' % e)

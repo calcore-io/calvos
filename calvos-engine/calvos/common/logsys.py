@@ -96,7 +96,7 @@ class Log:
         self.abstract_logs = []
         
         self.default_formatter_str = \
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            '[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s'
         
         if formatter_str is None:
             self.formatter_str = self.default_formatter_str

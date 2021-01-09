@@ -11,6 +11,7 @@ import time
 import os
 import shutil
 import pathlib as pl
+import math
 
 import calvos.common.logsys as lg
 
@@ -43,7 +44,9 @@ def log_critical(message):
 #==============================================================================
 
 MCU_word_size = 32
-Compiler_max_size = 32
+Compiler_max_size = 64
+little_endian = False
+pack_struct_tag = " __attribute__((packed))"
 
 #dt in this context stands for "data type" prefix
 
@@ -77,20 +80,65 @@ PRFX_DEFAULT = 0
     
 #==============================================================================
 def calculate_base_type_len(data_size):
-    """ Returns the size of the "base" data type that can contain the input data size """
-    return_type_len = None
-    if data_size > 0 and data_size <= 8:
-        return_type_len = 8
-    elif data_size > 8 and data_size <= 16:
-        return_type_len = 16
-    elif data_size > 16 and data_size <= 32:
-        return_type_len = 32
-    elif data_size > 32 and data_size <= 64:
-        return_type_len = 64
+    """ Calculate lenght of type that can hold the input size.
+    Returns the size of the "base" data type that can contain the input data size, if
+    data_size is greater than the maximum variable size of the compiler then
+    returns None.
+    """
+    return_value = None
+    exponent = math.ceil(math.log(data_size, 2))
+    base = int(math.pow(2, exponent))
+    
+    if base <= Compiler_max_size:
+        if base < 8:
+            # Minimum base length is 8 bits (1 byte).
+            base = 8
+        return_value = base
+    
+    return int(return_value)
+
+def to_hex_string_with_suffix(input_constant):
+    """ Returns a string for the given number in hex and with unsigned suffix. """
+    # TODO: This is compiler-dependent, adapt this function so that it takes that
+    # in consideration.
+    return_string = ""
+    
+    max_16 = pow(2,16)
+    max_32 = pow(2,32)
+    max_64 = pow(2,64)
+    
+    if input_constant <= max_16:
+        return_string = "0x{:02x}".format(input_constant)
+        return_string += "u"
+    elif input_constant > max_16 and input_constant <= max_32:
+        return_string = "0x{:04x}".format(input_constant)
+        return_string += "ul"
+    elif input_constant > max_32 and input_constant <= max_64:
+        return_string = "0x{:08x}".format(input_constant)
+        return_string += "ull"
     else:
-        #TODO: warning
-        return_type_len = 0 
-    return return_type_len
+        log_warn("Passed input '%s' exceeds 64-bits." % str(input_constant))
+        return_string = "None"
+    
+    return return_string
+
+def shifter_string_with_suffix(shifting_bits):
+    """ Returns a string for the given shifting bits with unsigned suffix. """
+    # TODO: This is compiler-dependent, adapt this function so that it takes that
+    # in consideration.
+    return_string = str(shifting_bits)
+    
+    if shifting_bits <= 16:
+        return_string += "u"
+    elif shifting_bits > 16 and shifting_bits <= 32:
+        return_string += "ul"
+    elif shifting_bits > 32 and shifting_bits <= 64:
+        return_string += "ull"
+    else:
+        log_warn("Passed input '%s' exceeds 64-bits." % str(shifting_bits))
+        return_string += "ull"
+    
+    return return_string
 
 #==============================================================================
 #get_dtk -> "get data type key" (previously "g_dt_k")
@@ -123,12 +171,14 @@ def get_dtk(size, d_type = "i", is_signed = False):
                 return_value = data_type_key
                 break
         
-        #TODO: Warning-> "Passed data type information (Size = ", size, ",
-        # type = ", d_type, ", signed = ", is_signed,") is not valid."
+        if return_value is None:
+            log_warn(("Provided data type information is not valid. "
+                      + "Size ='%d', type = '%s', signed = '%s'")
+                       % (size, d_type, is_signed))
         
     else:
-        #TODO: Warning-> "Passed data size: ", size, " shall be between 1 - 64."
-        pass
+        log_warn(("Provided data type size shall be from 1 upto 64."
+                  + "Provided size ='%d'") % size)
     
     return return_value
 
@@ -161,12 +211,14 @@ def get_dtv(size, d_type = "i", is_signed = False):
                 return_value = dt[data_type_key] 
                 break
         
-        #TODO: Warning-> "Passed data type information (Size = ", size, ",
-        # type = ", d_type, ", signed = ", is_signed,") is not valid."
+        if return_value is None:
+            log_warn(("Provided data type information is not valid. "
+                      + "Size ='%d', type = '%s', signed = '%s'")
+                       % (size, d_type, is_signed))
         
     else:
-        #TODO: Warning-> "Passed data size: ", size, " shall be between 1 - 64." 
-        pass
+        log_warn(("Provided data type size shall be from 1 upto 64."
+                  + "Provided size ='%d'") % size)
     
     return return_value
 
@@ -447,7 +499,7 @@ def get_special_string(input_dictionary):
     return output_string
     
 #==============================================================================
-def get_local_time_formatted(self):
+def get_local_time_formatted():
     """ Gets current local time and returns it in a formatted string """
     curren_time = time.localtime() # Gets current local time
     return_string = str(curren_time[1])+"." \
@@ -457,6 +509,20 @@ def get_local_time_formatted(self):
                 + str(curren_time[4])+":" \
                 + str(curren_time[5])
     return return_string
+
+#==============================================================================
+def get_unsigned_suffix(number):
+    """ Returns the unsigned suffix for the given number. """
+    #TODO: solve compiler dependencies for suffix u, ul, ull
+    return_str = ""
+    if number <= 16:
+        return_str = "u"
+    elif number > 16 and number <= 32:
+        return_str = "ul"
+    else:
+        return_str = "ull"
+        
+    return return_str
 
 #==============================================================================
 
@@ -538,6 +604,24 @@ def file_exists(file_name):
         
     return return_value
 
+
+def C_license():
+    """ Returns a string with the license in C comment format. """
+    return_str = """/*  This file is part of calvOS project.
+ *
+ *  calvOS is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  calvOS is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with calvOS.  If not, see <https://www.gnu.org/licenses/>. */"""
+    return return_str
 
 class GenParam():
     """ . """

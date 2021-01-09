@@ -1,11 +1,10 @@
 #!/usr/local/bin/python2.7
 # encoding: utf-8
 '''
-calvos.main -- shortdesc
+CalvOS - Open Source SW Utilitites for Embedded Systems.
 
-calvos.main is a description
-
-It defines classes_and_methods
+Calvos provides a set of SW utilitites for the development
+of embedded systems in C-language.
 
 @author:     Carlos Calvillo
 
@@ -15,8 +14,7 @@ It defines classes_and_methods
 
 @contact:    calcore.io@gmail.com
 @deffield    updated: Updated
-'''
-
+'''           
 import sys
 import os
 import pathlib as pl
@@ -91,12 +89,10 @@ def main(argv=None): # IGNORE:C0111
     program_name = os.path.basename(sys.argv[0])
     program_version = "v%s" % __version__
     program_build_date = str(__updated__)
-    program_version_message = '%%(prog)s %s (%s)' % (program_version, program_build_date)
+    program_version_message = 'calvos %s' % (program_version)
     program_shortdesc = __import__('__main__').__doc__.split("\n")[1]
     program_license = '''%s
-    
-  CalvOS. Open Source SW Utilitites for Embedded Systems.
-  Copyright (C) 2020  Carlos Calvillo
+Copyright (C) 2020  Carlos Calvillo
   
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -115,6 +111,9 @@ USAGE
 ''' % program_shortdesc
 
     try:
+        
+        print(sys.argv)
+        
         # Setup argument parser
         parser = ArgumentParser(description=program_license, formatter_class=RawDescriptionHelpFormatter)
         parser.add_argument("-p","--project", dest="project", required=True, \
@@ -124,6 +123,7 @@ USAGE
         parser.add_argument("-l","--log", dest="log_level", required=False, \
             help="Logging level: 0 - Debug, 1 - Info, 2 - Warning, 3 - Error. Default is 1 - Info.")
         parser.add_argument('-V', '--version', action='version', version=program_version_message)
+        parser.add_argument('-v', '--ver', action='version', version=program_version_message)
 
         # Process arguments
         args = parser.parse_args()
