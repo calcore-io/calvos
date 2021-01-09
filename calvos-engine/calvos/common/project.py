@@ -153,7 +153,6 @@ class Project:
                     param_object.default = param_object.default
                     
                 elif param_type == "enum":
-                    print("New enum")
                     # Get enumerated values
                     enum_values = {}
                     for entry in param.findall("./Enumeration/Entry"):
@@ -356,7 +355,6 @@ class Project:
                     log_warn('Component type is invalid: "%s".' % component_type)
     
             log_info('Loading completed.')
-            print("COMPONENTS: ", self.components)
     
     #===============================================================================================    
     def load_component_data(self, component):
