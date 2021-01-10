@@ -9,6 +9,8 @@ protocol.
 @license:    GPL v3
 """
 __version__ = '0.1.0'
+from _ast import If
+from pickle import NONE
 __date__ = '2020-08-03'
 __updated__ = '2020-12-18'
     
@@ -75,6 +77,11 @@ SPONTAN = 0
 CYCLIC = 1
 CYCLIC_SPONTAN = 2
 BAF = 3
+
+
+# Constants for indicating read or write. Used by function get_signal_abstract_read
+READ = 0
+WRITE = 1
     
 #===================================================================================================
 class Network_CAN:
@@ -1313,6 +1320,142 @@ class Network_CAN:
                      % (signal_name, self.id_string))
         
         return is_cannonical  
+
+    #===============================================================================================                
+    def get_signal_abstract_read(self, signal_name):
+        """ Gets an abstract access to the signal for code generation. """
+        return_value = None
+        
+        if signal_name in self.signals:
+            signal = self.signals[signal_name]
+            
+            signal_access = Network_CAN.SignalAccess(signal_name, signal.len)
+            
+            base_len = cg.calculate_base_type_len(signal.len)
+            
+            if base_len == 8:
+                # A single piece is enough for this signal
+                signal_piece = Network_CAN.SignalAccess.SignalPiece()
+                # Inner shifting (left shifting) is equal to the signal's start bit
+                if signal.start_bit > 0:
+                    signal_piece.shift_inner = signal.start_bit
+                signal_piece.len = base_len
+                # Generate mask if required for removing most-significant bits
+                # not belonging to the signal.
+                if signal.len < 7:
+                    mask_msb = int(255 << signal.len).to_bytes(8,'big')
+                    mask_msb = hex(mask_msb[-1] ^ 255)
+                    signal_piece.mask_outer =  mask_msb
+                # No outer shifting/mask is required in this case
+                signal_piece.abs_byte = signal.start_byte
+                signal_access.pieces.append(signal_piece)
+                
+            elif base_len <= cg.Compiler_max_size:
+                abs_start_bit = (signal.start_byte*8)  + signal.start_bit
+                abs_end_bit = abs_start_bit + signal.len - 1
+    
+                abs_start_byte = signal.start_byte
+                abs_end_byte = int(math.floor(abs_end_bit / 8))
+    
+                bytes_remaining = abs_end_byte - abs_start_byte + 1
+                bits_remaining = signal.len
+    
+                current_byte = abs_start_byte
+                
+                part_base_len = cg.calculate_base_type_len(bytes_remaining*8)
+                shifting_bits = 0
+                first_chunk = True
+
+                while (part_base_len / 8) > bytes_remaining:
+                    # Signal doesn't fit in a single data type so multiple
+                    # parts for accessing it are needed.
+                    signal_piece = Network_CAN.SignalAccess.SignalPiece()
+                    # Get next signal piece with a smaller data size than previously
+                    part_base_len = int(part_base_len / 2)
+                    # TODO: Is it ensured that reduced_type_len is never
+                    # less than 8?
+                    signal_piece.abs_byte = current_byte
+                    signal_piece.len = part_base_len
+                    
+#                     macro_str = "(" + cg.get_dtv(base_len) + ")*((" \
+#                             + cg.get_dtv(part_base_len) + "*)&"+array_str+"[" \
+#                             + str(current_byte) + "])"
+
+                    if first_chunk is True and signal.start_bit > 0:
+                        # If signal doesn't start at bit zero then
+                        # right shifting is required.
+                        signal_piece.shift_inner = signal.start_bit
+#                         macro_str = "(" + macro_str + " >> " \
+#                             + str(signal.start_bit) + "u)"
+
+                    if shifting_bits > 0:
+                        signal_piece.shift_outer = shifting_bits
+#                         macro_str += " << " \
+#                             + cg.shifter_string_with_suffix(shifting_bits)
+
+                    signal_access.pieces.append(signal_piece)
+#                     macro_pieces.append(macro_str)
+
+                    current_byte += int(part_base_len/8)
+                    bytes_remaining -= int(part_base_len/8)
+
+                    bits_remaining -= part_base_len
+                    if first_chunk is True:
+                        # For first chunk, bits before start_bit don't
+                        # contribute to the remaining bits so need to be
+                        # added back.
+                        bits_remaining += signal.start_bit
+
+                    shifting_bits += (part_base_len - signal.start_bit)
+
+                    part_base_len = \
+                        cg.calculate_base_type_len(bytes_remaining * 8)
+
+                    first_chunk = False
+                else:
+                    signal_piece = Network_CAN.SignalAccess.SignalPiece()
+                    
+                    signal_piece.abs_byte = current_byte
+                    signal_piece.len = part_base_len
+                    
+#                     macro_str = "(" + cg.get_dtv(base_len) + ")*((" \
+#                             + cg.get_dtv(part_base_len) + "*)&"+array_str+"[" \
+#                             + str(current_byte) + "])"
+
+                    if first_chunk is True and signal.start_bit > 0:
+                        # If signal doesn't start at bit zero then
+                        # right shifting is required.
+                        signal_piece.shift_inner = signal.start_bit
+#                         macro_str = "(" + macro_str + " >> " \
+#                             + str(signal.start_bit) + "u)"
+
+                    if shifting_bits > 0:
+                        signal_piece.shift_outer = shifting_bits
+#                         macro_str += " << " \
+#                             + cg.shifter_string_with_suffix(shifting_bits)
+
+                    mask_bits = bits_remaining
+                    if mask_bits < part_base_len:
+                        # Some most-significant bits need to be masked-out
+                        mask_msb = 0
+                        for i in range(mask_bits):
+                            mask_msb = mask_msb | (1 << i)
+                        signal_piece.mask_outer =  mask_msb
+#                         macro_str = "(" + macro_str + ") & " + str(hex(mask_msb))
+                    
+                    signal_access.pieces.append(signal_piece)            
+            else:
+                # Signal length exceeds maximum compiler data type
+                log_warn(("Length of scalar signal '" + signal_name \
+                          + "' exceeds maximum compiler data size. " +
+                         " Consider defining the signal as an array instead."))
+                
+            return_value = signal_access
+            
+        else:
+            log_warn("Signal '%s' is not defined." % signal_name)
+        
+        return return_value
             
     #=============================================================================================== 
     #TODO: check usage and implementation of function "fragment_signal"
@@ -2069,6 +2212,34 @@ class Network_CAN:
                 return_value = False
                 
             return return_value
+
+    #===============================================================================================
+    class SignalAccess():
+        """ Class to model the abstract access of a signal. """
+        def __init__(self, name, length):
+            self.signal_name = name
+            self.signal_len = length
+            self.signal_base_len = cg.calculate_base_type_len(self.signal_len)
+                    
+            self.pieces = [] # Array of SignalPiece objects
+        
+        def add_piece(self, length, relative_byte, shift_inner, shift_outer, \
+                         mask_inner, mask_outer):
+            """ Adds a new piece to the signal. """
+            temp = SignalPiece(length, relative_byte, shift_inner, shift_outer, \
+                         mask_inner, mask_outer)
+            self.pieces.append(temp)
+        
+        class SignalPiece():
+            """ Class to model a signal access piece. """
+            def __init__(self, length = None, abs_byte = None, shift_inner = None, shift_outer = None, \
+                         mask_inner = None, mask_outer = None):
+                self.len = length
+                self.abs_byte = abs_byte
+                self.shift_inner = shift_inner 
+                self.shift_outer = shift_outer
+                self.mask_inner = mask_inner
+                self.mask_outer = mask_outer
 
 #===================================================================================================
 class CodeGen():

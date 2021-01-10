@@ -107,6 +107,10 @@ def to_hex_string_with_suffix(input_constant):
     max_32 = pow(2,32)
     max_64 = pow(2,64)
     
+    if type(input_constant) is not int:
+        if is_hex_string(input_constant):
+            input_constant = int(str(input_constant),0)
+    
     if input_constant <= max_16:
         return_string = "0x{:02x}".format(input_constant)
         return_string += "u"
@@ -286,7 +290,6 @@ def parse_codegen_spreadsheet(input_file):
         # Check if parameter set exists
         working_sheet = book["Parameters"]
         working_sheet.name_columns_by_row(0)
-        #print(working_sheet.colnames)
         
         if params_set in working_sheet.colnames:
             # Parameter set exists, continue processing parameters...
@@ -300,14 +303,12 @@ def parse_codegen_spreadsheet(input_file):
                     # empty.
                     param_value = str(row[working_sheet.colnames.index(params_set)])
                     if param_value != "":
-                        #print("Updating: ", param, ", ", param_value)
                         dt.update({param : param_value})
                 elif param_category == 2:
                     # Parameter is of "general" type. Update value if it is not
                     # empty.
                     param_value = str(row[working_sheet.colnames.index(params_set)])
                     if param_value != "":
-                        #print("Updating: ", param, ", ", param_value)
                         dt.update({param : param_value})
                 else:
                     # Parameter not defined internally.
@@ -569,22 +570,11 @@ def create_folder(folder):
     if folder_exists(folder) is False:
         try:
             folder.mkdir()
-            print("Folder created: ",folder)
             log_debug("Folder created: %s" % folder)
         except Exception as e:
             log_error('Failed to create folder %s. Reason: %s' % (folder, e))
-            print('Failed to create folder %s. Reason: %s' % (folder, e))
     else:
         log_info("Folder to be created '%s' already exists." % folder)
-        
-# def create_file(file_name):
-#     """ Creates the specified folder.
-#     """
-#     try:
-#         folder.mkdir()
-#         print("folder created: ",folder)
-#     except Exception as e:
-#         print('Failed to create folder %s. Reason: %s' % (folder, e))
         
 def delete_file(file_name):
     """ deletes the specified file.

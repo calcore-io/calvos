@@ -60,7 +60,6 @@ code_string = ""
 for message in network.messages.values():
     cog.outl("#define CAN_" + network.id_string + "_MSG_DLEN_" + message.name \
 			+ "\t(" + str(message.len) + "u)")
-#print(code_string)
 ]]] */
 // [[[end]]]
 
@@ -218,119 +217,54 @@ for message in messages_layouts:
 					+ signal.name + "(msg)\t\t( &"+array_str+"[" \
 					+ str(signal.start_byte) + "] )" )
 		else:
-			base_len = cg.calculate_base_type_len(signal.len)
+			signal_access = network.get_signal_abstract_read(signal.name)
 
-			macro_pieces = []
-			macro_str = ""
-
-
-			base_len = cg.calculate_base_type_len(signal.len)
-
-			abs_start_bit = (signal.start_byte*8)  + signal.start_bit
-			abs_end_bit = abs_start_bit + signal.len - 1
-
-			abs_start_byte = signal.start_byte
-			abs_end_byte = int(math.floor(abs_end_bit / 8))
-
-			bytes_remaining = abs_end_byte - abs_start_byte + 1
-			bits_remaining = signal.len
-
-			current_byte = abs_start_byte
-
-			if base_len == 8:
-				# Signal is smaller or equal to a byte
-				macro_str = "&"+array_str+"[" + str(current_byte) + "]"
-				# If signal doesn't start at bit zero then right shifting
-				# is required.
-				if signal.start_bit > 0:
-					macro_str += " >> " + str(signal.start_bit) + "u"
-				# Check if masking is required
-				abs_end_bit = signal.start_bit + signal.len - 1
-				if signal.len < 7:
-					mask_msb = int(255 << signal.len).to_bytes(8,'big')
-					mask_msb = hex(mask_msb[-1] ^ 255)
-					macro_str = "(" + macro_str + ") & " + str(mask_msb) + "u"
-				macro_pieces.append(macro_str)
-			else:
-				part_base_len = cg.calculate_base_type_len(bytes_remaining*8)
-				shifting_bits = 0
-				first_chunk = True
-
-				while (part_base_len / 8) > bytes_remaining:
-					# Signal doesn't fit in a single data type so multiple
-					# parts for accessing it are needed.
-					part_base_len = int(part_base_len / 2)
-					# TODO: Is it ensured that reduced_type_len is never
-					# less than 8?
-					macro_str = "(" + cg.get_dtv(base_len) + ")*((" \
-							+ cg.get_dtv(part_base_len) + "*)&"+array_str+"[" \
-							+ str(current_byte) + "])"
-
-					if first_chunk is True and signal.start_bit > 0:
-						# If signal doesn't start at bit zero then
-						# right shifting is required.
-						macro_str = "(" + macro_str + " >> " \
-							+ str(signal.start_bit) + "u)"
-
-					if shifting_bits > 0:
-						macro_str += " << " \
-							+ cg.shifter_string_with_suffix(shifting_bits)
-
-					macro_pieces.append(macro_str)
-
-					current_byte += int(part_base_len/8)
-					bytes_remaining -= int(part_base_len/8)
-
-					bits_remaining -= part_base_len
-					if first_chunk is True:
-						# For first chunk, bits before start_bit don't
-						# contribute to the remaining bits so need to be
-						# added back.
-						bits_remaining += signal.start_bit
-
-					shifting_bits += (part_base_len - signal.start_bit)
-
-					part_base_len = \
-						cg.calculate_base_type_len(bytes_remaining * 8)
-
-					first_chunk = False
-				else:
-					macro_str = "(" + cg.get_dtv(base_len) + ")*((" \
-							+ cg.get_dtv(part_base_len) + "*)&"+array_str+"[" \
-							+ str(current_byte) + "])"
-
-					if first_chunk is True and signal.start_bit > 0:
-						# If signal doesn't start at bit zero then
-						# right shifting is required.
-						macro_str = "(" + macro_str + " >> " \
-							+ str(signal.start_bit) + "u)"
-
-					if shifting_bits > 0:
-						macro_str += " << " \
-							+ cg.shifter_string_with_suffix(shifting_bits)
-
-					mask_bits = bits_remaining
-					if mask_bits < part_base_len:
-						# Some most-significant bits need to be masked-out
-						mask_msb = 0
-						for i in range(mask_bits):
-							mask_msb = mask_msb | (1 << i)
-						macro_str = "(" + macro_str + ") & " + str(hex(mask_msb))
-
-					macro_pieces.append(macro_str)
-
-			if len(macro_pieces) == 1:
-				macro_str = "(" + macro_pieces[0] + ")"
-			else:
-				macro_str = "("
-				for i, piece in enumerate(macro_pieces):
-					if i < (len(macro_pieces) - 1):
-						macro_str += "(" + piece + ") \\ \n\t\t\t\t\t\t\t\t\t| "
+			if len(signal_access.pieces) > 0 :
+				macro_str2 = ""
+				for i, piece in enumerate(signal_access.pieces):
+					# Add signal casting if piece base size is bigger than 8-bits
+					if piece.len > 8:
+						macro_piece = "*("+cg.get_dtv(piece.len)+"*)&"+array_str \
+							+ "[" + str(piece.abs_byte) + "]"
 					else:
-						macro_str += "(" + piece + "))"
+						macro_piece = array_str + "[" + str(piece.abs_byte) + "]"
+
+					# Add right shifting if required
+					if piece.shift_inner is not None:
+						macro_piece += " >> " \
+							+ cg.shifter_string_with_suffix(piece.shift_inner)
+
+					# Add signal casting if signal base size is bigger than 8-bits
+					if signal_access.signal_base_len > 8:
+						macro_piece = "(" \
+							+ cg.get_dtv(signal_access.signal_base_len) \
+							+ ")(" + macro_piece + ")"
+
+					if piece.shift_outer is not None:
+						macro_piece += " << " \
+							+ cg.shifter_string_with_suffix(piece.shift_outer)
+
+					if piece.mask_outer is not None:
+						macro_piece = "(" + macro_piece + ") & " \
+							+ cg.to_hex_string_with_suffix(piece.mask_outer)
+
+					if len(signal_access.pieces) > 1:
+						if i == 0:
+							macro_str2 = "("
+						if i < (len(signal_access.pieces) - 1):
+							macro_str2 += "(" + macro_piece + ") \\ \n\t\t\t\t\t\t\t\t\t| "
+						else:
+							macro_str2 += "(" + macro_piece + ")"
+					else:
+							macro_str2 += "(" + macro_piece + ")"
+			else:
+				macro_str2 = "ERROR, invalid signal '" \
+						+ signal.name + "' access structure."
+				# TODO: logging system for this file
+				# log_warn("Invalid signal '%s' access structure" & signal.name)
 
 			cog.outl("#define CAN_"+network.id_string+"_extract_" \
-					+ signal.name + "("+array_str+")\t\t" + macro_str)
+					+ signal.name + "("+array_str+")\t\t" + macro_str2)
 
 			cog.outl("#define CAN_"+network.id_string+"_get_" \
 					+ signal.name + "(msg)\t\t" \
@@ -341,9 +275,6 @@ for message in messages_layouts:
 					+ signal.name + "()\t\t" \
 					+ "(CAN_"+network.id_string+"_extract_" \
 					+ signal.name + "(unified_buffer))")
-
-			#cog.outl("NON Cannonical: " + signal.name +",\t\t" + macro_str)
-
 	
 		# Signal write macros
 		# -------------------

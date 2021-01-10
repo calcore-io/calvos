@@ -11,21 +11,6 @@ from lxml import etree as ET
 import xml.dom.minidom
 
 # #TODO: Solve how to pass the log file path dynamically to this module
-# def _delete_file(file_name):
-#     """ deletes the specified file.
-#     """
-#     try:
-#         os.unlink(file_name)
-#     except Exception as e:
-#         print('Failed to delete %s. Reason: %s' % (file_name, e))
-#         
-# def _file_exists(file_name):
-#     """ Returns True if the specified file exists.
-#     """
-#     return_value = False
-#     if os.path.isfile(file_name) is True:
-#         return_value = True
-#     return return_value
 
 # A new handler to store "raw" LogRecords instances
 class LogRecordsHandler(logging.Handler):
