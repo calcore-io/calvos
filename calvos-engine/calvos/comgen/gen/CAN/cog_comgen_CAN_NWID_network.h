@@ -24,7 +24,7 @@ import pathlib as plib
 import calvos.comgen.CAN as nw
 import calvos.common.codegen as cg
 
-import CAN_code as CANc
+from cog_CAN import log_debug, log_info, log_warn, log_error, log_critical, C_gen_info
 
 cog.outl(cg.C_license())
 
@@ -39,7 +39,7 @@ except Exception as e:
         print('Failed to access pickle file %s. Reason: %s' % (cog_pickle_file, e))
 
 # Print generation information
-cog.outl(CANc.C_gen_info(input_worksheet,network))
+cog.outl(C_gen_info(input_worksheet,network))
 ]]] */
 // [[[end]]]
 /* [[[cog
@@ -220,7 +220,7 @@ for message in messages_layouts:
 			signal_access = network.get_signal_abstract_read(signal.name)
 
 			if len(signal_access.pieces) > 0 :
-				macro_str2 = ""
+				macro_str = ""
 				for i, piece in enumerate(signal_access.pieces):
 					# Add signal casting if piece base size is bigger than 8-bits
 					if piece.len > 8:
@@ -240,31 +240,33 @@ for message in messages_layouts:
 							+ cg.get_dtv(signal_access.signal_base_len) \
 							+ ")(" + macro_piece + ")"
 
+					if piece.mask_inner is not None:
+						macro_piece = "(" + macro_piece + ") & " \
+							+ cg.to_hex_string_with_suffix(piece.mask_inner)
+
 					if piece.shift_outer is not None:
 						macro_piece += " << " \
 							+ cg.shifter_string_with_suffix(piece.shift_outer)
 
-					if piece.mask_outer is not None:
-						macro_piece = "(" + macro_piece + ") & " \
-							+ cg.to_hex_string_with_suffix(piece.mask_outer)
+
 
 					if len(signal_access.pieces) > 1:
 						if i == 0:
-							macro_str2 = "("
+							macro_str = "("
 						if i < (len(signal_access.pieces) - 1):
-							macro_str2 += "(" + macro_piece + ") \\ \n\t\t\t\t\t\t\t\t\t| "
+							macro_str += "(" + macro_piece + ") \\ \n\t\t\t\t\t\t\t\t\t| "
 						else:
-							macro_str2 += "(" + macro_piece + ")"
+							macro_str += "(" + macro_piece + ")"
 					else:
-							macro_str2 += "(" + macro_piece + ")"
+							macro_str += "(" + macro_piece + ")"
 			else:
-				macro_str2 = "ERROR, invalid signal '" \
+				macro_str = "ERROR, invalid signal '" \
 						+ signal.name + "' access structure."
 				# TODO: logging system for this file
-				# log_warn("Invalid signal '%s' access structure" & signal.name)
+				log_warn("Invalid signal '%s' access structure" & signal.name)
 
 			cog.outl("#define CAN_"+network.id_string+"_extract_" \
-					+ signal.name + "("+array_str+")\t\t" + macro_str2)
+					+ signal.name + "("+array_str+")\t\t" + macro_str)
 
 			cog.outl("#define CAN_"+network.id_string+"_get_" \
 					+ signal.name + "(msg)\t\t" \

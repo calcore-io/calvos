@@ -1345,7 +1345,7 @@ class Network_CAN:
                 if signal.len < 7:
                     mask_msb = int(255 << signal.len).to_bytes(8,'big')
                     mask_msb = hex(mask_msb[-1] ^ 255)
-                    signal_piece.mask_outer =  mask_msb
+                    signal_piece.mask_inner =  mask_msb
                 # No outer shifting/mask is required in this case
                 signal_piece.abs_byte = signal.start_byte
                 signal_access.pieces.append(signal_piece)
@@ -1440,7 +1440,7 @@ class Network_CAN:
                         mask_msb = 0
                         for i in range(mask_bits):
                             mask_msb = mask_msb | (1 << i)
-                        signal_piece.mask_outer =  mask_msb
+                        signal_piece.mask_inner =  mask_msb
 #                         macro_str = "(" + macro_str + ") & " + str(hex(mask_msb))
                     
                     signal_access.pieces.append(signal_piece)            
