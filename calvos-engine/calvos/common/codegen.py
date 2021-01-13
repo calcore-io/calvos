@@ -97,7 +97,7 @@ def calculate_base_type_len(data_size):
     
     return int(return_value)
 
-def to_hex_string_with_suffix(input_constant):
+def to_hex_string_with_suffix(input_constant, suffix_len = None):
     """ Returns a string for the given number in hex and with unsigned suffix. """
     # TODO: This is compiler-dependent, adapt this function so that it takes that
     # in consideration.
@@ -111,19 +111,28 @@ def to_hex_string_with_suffix(input_constant):
         if is_hex_string(input_constant):
             input_constant = int(str(input_constant),0)
     
-    if input_constant <= max_16:
+    if suffix_len is not None and suffix_len >= input_constant:
+        length_to_check = suffix_len
+    else:
+        length_to_check = input_constant
+    
+    if length_to_check <= max_16:
         return_string = "0x{:02x}".format(input_constant)
         return_string += "u"
-    elif input_constant > max_16 and input_constant <= max_32:
+    elif length_to_check > max_16 and length_to_check <= max_32:
         return_string = "0x{:04x}".format(input_constant)
         return_string += "ul"
-    elif input_constant > max_32 and input_constant <= max_64:
+    elif length_to_check > max_32 and length_to_check <= max_64:
         return_string = "0x{:08x}".format(input_constant)
         return_string += "ull"
     else:
-        log_warn("Passed input '%s' exceeds 64-bits." % str(input_constant))
-        return_string = "None"
-    
+        log_warn("Passed suffix lenght '%s' or input length '%s' exceeds 64-bits." \
+                 % (str(suffix_len), str(input_constant)))
+        if input_constant > max_64:
+            return_string = "None"
+        else:
+            return_string = str(input_constant)
+
     return return_string
 
 def shifter_string_with_suffix(shifting_bits):
@@ -143,6 +152,19 @@ def shifter_string_with_suffix(shifting_bits):
         return_string += "ull"
     
     return return_string
+
+#==============================================================================
+def get_bit_mask(n_of_bits, start_bit = 0, inverse = False):
+    """ Returns an integer mask. """
+    bits_mask = 0
+    
+    for i in range(n_of_bits):
+        bits_mask = bits_mask | (1 << (i + start_bit))
+        
+    if inverse is True:
+        bits_mask = ~bits_mask
+        
+    return bits_mask
 
 #==============================================================================
 #get_dtk -> "get data type key" (previously "g_dt_k")

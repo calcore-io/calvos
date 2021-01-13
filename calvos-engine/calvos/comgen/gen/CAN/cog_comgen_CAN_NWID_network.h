@@ -48,6 +48,50 @@ cog.outl("#ifndef COMGEN_CAN_"+network.id_string.upper()+"_NETWORK_H")
 cog.outl("#define COMGEN_CAN_"+network.id_string.upper()+"_NETWORK_H")
 ]]] */
 // [[[end]]]
+/* [[[cog
+
+# Definition of Functions
+
+def get_access_macro(data_str, data_byte, type1=None, type2=None, \
+		mask1=None, operator1=None, shift1=None, \
+		mask2=None, operator2=None, shift2=None):
+	""" Generates a signal access macro from abstract access elements. """
+	return_string = ""
+
+	if type1 is not None and type1 > 8:
+		return_string = "*("+cg.get_dtv(type1)+"*)&"+data_str \
+			+ "[" + str(data_byte) + "]"
+	else:
+		return_string = data_str + "[" + str(data_byte) + "]"
+
+	# Add inner mask if required
+	if mask1 is not None:
+		return_string = "(" + return_string + ") & " \
+			+ cg.to_hex_string_with_suffix(mask1)
+
+	# Add shifting 1 if required (shift inner)
+	if operator1 is not None and shift1 is not None:
+		return_string = "(" + return_string + ") " + operator1 + " " \
+			+ cg.shifter_string_with_suffix(shift1)
+
+	if mask2 is not None:
+		return_string = "(" + return_string + ") & " \
+			+ cg.to_hex_string_with_suffix(mask2)
+
+	# Add signal casting if signal base size is bigger than 8-bits
+	if type2 is not None and type2 > 8:
+		return_string = "(" \
+			+ cg.get_dtv(type2) \
+			+ ")(" + return_string + ")"
+
+	if operator2 is not None and shift2 is not None:
+		return_string += " "+operator2+" " \
+			+ cg.shifter_string_with_suffix(shift2)
+
+	return return_string
+
+ ]]] */
+// [[[end]]]
 
 #include "LIN_common_network.h"
 
@@ -210,6 +254,7 @@ for message in messages_layouts:
 			+ "\". " + chr(42) + "/")
 
 	array_str = "msg_buffer"
+	data_in_str = "data"
 
 	for signal in message_signals:	
 		if signal.is_array():
@@ -229,10 +274,19 @@ for message in messages_layouts:
 					else:
 						macro_piece = array_str + "[" + str(piece.abs_byte) + "]"
 
-					# Add right shifting if required
+					# Add inner mask if required
+					if piece.mask_inner is not None:
+						macro_piece = "(" + macro_piece + ") & " \
+							+ cg.to_hex_string_with_suffix(piece.mask_inner)
+
+					# Add right shifting if required (shift inner)
 					if piece.shift_inner is not None:
-						macro_piece += " >> " \
+						macro_piece = "(" + macro_piece + ") >> " \
 							+ cg.shifter_string_with_suffix(piece.shift_inner)
+
+					if piece.mask_outer is not None:
+						macro_piece = "(" + macro_piece + ") & " \
+							+ cg.to_hex_string_with_suffix(piece.mask_outer)
 
 					# Add signal casting if signal base size is bigger than 8-bits
 					if signal_access.signal_base_len > 8:
@@ -240,15 +294,9 @@ for message in messages_layouts:
 							+ cg.get_dtv(signal_access.signal_base_len) \
 							+ ")(" + macro_piece + ")"
 
-					if piece.mask_inner is not None:
-						macro_piece = "(" + macro_piece + ") & " \
-							+ cg.to_hex_string_with_suffix(piece.mask_inner)
-
 					if piece.shift_outer is not None:
 						macro_piece += " << " \
 							+ cg.shifter_string_with_suffix(piece.shift_outer)
-
-
 
 					if len(signal_access.pieces) > 1:
 						if i == 0:
@@ -256,7 +304,7 @@ for message in messages_layouts:
 						if i < (len(signal_access.pieces) - 1):
 							macro_str += "(" + macro_piece + ") \\ \n\t\t\t\t\t\t\t\t\t| "
 						else:
-							macro_str += "(" + macro_piece + ")"
+							macro_str += "(" + macro_piece + "))"
 					else:
 							macro_str += "(" + macro_piece + ")"
 			else:
@@ -280,12 +328,106 @@ for message in messages_layouts:
 	
 		# Signal write macros
 		# -------------------
+		cog.outl("")
 		if signal.is_array():
 			cog.outl("#define CAN_"+network.id_string+"_update_" \
 					+ signal.name + "(msg, values)\t\t( memcpy(&"+array_str+"["+str(signal.start_byte) \
 					+ "],&values, CAN_" + network.id_string + "_MSG_DLEN_" + message.name + ")" )
 		else:
 			pass
+
+			signal_access = network.get_signal_abstract_write(signal.name)
+
+			if len(signal_access.pieces) > 0 :
+				macro_str = ""
+				for i, piece in enumerate(signal_access.pieces):
+					macro_str_clear = ""
+					macro_str_write = ""
+					macro_str_assign = ""
+
+					# Add signal casting if piece base size is bigger than 8-bits
+					if piece.len > 8:
+						macro_str_assign = "*("+cg.get_dtv(piece.len)+"*)&"+array_str \
+							+ "[" + str(piece.abs_byte) + "]"
+					else:
+						macro_str_assign = array_str + "[" + str(piece.abs_byte) + "]"
+
+					# Mask out bits to be written
+					if i == 0:
+						# For first chunk, mask out bits starting from signal
+						# start bit.
+						if signal.start_bit > 0 or signal.len < piece.len:
+							macro_str_clear = macro_str_assign
+							mask_msb = cg.get_bit_mask(signal.len, signal.start_bit)
+							macro_str_clear = macro_str_clear + " & " \
+								+ cg.to_hex_string_with_suffix(mask_msb, \
+										piece.len)
+					else:
+						if remaining_bits < piece.len:
+							macro_str_clear = macro_str_assign
+							mask_msb = cg.get_bit_mask(remaining_bits)
+							macro_str_clear = macro_str_clear + " & " \
+								+ cg.to_hex_string_with_suffix(mask_msb, \
+										piece.len)
+
+					# Form the "write" part of the macro...
+					macro_str_write = data_in_str
+
+					# Add right shifting if required (shift inner)
+					if piece.shift_inner is not None:
+						macro_str_write += " >> " \
+							+ cg.shifter_string_with_suffix(piece.shift_inner)
+
+					# Add outer mask if required
+					if piece.mask_outer is not None:
+						macro_str_write = "(" + macro_str_write + ") & " \
+							+ cg.to_hex_string_with_suffix(piece.mask_outer)
+
+					# Form piece string
+					if len(signal_access.pieces) > 1:
+						print("Signal: ", signal.name, " i: ", i, " size: ", len(signal_access.pieces))
+						if i == 0:
+							print("A, clear: ", macro_str_clear)
+
+							macro_str = "(" + macro_str_assign + " = "
+							if macro_str_clear != "":
+								macro_str += "(" + macro_str_clear + ") | " \
+									+ "(" + macro_str_write + ")"
+							else:
+								macro_str += macro_str_write
+							macro_str += ";a \n\t\t\t\t\t\t\t\t\t"
+						elif i > 0 and i < (len(signal_access.pieces) - 1):
+							print("B")
+							macro_str += macro_str_assign + " = "
+							if macro_str_clear != "":
+								macro_str += "(" + macro_str_clear + ") | " \
+									+ "(" + macro_str_write + ")"
+							else:
+								macro_str += macro_str_write
+							macro_str += ";a \n\t\t\t\t\t\t\t\t\t"
+						else:
+							print("C")
+							macro_str += macro_str_assign + " = "
+							if macro_str_clear != "":
+								macro_str += "(" + macro_str_clear + ") | " \
+									+ "(" + macro_str_write + ")"
+							else:
+								macro_str += macro_str_write
+							macro_str += "; )"
+						#print(macro_str)
+					else:
+						macro_str = "(" + macro_str_assign + " = "
+						if macro_str_clear != "":
+							macro_str += "(" + macro_str_clear + ") | "
+						macro_str += "(" + macro_str_write + "));m )"
+			else:
+				macro_str = "ERROR, invalid signal '" \
+						+ signal.name + "' access structure."
+				# TODO: logging system for this file
+				log_warn("Invalid signal '%s' access structure" & signal.name)
+
+			cog.outl("#define CAN_"+network.id_string+"_write_" \
+					+ signal.name + "("+array_str+","+data_in_str+")\t\t" + macro_str)
 		
 		cog.outl("")
 ]]] */
