@@ -1,17 +1,3 @@
-/*============================================================================*/
-/*                           calvOS Project                                   */
-/*============================================================================*/
-/** \file 		CAN_signals.h
- *  \brief     	Header file CAN Signals definitions.
- *  \details   	Contains data structures to ease the handling of the CAN 
- *				signals.
- *  \author    	Carlos Calvillo
- *  \authors	Carlos Calvillo
- *  \version   	1.0
- *  \date      	1990-2011
- *  \copyright 	GNU Public License v3.
- */
-/*============================================================================*/
 /* [[[cog
 import cog
 import math
@@ -26,17 +12,50 @@ import calvos.common.codegen as cg
 
 from cog_CAN import log_debug, log_info, log_warn, log_error, log_critical, C_gen_info
 
-cog.outl(cg.C_license())
-
-]]] */
-// [[[end]]]
-/*============================================================================*/
-/* [[[cog
 try:
 	with open(cog_pickle_file, 'rb') as f:
 		network = pic.load(f)
 except Exception as e:
         print('Failed to access pickle file %s. Reason: %s' % (cog_pickle_file, e))
+]]] */
+// [[[end]]]
+/*============================================================================*/
+/*                           calvOS Project                                   */
+/*============================================================================*/
+/* [[[cog
+file_name = "cog_comgen_CAN_NWID_network.h"
+# Remove "cog_" prefix
+file_name = file_name[4:]
+if network.id_string is not None:
+	file_name = file_name.replace('NWID',network.id_string)
+else:
+	file_name = file_name.replace('NWID_','')
+#substitute node name if found (NODENAME)
+comgen_CAN_cog_output_file = \
+	file_name = file_name.replace('NODENAME_','')
+padding = 80 - (19 + len(file_name))
+padding_str = " "
+if padding > 1:
+	for i in range(padding-1):
+		padding_str += " "
+cog.outl("/"+chr(42)+chr(42)+" \\file\t\t"+file_name+" "+padding_str+chr(42)+"/")
+]]] */
+// [[[end]]]
+/** \brief     	Header file CAN Signals definitions.
+ *  \details   	Contains data structures to ease the handling of the CAN
+ *				signals.
+ *  \author    	Carlos Calvillo
+ *  \version   	1.0
+ *  \date      	2020-11-15
+ *  \copyright 	2020 Carlos Calvillo.
+ */
+/*============================================================================*/
+/* [[[cog
+cog.outl(cg.C_license())
+]]] */
+// [[[end]]]
+/*============================================================================*/
+/* [[[cog
 
 # Print generation information
 cog.outl(C_gen_info(input_worksheet,network))
@@ -93,7 +112,7 @@ def get_access_macro(data_str, data_byte, type1=None, type2=None, \
  ]]] */
 // [[[end]]]
 
-#include "LIN_common_network.h"
+#include "CAN_common_network.h"
 
 /* -------------------------------------------------------------------------- */
 // 		Network Messages
@@ -252,11 +271,15 @@ for message in messages_layouts:
 	cog.outl("/"+chr(42)+" Macros for reading/writing signals of network \"" \
 			+ network.id_string + "\" message \"" + message.name \
 			+ "\". " + chr(42) + "/")
+	cog.outl("")
 
 	array_str = "msg_buffer"
 	data_in_str = "data"
 
 	for signal in message_signals:	
+		# Print read macro comment
+		cog.outl("/"+chr(42)+" Macros for reading signal \"" \
+			+ signal.name + "\". " + chr(42) + "/")
 		if signal.is_array():
 			cog.outl("#define CAN_"+network.id_string+"_get_ptr_" \
 					+ signal.name + "(msg)\t\t( &"+array_str+"[" \
@@ -328,7 +351,8 @@ for message in messages_layouts:
 	
 		# Signal write macros
 		# -------------------
-		cog.outl("")
+		cog.outl("/"+chr(42)+" Macros for writing signal \"" \
+			+ signal.name + "\". " + chr(42) + "/")
 		if signal.is_array():
 			cog.outl("#define CAN_"+network.id_string+"_update_" \
 					+ signal.name + "(msg, values)\t\t( memcpy(&"+array_str+"["+str(signal.start_byte) \
@@ -353,32 +377,31 @@ for message in messages_layouts:
 						macro_str_assign = array_str + "[" + str(piece.abs_byte) + "]"
 
 					# Mask out bits to be written
-					if i == 0:
-						# For first chunk, mask out bits starting from signal
-						# start bit.
-						if signal.start_bit > 0 or signal.len < piece.len:
-							macro_str_clear = macro_str_assign
-							mask_msb = cg.get_bit_mask(signal.len, signal.start_bit)
-							macro_str_clear = macro_str_clear + " & " \
-								+ cg.to_hex_string_with_suffix(mask_msb, \
-										piece.len)
+					if piece.mask_inner is not None:
+						macro_str_clear = macro_str_assign + " & " \
+							+ cg.to_hex_string_with_suffix(piece.mask_inner, \
+									piece.len)
 					else:
-						if remaining_bits < piece.len:
-							macro_str_clear = macro_str_assign
-							mask_msb = cg.get_bit_mask(remaining_bits)
-							macro_str_clear = macro_str_clear + " & " \
-								+ cg.to_hex_string_with_suffix(mask_msb, \
-										piece.len)
+						macro_str_clear = ""
 
-					# Form the "write" part of the macro...
-					macro_str_write = data_in_str
+					# Shifting part of the "write" macro depends on the chunk number
+					if i == 0:
+						# For first chunk, "write" macro shall do a left shifting
+						if piece.shift_inner is not None:
+							macro_str_write = data_in_str + " << " \
+								+ cg.shifter_string_with_suffix(piece.shift_inner)
+						else:
+							macro_str_write = data_in_str
+					else:
+						# For subsequent chunks, "write" macro shall do a
+						# right shiftings
+						if piece.shift_inner is not None:
+							macro_str_write = data_in_str + " >> " \
+								+ cg.shifter_string_with_suffix(piece.shift_inner)
+						else:
+							macro_str_write = data_in_str
 
-					# Add right shifting if required (shift inner)
-					if piece.shift_inner is not None:
-						macro_str_write += " >> " \
-							+ cg.shifter_string_with_suffix(piece.shift_inner)
-
-					# Add outer mask if required
+					# Add masking part of "write" macro
 					if piece.mask_outer is not None:
 						macro_str_write = "(" + macro_str_write + ") & " \
 							+ cg.to_hex_string_with_suffix(piece.mask_outer)
@@ -386,40 +409,28 @@ for message in messages_layouts:
 					# Form piece string
 					if len(signal_access.pieces) > 1:
 						print("Signal: ", signal.name, " i: ", i, " size: ", len(signal_access.pieces))
-						if i == 0:
-							print("A, clear: ", macro_str_clear)
 
+						if i == 0:
 							macro_str = "(" + macro_str_assign + " = "
-							if macro_str_clear != "":
-								macro_str += "(" + macro_str_clear + ") | " \
-									+ "(" + macro_str_write + ")"
-							else:
-								macro_str += macro_str_write
-							macro_str += ";a \n\t\t\t\t\t\t\t\t\t"
-						elif i > 0 and i < (len(signal_access.pieces) - 1):
-							print("B")
-							macro_str += macro_str_assign + " = "
-							if macro_str_clear != "":
-								macro_str += "(" + macro_str_clear + ") | " \
-									+ "(" + macro_str_write + ")"
-							else:
-								macro_str += macro_str_write
-							macro_str += ";a \n\t\t\t\t\t\t\t\t\t"
 						else:
-							print("C")
 							macro_str += macro_str_assign + " = "
-							if macro_str_clear != "":
-								macro_str += "(" + macro_str_clear + ") | " \
-									+ "(" + macro_str_write + ")"
-							else:
-								macro_str += macro_str_write
-							macro_str += "; )"
-						#print(macro_str)
+
+						if macro_str_clear != "":
+							macro_str += "(" + macro_str_clear + ") | " \
+									+ "(" + macro_str_write + ");"
+						else:
+							macro_str += macro_str_write + ";"
+
+						if i < (len(signal_access.pieces) - 1):
+							macro_str += "\n\t\t\t\t\t\t\t\t\t"
+						else:
+							# Add closing parentheses for last chunk
+							macro_str += ")"
 					else:
 						macro_str = "(" + macro_str_assign + " = "
 						if macro_str_clear != "":
 							macro_str += "(" + macro_str_clear + ") | "
-						macro_str += "(" + macro_str_write + "));m )"
+						macro_str += "(" + macro_str_write + "); )"
 			else:
 				macro_str = "ERROR, invalid signal '" \
 						+ signal.name + "' access structure."

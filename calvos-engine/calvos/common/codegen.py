@@ -154,17 +154,46 @@ def shifter_string_with_suffix(shifting_bits):
     return return_string
 
 #==============================================================================
-def get_bit_mask(n_of_bits, start_bit = 0, inverse = False):
+def get_bit_mask(n_of_bits, start_bit = 0, inverse = False, length = None):
     """ Returns an integer mask. """
-    bits_mask = 0
+    bits_mask_str = ""
+    if inverse is False:
+        zero_char = "0"
+        one_char = "1"
+    else:
+        zero_char = "1"
+        one_char = "0"
+     
+    if length is not None:
+        max_len = calculate_base_type_len(length)
+    else:
+        max_len = calculate_base_type_len(n_of_bits+start_bit)
+     
+    first_bit_position = start_bit
+    last_bit_position = first_bit_position + n_of_bits - 1
+    for i in range(max_len,0,-1):
+        if (i-1) >= first_bit_position and (i-1) <= last_bit_position:
+            # Put a "one_char"
+            bits_mask_str += one_char
+        else:
+            # Put a "zero_char"
+            bits_mask_str += zero_char
+         
+    bits_mask = int(bits_mask_str, 2)
     
-    for i in range(n_of_bits):
-        bits_mask = bits_mask | (1 << (i + start_bit))
-        
-    if inverse is True:
-        bits_mask = ~bits_mask
-        
+    print("0b",bits_mask_str,"     max len: ", max_len)
+    print("bits, ", n_of_bits," start: ",start_bit," sum: ",n_of_bits+start_bit, " len: ",length, " MASK: ", to_hex_string_with_suffix(bits_mask, max_len))
+         
     return bits_mask
+#     bits_mask = 0
+#     print("bits, ", n_of_bits," start: ",start_bit," sum: ",n_of_bits+start_bit, " len: ",length) 
+#     for i in range(n_of_bits):
+#         bits_mask = bits_mask | (1 << (i + start_bit))
+#          
+#     if inverse is True:
+#         bits_mask = ~bits_mask
+#          
+#     return bits_mask
 
 #==============================================================================
 #get_dtk -> "get data type key" (previously "g_dt_k")
@@ -525,9 +554,9 @@ def get_special_string(input_dictionary):
 def get_local_time_formatted():
     """ Gets current local time and returns it in a formatted string """
     curren_time = time.localtime() # Gets current local time
-    return_string = str(curren_time[1])+"." \
-                + str(curren_time[2])+"." \
-                + str(curren_time[0])+"::" \
+    return_string = str(curren_time[0])+"." \
+                + str(curren_time[1])+"." \
+                + str(curren_time[2])+"::" \
                 + str(curren_time[3])+":" \
                 + str(curren_time[4])+":" \
                 + str(curren_time[5])

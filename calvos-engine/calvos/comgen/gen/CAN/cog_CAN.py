@@ -45,7 +45,7 @@ def C_gen_info(worksheet, network_object):
     # Print generation information
     curren_time = cg.get_local_time_formatted() # Gets current local time
     return_str = """/*-----------------------------------------------------------------------------
- * This file was generated on (mm.dd.yyyy::hh:mm:ss): """ + curren_time +""")
+ * This file was generated on (yyyy.mm.dd::hh:mm:ss): """ + curren_time +"""
  * Generated from following source(s):
  *     Network file: \""""+ str(worksheet) +"""\"
  *     Network name: \""""+ str(network_object.name) +"""\"

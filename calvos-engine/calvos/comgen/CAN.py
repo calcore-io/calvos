@@ -1451,26 +1451,7 @@ class Network_CAN:
             
             base_len = cg.calculate_base_type_len(signal.len)
             
-            if base_len == 8:
-                # A single piece is enough for this signal
-                signal_piece = Network_CAN.SignalAccess.PieceAccess()
-                # Generate mask if required for removing most-significant bits
-                # not to be used for this piece.
-                if signal.len < 8:
-                    mask_msb = int(255 << signal.len).to_bytes(8,'big')
-                    mask_msb = hex(mask_msb[-1] ^ 255)
-                    signal_piece.mask_inner =  mask_msb
-                    
-                # Inner shifting (left shifting) is equal to the signal's start bit
-                if signal.start_bit > 0:
-                    signal_piece.shift_inner = signal.start_bit
-                signal_piece.len = base_len
-                
-                # No outer shifting/mask is required in this case
-                signal_piece.abs_byte = signal.start_byte
-                signal_access.pieces.append(signal_piece)
-                
-            elif base_len <= cg.Compiler_max_size:
+            if base_len <= cg.Compiler_max_size:
                 abs_start_bit = (signal.start_byte*8)  + signal.start_bit
                 abs_end_bit = abs_start_bit + signal.len - 1
     
@@ -1494,35 +1475,40 @@ class Network_CAN:
                     # TODO: Is it ensured that reduced_type_len is never
                     # less than 8?
                     signal_piece.abs_byte = current_byte
-                    signal_piece.len = part_base_len
+                    signal_piece.len = part_base_len  
                     
-                    # Mask out signal bits not to be used by this piece
                     if first_chunk is True:
-                        mask_bits = part_base_len  - signal.start_bit
-                        if mask_bits > 0:
-                            mask_msb = 0
-                            for i in range(mask_bits):
-                                mask_msb = mask_msb | (1 << i)
-                            signal_piece.mask_inner =  mask_msb
-                    
+                        # Calculate clearing mask and shifting bits for first chunk...
+                        if signal.start_bit > 0:
+                            # Shifting is not required if start_bit is zero.
+                            signal_piece.shift_inner = signal.start_bit
+                            # Masking is not required if start_bit is zero since all bits
+                            # of the buffer need to be overwritten
+                            signal_piece.mask_inner = \
+                                cg.get_bit_mask(part_base_len - signal.start_bit, \
+                                                signal.start_bit, True, part_base_len)
+                        # Calculate data bits mask for first chunk
+                        signal_piece.mask_outer = \
+                            cg.get_bit_mask(part_base_len - signal.start_bit, \
+                                            signal.start_bit, False, part_base_len)
+                    else:
+                        # For subsequent chunks (except last one that will be treated in the
+                        # "else" statement of this while statement). Shifting will be right
+                        # shifting and mask should be of part_base_len.
+                        # shift_bits = signal.len - bits_remaining
+                        # Consume the bits from the input data (right shifting of consumed bits).
+                        signal_piece.shift_inner = signal.len - bits_remaining
+                        # Mask out bits not belonging to this piece
+                        signal_piece.mask_outer = \
+                            cg.get_bit_mask(part_base_len, 0, False, part_base_len)
+
                     bits_remaining -= part_base_len
                     if first_chunk is True:
                         # For first chunk, bits before start_bit don't
                         # contribute to the remaining bits so need to be
                         # added back.
                         bits_remaining += signal.start_bit
-                    
-                    shift_bits = signal.len - bits_remaining   
-                    if shift_bits > 0:
-                        # Add shift bitd if required.
-                        signal_piece.shift_inner = shift_bits
-                    
-                    if first_chunk is False:
-                        mask_bits = part_base_len
-                        mask_msb = 0
-                        for i in range(mask_bits):
-                            mask_msb = mask_msb | (1 << i)
-                        signal_piece.mask_outer =  mask_msb
+                        
 
                     signal_access.pieces.append(signal_piece)
 
@@ -1534,38 +1520,47 @@ class Network_CAN:
 
                     first_chunk = False
                 else:
+                    # Flow goes here in two cases. If first_chunk is True in here it means that
+                    # only one piece is required for this signal, if first_chunk is False here
+                    # it means it is the last piece of a multi-piece signal.
                     signal_piece = Network_CAN.SignalAccess.PieceAccess()
                     
                     signal_piece.abs_byte = current_byte
                     signal_piece.len = part_base_len
                     
                     if first_chunk is True:
-                        shift_bits = signal.start_bit
+                        first_chunk = False
+                        # Calculate shifting for first chunk (left shifting)
+                        if signal.start_bit > 0:
+                            signal_piece.shift_inner = signal.start_bit
+                        # Calculate clearing bits mask for first chunk
+                        signal_piece.mask_inner = \
+                            cg.get_bit_mask(signal.len, signal.start_bit, \
+                                            True, part_base_len)
+                        # Calculate data bits mask for first chunk
+                        signal_piece.mask_outer = \
+                            cg.get_bit_mask(signal.len, signal.start_bit, \
+                                            False, part_base_len)
                     else:
-                        shift_bits = signal.len - part_base_len + signal.start_bit
-                    
-                    if shift_bits > 0:
-                        signal_piece.shift_inner = shift_bits
-
-                    if first_chunk is True and signal.start_bit > 0:
-                        # If signal doesn't start at bit zero then
-                        # right shifting is required.
-                        signal_piece.shift_inner = signal.start_bit
-
-                    mask_bits = bits_remaining
-                    if mask_bits < part_base_len:
-                        # Some most-significant bits need to be masked-out
-                        mask_msb = 0
-                        for i in range(mask_bits):
-                            mask_msb = mask_msb | (1 << i)
-                        signal_piece.mask_outer =  mask_msb
+                        # For last chunk (in a multi-chunk data) shifting will be right
+                        # shifting and mask should be of bits_remaining.
+                        # Consume the bits from the input data (right shifting of consumed bits).
+                        if signal.len - bits_remaining > 0:
+                            signal_piece.shift_inner = signal.len - bits_remaining
+                        # Calculate mask for clearing bits in target location
+                        if bits_remaining < part_base_len:
+                            signal_piece.mask_inner = \
+                                cg.get_bit_mask(bits_remaining, 0, True, part_base_len)
+                        # Mask out bits not belonging to this piece
+                        signal_piece.mask_outer = \
+                            cg.get_bit_mask(bits_remaining, 0, False, part_base_len)         
                     
                     signal_access.pieces.append(signal_piece)            
             else:
                 # Signal length exceeds maximum compiler data type
                 log_warn(("Length of scalar signal '" + signal_name \
-                          + "' exceeds maximum compiler data size. " +
-                         " Consider defining the signal as an array instead."))
+                          + "' exceeds maximum compiler data size '" + cg.Compiler_max_size \
+                         + "'. Consider defining the signal as an array instead."))
             
             return_value = signal_access
             
@@ -1874,7 +1869,7 @@ class Network_CAN:
                 str(comgen_CAN_cog_output_file).replace('NWID',network_name)
         else:
             comgen_CAN_cog_output_file = \
-                str(comgen_CAN_cog_output_file).replace('NWID','')
+                str(comgen_CAN_cog_output_file).replace('NWID_','')
         #substitute node name if found (NODENAME)
         if node_name is not None:
             comgen_CAN_cog_output_file = \
