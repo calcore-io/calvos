@@ -1534,13 +1534,17 @@ class Network_CAN:
                         if signal.start_bit > 0:
                             signal_piece.shift_inner = signal.start_bit
                         # Calculate clearing bits mask for first chunk
-                        signal_piece.mask_inner = \
-                            cg.get_bit_mask(signal.len, signal.start_bit, \
-                                            True, part_base_len)
-                        # Calculate data bits mask for first chunk
-                        signal_piece.mask_outer = \
-                            cg.get_bit_mask(signal.len, signal.start_bit, \
-                                            False, part_base_len)
+                        if signal.len < part_base_len:
+                            # Masks make sense if the signal len is smaller than the part_base_len
+                            # otherwise mask of all zeros and all ones will be generated which is
+                            # not optimal.
+                            signal_piece.mask_inner = \
+                                cg.get_bit_mask(signal.len, signal.start_bit, \
+                                                True, part_base_len)
+                            # Calculate data bits mask for first chunk
+                            signal_piece.mask_outer = \
+                                cg.get_bit_mask(signal.len, signal.start_bit, \
+                                                False, part_base_len)
                     else:
                         # For last chunk (in a multi-chunk data) shifting will be right
                         # shifting and mask should be of bits_remaining.

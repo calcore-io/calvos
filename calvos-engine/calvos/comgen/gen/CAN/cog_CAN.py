@@ -1,7 +1,7 @@
 '''
-Created on 9 ene. 2021
+Created on 13 ene. 2021
 
-@author: uidw7826
+@author: Carlos Calvillo
 '''
 import calvos.common.codegen as cg
 import calvos.common.logsys as lg
@@ -42,12 +42,15 @@ def log_critical(message):
  
 def C_gen_info(worksheet, network_object):
     """ Returns a C-comment with network information. """
+    # Adjust file string "worksheet" to do not exceed 80 characters and to start at 
+    # a given character
+    file_str = cg.str_to_multiline(worksheet, (80-22), 22)   
     # Print generation information
     curren_time = cg.get_local_time_formatted() # Gets current local time
     return_str = """/*-----------------------------------------------------------------------------
  * This file was generated on (yyyy.mm.dd::hh:mm:ss): """ + curren_time +"""
  * Generated from following source(s):
- *     Network file: \""""+ str(worksheet) +"""\"
+ *     Network file: \""""+ str(file_str) +"""\"
  *     Network name: \""""+ str(network_object.name) +"""\"
  *     Network id: \""""+ str(network_object.id_string) +"""\"
  *     Network date: \""""+ str(network_object.date) + """\"

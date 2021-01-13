@@ -111,9 +111,6 @@ USAGE
 ''' % program_shortdesc
 
     try:
-        
-        print(sys.argv)
-        
         # Setup argument parser
         parser = ArgumentParser(description=program_license, formatter_class=RawDescriptionHelpFormatter)
         parser.add_argument("-p","--project", dest="project", required=True, \

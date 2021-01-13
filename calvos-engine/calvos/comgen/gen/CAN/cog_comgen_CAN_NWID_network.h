@@ -167,7 +167,7 @@ for enum_type in network.enum_types.values():
 /* -------------------------------------------------------------------------- */
 
 /* [[[cog
-#Get structure of all network messages
+# Get structure of all network messages
 
 messages_layouts = network.get_messages_structures()
 
@@ -408,8 +408,6 @@ for message in messages_layouts:
 
 					# Form piece string
 					if len(signal_access.pieces) > 1:
-						print("Signal: ", signal.name, " i: ", i, " size: ", len(signal_access.pieces))
-
 						if i == 0:
 							macro_str = "(" + macro_str_assign + " = "
 						else:
@@ -439,6 +437,14 @@ for message in messages_layouts:
 
 			cog.outl("#define CAN_"+network.id_string+"_write_" \
 					+ signal.name + "("+array_str+","+data_in_str+")\t\t" + macro_str)
+			cog.outl("#define CAN_"+network.id_string+"_update_" \
+					+ signal.name + "(msg, data)\t\t" \
+					+ "(CAN_"+network.id_string+"_write_" \
+					+ signal.name + "(msg.all,data))")
+			cog.outl("#define CAN_"+network.id_string+"_update_direct_" \
+					+ signal.name + "(data)\t\t" \
+					+ "(CAN_"+network.id_string+"_write_" \
+					+ signal.name + "(unified_buffer,data))")
 		
 		cog.outl("")
 ]]] */

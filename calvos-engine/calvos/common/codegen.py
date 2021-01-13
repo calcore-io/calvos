@@ -180,20 +180,8 @@ def get_bit_mask(n_of_bits, start_bit = 0, inverse = False, length = None):
             bits_mask_str += zero_char
          
     bits_mask = int(bits_mask_str, 2)
-    
-    print("0b",bits_mask_str,"     max len: ", max_len)
-    print("bits, ", n_of_bits," start: ",start_bit," sum: ",n_of_bits+start_bit, " len: ",length, " MASK: ", to_hex_string_with_suffix(bits_mask, max_len))
          
     return bits_mask
-#     bits_mask = 0
-#     print("bits, ", n_of_bits," start: ",start_bit," sum: ",n_of_bits+start_bit, " len: ",length) 
-#     for i in range(n_of_bits):
-#         bits_mask = bits_mask | (1 << (i + start_bit))
-#          
-#     if inverse is True:
-#         bits_mask = ~bits_mask
-#          
-#     return bits_mask
 
 #==============================================================================
 #get_dtk -> "get data type key" (previously "g_dt_k")
@@ -577,7 +565,57 @@ def get_unsigned_suffix(number):
     return return_str
 
 #==============================================================================
+def str_to_multiline(input_str, max_chars, starting_char = None, separator = ".."):
+    """ Returns a multiline string for the given path string. """
+    return_str = ""
 
+    file_str_lst = input_str.split("/")
+    if len(file_str_lst) <= 1:
+        # Try with other diagonal
+        file_str_lst = input_str.split("\\")
+        if len(file_str_lst) > 1:
+            # add separator back
+            for i, element in enumerate(file_str_lst):
+                if i < len(file_str_lst) - 1:
+                    file_str_lst[i] += "\\"
+    else:
+        # add separator back
+        for i, element in enumerate(file_str_lst):
+            if i < len(file_str_lst) - 1:
+                file_str_lst[i] += "/"
+    
+    padding = ""
+    if starting_char is not None:
+        for i in range(starting_char):
+            padding += " "
+    
+    if len(file_str_lst) > 1:
+        # Split input_str into multi-lines according to max character
+        line_str = ""
+        for i, element in enumerate(file_str_lst):
+            if i == 0:
+                # Always insert first element
+                line_str = element
+            elif i < (len(file_str_lst) - 1):
+                if len(line_str) + len(element) <= max_chars:
+                    line_str += element
+                else:
+                    # Insert a separator and reset line_str
+                    line_str += separator + "\n" + padding
+                    return_str += line_str
+                    line_str = element
+            else:
+                if len(line_str) + len(element) <= max_chars:
+                    return_str += line_str + element
+                else:
+                    # Insert a separator and reset line_str
+                    return_str += line_str + separator + "\n" + padding + element
+    else:
+        return_str = input_str
+    
+    return return_str
+                    
+#==============================================================================
 def string_to_path(path_string):
     ''' Returns a "path" object for the given string. '''
     # libpath requires regular diagonal, not reverse diagonal
