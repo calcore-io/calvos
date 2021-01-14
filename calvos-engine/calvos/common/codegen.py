@@ -4,7 +4,7 @@ Created on Tue Sep 29 14:39:09 2020
 
 @author: Carlos Calvillo
 """
-
+import cogapp as cog
 import pyexcel as pe
 import re
 import time
@@ -55,6 +55,12 @@ dt = {"uint8"   :   "T_UBYTE",     "int8"   :   "T_BYTE", \
       "uint32"  :   "T_ULONG",     "int32"  :   "T_LONG", \
       "uint64"  :   "T_UDLONG",    "int64"  :   "T_DLONG",
       "float"   :   "T_FLOAT",    "double"  :   "T_DFLOAT"}
+
+dt_compiler = {"uint8"   :   "unsigned char",     "int8"   :   "signed char", \
+      "uint16"  :   "unsigned short",     "int16"  :   "signed short", \
+      "uint32"  :   "unsigned int",     "int32"  :   "signed int", \
+      "uint64"  :   "unsigned long long int",    "int64"  :   "signed long long int",
+      "float"   :   "float",    "double"  :   "double"}
 
 # { "type key" : [size, "i(integer)|f(float)", True(signed)|False(unsigned)]}
 dt_info = {"uint8" : [8, "i", False],   "int8" : [8, "i", True], \
@@ -808,8 +814,43 @@ class GenParams():
         
         return return_data
 
+#===================================================================================================
+def cog_generator(input_file, out_dir, work_dir, gen_path, variables = None):
+    """ Invoke cog generator for the specified file.
+    """
+    # Setup input and output files
+    # ----------------------------       
+    cog_input_file = gen_path / input_file
+    #remove "cog_" prefix to output file names
+    cog_output_file_str = input_file[4:]
+    #remove "static" prefix if present.
+    if cog_output_file_str.find("static_", 0, 7) == 0:
+        cog_output_file_str = cog_output_file_str[7:]
+    cog_output_file = out_dir / cog_output_file_str
+        
+    # Invoke code generation
+    # ----------------------           
+    cog_arguments = ['dummy_argument', \
+               '-d', \
+               '-D', 'input_worksheet=' + input_file, \
+               '-D', 'project_working_dir=' + str(work_dir), \
+               '-o', str(cog_output_file), \
+               str(cog_input_file) ]
+    
+    # Append additional variables if required
+    if variables is not None:
+        for variable in variables:
+            cog_arguments.append('-D')
+            cog_arguments.append(str(variable))
+            
+    # Call cogapp engine
+    cog_return = cog.Cog().main(cog_arguments)
+    if cog_return == 0:
+        print("INFO: code generation successful: ",cog_output_file)
+    else:
+        print("INFO: code generation return value: ",cog_return)
 
-
+#===================================================================================================
 def load_input(input_file, input_type, params):
     """ Loads input file and returns the corresponding object. """
     del input_type, params # Unused parameters
@@ -818,7 +859,17 @@ def load_input(input_file, input_type, params):
     # This function for this specific module returns a dummy object.
     return 0
 
+#===================================================================================================
 def generate(input_object, out_path, working_path, calvos_path, params):
     """ Generate C code for the given object """
-    del input_object, out_path, working_path, calvos_path, params # Unused parameter
-    #This function doesn't do anything for this specific module.
+
+    cog_files_path = calvos_path / "common" / "gen" / "codegen"
+    
+    #----------------------------------------------------------------------
+    # Generate types file
+    #----------------------------------------------------------------------
+    cog_file_name = "cog_calvos_types.h"
+    cog_generator(cog_file_name, out_path, working_path, cog_files_path)
+    
+    cog_file_name = "cog_static_calvos.h"
+    cog_generator(cog_file_name, out_path, working_path, cog_files_path)

@@ -23,9 +23,7 @@ except Exception as e:
 /*                           calvOS Project                                   */
 /*============================================================================*/
 /* [[[cog
-file_name = "cog_comgen_CAN_NWID_network.h"
-# Remove "cog_" prefix
-file_name = file_name[4:]
+file_name = "comgen_CAN_NWID_network.h"
 if network.id_string is not None:
 	file_name = file_name.replace('NWID',network.id_string)
 else:
@@ -112,7 +110,7 @@ def get_access_macro(data_str, data_byte, type1=None, type2=None, \
  ]]] */
 // [[[end]]]
 
-#include "CAN_common_network.h"
+#include "calvos.h"
 
 /* -------------------------------------------------------------------------- */
 // 		Network Messages

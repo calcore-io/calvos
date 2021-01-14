@@ -2339,13 +2339,6 @@ class Network_CAN:
                     
             self.pieces = [] # Array of PieceAccess objects
         
-        def add_piece(self, length, relative_byte, shift_inner, shift_outer, \
-                         mask_inner, mask_outer):
-            """ Adds a new piece to the signal. """
-            temp = PieceAccess(length, relative_byte, shift_inner, shift_outer, \
-                         mask_inner, mask_outer)
-            self.pieces.append(temp)
-        
         class PieceAccess():
             """ Class to model a signal access piece. """
             def __init__(self, length = None, abs_byte = None, shift_inner = None, shift_outer = None, \
