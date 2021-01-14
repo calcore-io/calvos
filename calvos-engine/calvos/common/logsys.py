@@ -151,11 +151,23 @@ class Log:
     
     def error(self, name, message):
         """ """
-        self.loggers[name].logger.error(message)
         self.counters["error"] += 1
-        trace = traceback.format_exc()
-        self.loggers[name].logger.error(trace)
-        traceback.print_exc()
+        if traceback.format_exc().find("NoneType") == -1:
+            trace = traceback.format_exc()
+            print("ERROR: ", message)
+            traceback.print_exc()
+        else:
+            trace = traceback.format_stack()
+            print("ERROR: ", message)
+            traceback.print_stack()
+        message += "\nError traceback/callstack:\n"
+        if type(trace) is list:
+            for entry in trace:
+                message += entry
+        else:
+            message += str(trace)
+            
+        self.loggers[name].logger.error(message)
 
     def critical(self, name, message):
         """ """

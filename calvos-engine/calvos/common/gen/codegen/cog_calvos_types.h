@@ -43,8 +43,8 @@ cog.outl(cg.C_license())
 cog.outl(C_gen_info("File Name"))
 ]]] */
 // [[[end]]]
-#ifndef "CALVOS_TYPES_H"
-#define "CALVOS_TYPES_H"
+#ifndef CALVOS_TYPES_H
+#define CALVOS_TYPES_H
 
 /* [[[cog
 
@@ -53,7 +53,7 @@ cog.outl("/"+chr(42)+" Definition of basic data types "+chr(42)+"/")
 for key, data_type in cg.dt_compiler.items():
 	typedef_str = None
 	if key in cg.dt:
-		if data_type != cg.dt[key]:
+		if data_type != cg.dt[key] and data_type is not None:
 			typedef_str = "typedef " + data_type + " " + cg.dt[key] + ";"
 	else:
 		typedef_str = "#error Data type string not found for '%s'" % data_type

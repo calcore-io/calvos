@@ -32,8 +32,8 @@ cog.outl(cg.C_license())
 ]]] */
 // [[[end]]]
 /*============================================================================*/
-#ifndef "CALVOS_H"
-#define "CALVOS_H"
+#ifndef CALVOS_H
+#define CALVOS_H
 
 #include "calvos_types.h"
 

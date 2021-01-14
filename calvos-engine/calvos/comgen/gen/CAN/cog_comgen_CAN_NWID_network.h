@@ -68,45 +68,6 @@ cog.outl("#define COMGEN_CAN_"+network.id_string.upper()+"_NETWORK_H")
 /* [[[cog
 
 # Definition of Functions
-
-def get_access_macro(data_str, data_byte, type1=None, type2=None, \
-		mask1=None, operator1=None, shift1=None, \
-		mask2=None, operator2=None, shift2=None):
-	""" Generates a signal access macro from abstract access elements. """
-	return_string = ""
-
-	if type1 is not None and type1 > 8:
-		return_string = "*("+cg.get_dtv(type1)+"*)&"+data_str \
-			+ "[" + str(data_byte) + "]"
-	else:
-		return_string = data_str + "[" + str(data_byte) + "]"
-
-	# Add inner mask if required
-	if mask1 is not None:
-		return_string = "(" + return_string + ") & " \
-			+ cg.to_hex_string_with_suffix(mask1)
-
-	# Add shifting 1 if required (shift inner)
-	if operator1 is not None and shift1 is not None:
-		return_string = "(" + return_string + ") " + operator1 + " " \
-			+ cg.shifter_string_with_suffix(shift1)
-
-	if mask2 is not None:
-		return_string = "(" + return_string + ") & " \
-			+ cg.to_hex_string_with_suffix(mask2)
-
-	# Add signal casting if signal base size is bigger than 8-bits
-	if type2 is not None and type2 > 8:
-		return_string = "(" \
-			+ cg.get_dtv(type2) \
-			+ ")(" + return_string + ")"
-
-	if operator2 is not None and shift2 is not None:
-		return_string += " "+operator2+" " \
-			+ cg.shifter_string_with_suffix(shift2)
-
-	return return_string
-
  ]]] */
 // [[[end]]]
 
@@ -132,7 +93,7 @@ for message in network.messages.values():
 code_string = "#define CAN_" + network.id_string + "_MSGS_TOTAL_DLEN ("
 for message in network.messages.values():
     code_string += "CAN_" + network.id_string + "_MSG_DLEN_" + message.name \
-			+ " \\ \n\t\t\t + "
+			+ " \\\n\t\t\t + "
 code_string = code_string[:-10] + ")"
 cog.outl(code_string)
 ]]] */
@@ -323,7 +284,7 @@ for message in messages_layouts:
 						if i == 0:
 							macro_str = "("
 						if i < (len(signal_access.pieces) - 1):
-							macro_str += "(" + macro_piece + ") \\ \n\t\t\t\t\t\t\t\t\t| "
+							macro_str += "(" + macro_piece + ") \\\n\t\t\t\t\t\t\t\t\t| "
 						else:
 							macro_str += "(" + macro_piece + "))"
 					else:
@@ -407,7 +368,7 @@ for message in messages_layouts:
 					# Form piece string
 					if len(signal_access.pieces) > 1:
 						if i == 0:
-							macro_str = "(" + macro_str_assign + " = "
+							macro_str = macro_str_assign + " = "
 						else:
 							macro_str += macro_str_assign + " = "
 
@@ -418,15 +379,12 @@ for message in messages_layouts:
 							macro_str += macro_str_write + ";"
 
 						if i < (len(signal_access.pieces) - 1):
-							macro_str += "\n\t\t\t\t\t\t\t\t\t"
-						else:
-							# Add closing parentheses for last chunk
-							macro_str += ")"
+							macro_str += " \\\n\t\t\t\t\t\t\t\t\t"
 					else:
-						macro_str = "(" + macro_str_assign + " = "
+						macro_str = macro_str_assign + " = "
 						if macro_str_clear != "":
 							macro_str += "(" + macro_str_clear + ") | "
-						macro_str += "(" + macro_str_write + "); )"
+						macro_str += "(" + macro_str_write + ");"
 			else:
 				macro_str = "ERROR, invalid signal '" \
 						+ signal.name + "' access structure."
@@ -437,12 +395,12 @@ for message in messages_layouts:
 					+ signal.name + "("+array_str+","+data_in_str+")\t\t" + macro_str)
 			cog.outl("#define CAN_"+network.id_string+"_update_" \
 					+ signal.name + "(msg, data)\t\t" \
-					+ "(CAN_"+network.id_string+"_write_" \
-					+ signal.name + "(msg.all,data))")
+					+ "CAN_"+network.id_string+"_write_" \
+					+ signal.name + "(msg.all,data)")
 			cog.outl("#define CAN_"+network.id_string+"_update_direct_" \
 					+ signal.name + "(data)\t\t" \
-					+ "(CAN_"+network.id_string+"_write_" \
-					+ signal.name + "(unified_buffer,data))")
+					+ "CAN_"+network.id_string+"_write_" \
+					+ signal.name + "(unified_buffer,data)")
 		
 		cog.outl("")
 ]]] */

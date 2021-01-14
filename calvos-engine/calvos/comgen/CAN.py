@@ -1076,9 +1076,8 @@ class Network_CAN:
                     self.signals[signal_name].data_type = data_type 
                 else:
                     # Data type not defined.
-                    log_warn(("Undefined singal type: \"" + data_type \
-                                     + "\" for signal \"" \
-                                     + signal_name + "\"."))
+                    log_warn(("Undefined signal type: \"" + data_type + "\" for signal \"" \
+                              + signal_name + "\". Type not assigned to the signal."))
     
     #===============================================================================================
     def get_signal_conveyor_message(self, signal_name):
@@ -1902,8 +1901,11 @@ class Network_CAN:
         # Call cogapp engine
         cog_return = cog.Cog().main(cog_arguments)
         if cog_return == 0:
+            log_info("Code generation successful: '%s'" % comgen_CAN_cog_output_file)
             print("INFO: code generation successful: ",comgen_CAN_cog_output_file)
         else:
+            log_warn("Code generation error for '%s'. Cogapp return code: '%s'" \
+                 % (comgen_CAN_cog_output_file, str(cog_return)))
             print("INFO: code generation return value: ",cog_return)
         
     #===============================================================================================   
