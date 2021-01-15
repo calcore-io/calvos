@@ -9,8 +9,6 @@ protocol.
 @license:    GPL v3
 """
 __version__ = '0.1.0'
-from _ast import If
-from pickle import NONE
 __date__ = '2020-08-03'
 __updated__ = '2020-12-18'
     
@@ -1862,24 +1860,26 @@ class Network_CAN:
         """ Invoke cog generator for the specified file.
         """
         # Setup input and output files
-        # ----------------------------       
+        # ----------------------------  
+        input_file = str(input_file) 
         comgen_CAN_cog_input_file = gen_path / input_file
+        
         #remove "cog_" prefix to output file names
-        comgen_CAN_cog_output_file = out_dir / (input_file[4:])
+        if input_file.find("cog_") == 0:  
+            cog_output_file = input_file[4:]  
         #substitute network name if found (NWID)
         if network_name is not None:
-            comgen_CAN_cog_output_file = \
-                str(comgen_CAN_cog_output_file).replace('NWID',network_name)
+            cog_output_file = cog_output_file.replace('NWID',network_name)
         else:
-            comgen_CAN_cog_output_file = \
-                str(comgen_CAN_cog_output_file).replace('NWID_','')
+            cog_output_file = cog_output_file.replace('NWID_','')
         #substitute node name if found (NODENAME)
         if node_name is not None:
-            comgen_CAN_cog_output_file = \
-                str(comgen_CAN_cog_output_file).replace('NODENAME','node')
+            cog_output_file = cog_output_file.replace('NODENAME','node')
         else:
-            comgen_CAN_cog_output_file = \
-                str(comgen_CAN_cog_output_file).replace('NODENAME_','')
+            cog_output_file = cog_output_file.replace('NODENAME_','')
+                
+        # Set output file with path
+        comgen_CAN_cog_output_file = out_dir / cog_output_file
                 
         # Invoke code generation
         # ----------------------           
@@ -1889,6 +1889,7 @@ class Network_CAN:
                    '-D', 'project_working_dir=' + str(work_dir), \
                    '-D', 'cog_pickle_file=' + str(pickle), \
                    '-D', 'node_name=' + str(node_name), \
+                   '-D', 'cog_output_file=' + str(cog_output_file), \
                    '-o', str(comgen_CAN_cog_output_file), \
                    str(comgen_CAN_cog_input_file) ]
         

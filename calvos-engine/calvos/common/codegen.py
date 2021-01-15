@@ -571,32 +571,33 @@ def get_unsigned_suffix(number):
     return return_str
 
 #==============================================================================
-def str_to_multiline(input_str, max_chars, starting_char = None, separator = ".."):
-    """ Returns a multiline string for the given path string. """
+def str_to_multiline(input_str, max_chars, starting_char = None, \
+                     separator = "..", divisors = ["/", "\\"], \
+                     include_divisor = True):
+    """ Returns a multiline string for the given input string. """
     return_str = ""
-
-    file_str_lst = input_str.split("/")
-    if len(file_str_lst) <= 1:
-        # Try with other diagonal
-        file_str_lst = input_str.split("\\")
+    file_str_lst = []
+    # Split string as per divisor's list
+    for divisor in divisors:
+        file_str_lst = input_str.split(divisor)
         if len(file_str_lst) > 1:
-            # add separator back
-            for i, element in enumerate(file_str_lst):
-                if i < len(file_str_lst) - 1:
-                    file_str_lst[i] += "\\"
-    else:
-        # add separator back
-        for i, element in enumerate(file_str_lst):
-            if i < len(file_str_lst) - 1:
-                file_str_lst[i] += "/"
-    
-    padding = ""
-    if starting_char is not None:
-        for i in range(starting_char):
-            padding += " "
+            # Divisor found. Add separator back if needed
+            if include_divisor is True:
+                for i, element in enumerate(file_str_lst):
+                    if i < len(file_str_lst) - 1:
+                        file_str_lst[i] += divisor
+            break
+        # else: if divisor not found try with next one.
     
     if len(file_str_lst) > 1:
         # Split input_str into multi-lines according to max character
+        
+        # Calculate padding bits
+        padding = ""
+        if starting_char is not None:
+            for i in range(starting_char):
+                padding += " "
+            
         line_str = ""
         for i, element in enumerate(file_str_lst):
             if i == 0:
@@ -620,7 +621,37 @@ def str_to_multiline(input_str, max_chars, starting_char = None, separator = "..
         return_str = input_str
     
     return return_str
-                    
+
+#==============================================================================
+def gen_padding(starting_pos, last_occupied_pos = None):
+    """ Generates a string of blank spaces for padding. """
+    
+    padding_str = ""
+    if last_occupied_pos is not None and last_occupied_pos > starting_pos:
+        padding = 1
+        log_warn( \
+            "Minimal padding: last occupied position '%d' is bigger than starting position '%d."\
+            % (last_occupied_pos, starting_pos))
+    elif last_occupied_pos is not None:
+        padding = starting_pos - last_occupied_pos
+    else:
+        padding = starting_pos
+    
+    for i in range(padding):
+        padding_str += " "
+    
+    return padding_str
+
+#==============================================================================
+def get_str_max_len(input_strings):
+    """ Returns the size of the longest string within a list of strings. """
+    max_len = 0
+    for string in input_strings:
+        if len(string) > max_len:
+            max_len = len(string)
+    return max_len
+    
+                 
 #==============================================================================
 def string_to_path(path_string):
     ''' Returns a "path" object for the given string. '''
@@ -630,6 +661,7 @@ def string_to_path(path_string):
     path_string = path_string.replace("\\", "/")
     
     return pl.Path(path_string)
+
     
 def folder_exists(path):
     ''' Returns "True" if the given path is an existing folder. '''

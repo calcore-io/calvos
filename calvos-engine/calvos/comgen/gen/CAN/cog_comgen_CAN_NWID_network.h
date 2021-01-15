@@ -23,15 +23,8 @@ except Exception as e:
 /*                           calvOS Project                                   */
 /*============================================================================*/
 /* [[[cog
-file_name = "comgen_CAN_NWID_network.h"
-if network.id_string is not None:
-	file_name = file_name.replace('NWID',network.id_string)
-else:
-	file_name = file_name.replace('NWID_','')
-#substitute node name if found (NODENAME)
-comgen_CAN_cog_output_file = \
-	file_name = file_name.replace('NODENAME_','')
-padding = 80 - (19 + len(file_name))
+file_name = cog_output_file
+padding = 80 - (19 + len(cog_output_file))
 padding_str = " "
 if padding > 1:
 	for i in range(padding-1):
@@ -61,8 +54,11 @@ cog.outl(C_gen_info(input_worksheet,network))
 // [[[end]]]
 /* [[[cog
 # Print include guards
-cog.outl("#ifndef COMGEN_CAN_"+network.id_string.upper()+"_NETWORK_H")
-cog.outl("#define COMGEN_CAN_"+network.id_string.upper()+"_NETWORK_H")
+guard_symbol = cog_output_file.replace(".","_")
+guard_symbol = guard_symbol.upper()
+
+cog.outl("#ifndef "+guard_symbol)
+cog.outl("#define "+guard_symbol)
 ]]] */
 // [[[end]]]
 /* [[[cog
@@ -76,25 +72,50 @@ cog.outl("#define COMGEN_CAN_"+network.id_string.upper()+"_NETWORK_H")
 /* -------------------------------------------------------------------------- */
 // 		Network Messages
 /* -------------------------------------------------------------------------- */
+
+/* Macros for message(s) length */
 /* [[[cog
+
+TAB_SPACE = 4
+
 # Code for individual CAN msgs lenght
-code_string = ""
+
+# Calculate padding spaces
+macro_prefix = "CAN_" + network.id_string + "_MSG_DLEN_"
+macro_names = []
+macro_values = []
 for message in network.messages.values():
-    cog.outl("#define CAN_" + network.id_string + "_MSG_DLEN_" + message.name \
-			+ "\t(" + str(message.len) + "u)")
+	macro_name = macro_prefix + message.name
+	macro_value = "(" + str(message.len) + "u)"
+	macro_names.append(macro_name)
+	macro_values.append(macro_value)
+
+max_len = cg.get_str_max_len(macro_names)
+max_len += TAB_SPACE
+
+for i, macro_name in enumerate(macro_names):
+	code_string = "#define " + macro_name \
+				+ cg.gen_padding(max_len, len(macro_name)) + macro_values[i]
+	cog.outl(code_string)
+
 ]]] */
 // [[[end]]]
 
-// Macro for getting the sum of the CAN msgs lenght.
-// This to be used for defining the CAN data buffer.
+/* Macro for getting the sum of the CAN msgs lenght. */
+/* This to be used for defining the unified CAN data buffer. */
 
 /* [[[cog
-# Code for CAN_MSGS_TOTAL_DLEN
-code_string = "#define CAN_" + network.id_string + "_MSGS_TOTAL_DLEN ("
-for message in network.messages.values():
-    code_string += "CAN_" + network.id_string + "_MSG_DLEN_" + message.name \
-			+ " \\\n\t\t\t + "
-code_string = code_string[:-10] + ")"
+macro_name = "CAN_" + network.id_string + "_MSGS_TOTAL_LEN"
+
+code_string = "#define " + macro_name + cg.gen_padding(TAB_SPACE)
+padding_str = cg.gen_padding(len(code_string))
+code_string += "("
+for i, macro_name in enumerate(macro_names):
+	if i < len(macro_names) - 1:
+		code_string += macro_name + " \\\n" + padding_str + "+ "
+	else:
+		code_string += macro_name + ")"
+
 cog.outl(code_string)
 ]]] */
 // [[[end]]]
@@ -235,14 +256,53 @@ for message in messages_layouts:
 	array_str = "msg_buffer"
 	data_in_str = "data"
 
-	for signal in message_signals:	
+	for signal in message_signals:
+		def_read_array = "CAN_" + network.id_string + "_get_ptr_" \
+						+ signal.name + "(" + array_str + ")"
+		def_read = "CAN_"+network.id_string+"_extract_" \
+						+ signal.name + "(" + array_str + ")"
+		def_get = "CAN_"+network.id_string+"_get_" \
+						+ signal.name + "(" + array_str + ")"
+		def_get_direct = "CAN_"+network.id_string+"_get_direct_" \
+						+ signal.name + "()"
+
+		def_write_array = "CAN_" + network.id_string + "_update_" \
+						+ signal.name + "(" + array_str + "," + data_in_str + ")"
+		def_write = "CAN_"+network.id_string+"_write_" \
+						+ signal.name + "(" + array_str + "," + data_in_str + ")"
+		def_update = "CAN_"+network.id_string+"_update_" \
+						+ signal.name + "(" + array_str + "," + data_in_str + ")"
+		def_update_direct = "CAN_"+network.id_string+"_update_direct_" \
+						+ signal.name + "(" + data_in_str + ")"
+
+		max_len = cg.get_str_max_len([def_read_array, def_read, \
+									def_get, def_get_direct, \
+									def_write_array, def_write, def_update, \
+									def_update_direct])
+		# From longest string add TAB_SPACE spaces for padding
+		max_len += TAB_SPACE
+
+		# Calculate padding
+		pad_read_array = cg.gen_padding(max_len, len(def_read_array))
+		pad_read = cg.gen_padding(max_len, len(def_read))
+		pad_get = cg.gen_padding(max_len, len(def_get))
+		pad_get_direct = cg.gen_padding(max_len, len(def_get_direct))
+
+		pad_write_array = cg.gen_padding(max_len, len(def_write_array))
+		pad_write = cg.gen_padding(max_len, len(def_write))
+		pad_update = cg.gen_padding(max_len, len(def_update))
+		pad_update_direct = cg.gen_padding(max_len, len(def_update_direct))
+
 		# Print read macro comment
 		cog.outl("/"+chr(42)+" Macros for reading signal \"" \
 			+ signal.name + "\". " + chr(42) + "/")
+
+		# Signal read macros
+		# ------------------
 		if signal.is_array():
-			cog.outl("#define CAN_"+network.id_string+"_get_ptr_" \
-					+ signal.name + "(msg)\t\t( &"+array_str+"[" \
-					+ str(signal.start_byte) + "] )" )
+			cog.outl("#define "+ def_read_array \
+					+ pad_read_array \
+					+ "( &"+array_str+"[" + str(signal.start_byte) + "] )" )
 		else:
 			signal_access = network.get_signal_abstract_read(signal.name)
 
@@ -284,7 +344,7 @@ for message in messages_layouts:
 						if i == 0:
 							macro_str = "("
 						if i < (len(signal_access.pieces) - 1):
-							macro_str += "(" + macro_piece + ") \\\n\t\t\t\t\t\t\t\t\t| "
+							macro_str += "(" + macro_piece + ") \\\n"+cg.gen_padding(max_len+8)+"| "
 						else:
 							macro_str += "(" + macro_piece + "))"
 					else:
@@ -295,27 +355,24 @@ for message in messages_layouts:
 				# TODO: logging system for this file
 				log_warn("Invalid signal '%s' access structure" & signal.name)
 
-			cog.outl("#define CAN_"+network.id_string+"_extract_" \
-					+ signal.name + "("+array_str+")\t\t" + macro_str)
+			cog.outl("#define " + def_read + pad_read + macro_str)
 
-			cog.outl("#define CAN_"+network.id_string+"_get_" \
-					+ signal.name + "(msg)\t\t" \
-					+ "(CAN_"+network.id_string+"_extract_" \
-					+ signal.name + "(msg.all))")
+			cog.outl("#define " + def_get + pad_get \
+				+ "(" + def_read.replace("("+array_str+")","("+array_str+".all)") + ")" )
 
-			cog.outl("#define CAN_"+network.id_string+"_get_direct_" \
-					+ signal.name + "()\t\t" \
-					+ "(CAN_"+network.id_string+"_extract_" \
-					+ signal.name + "(unified_buffer))")
+			cog.outl("#define "+def_get_direct + pad_get_direct \
+				+ "(" + def_read.replace("("+array_str+")","(unified_buffer)") + ")" )
 	
 		# Signal write macros
 		# -------------------
+
 		cog.outl("/"+chr(42)+" Macros for writing signal \"" \
 			+ signal.name + "\". " + chr(42) + "/")
 		if signal.is_array():
-			cog.outl("#define CAN_"+network.id_string+"_update_" \
-					+ signal.name + "(msg, values)\t\t( memcpy(&"+array_str+"["+str(signal.start_byte) \
-					+ "],&values, CAN_" + network.id_string + "_MSG_DLEN_" + message.name + ")" )
+			cog.outl("#define " + def_write_array + pad_write_array \
+					+"( memcpy(&"+array_str+"["+str(signal.start_byte) \
+					+ "],&values, CAN_" + network.id_string \
+					+ "_MSG_DLEN_" + message.name + ")" )
 		else:
 			pass
 
@@ -379,7 +436,7 @@ for message in messages_layouts:
 							macro_str += macro_str_write + ";"
 
 						if i < (len(signal_access.pieces) - 1):
-							macro_str += " \\\n\t\t\t\t\t\t\t\t\t"
+							macro_str += " \\\n" + cg.gen_padding(max_len+8)
 					else:
 						macro_str = macro_str_assign + " = "
 						if macro_str_clear != "":
@@ -391,16 +448,11 @@ for message in messages_layouts:
 				# TODO: logging system for this file
 				log_warn("Invalid signal '%s' access structure" & signal.name)
 
-			cog.outl("#define CAN_"+network.id_string+"_write_" \
-					+ signal.name + "("+array_str+","+data_in_str+")\t\t" + macro_str)
-			cog.outl("#define CAN_"+network.id_string+"_update_" \
-					+ signal.name + "(msg, data)\t\t" \
-					+ "CAN_"+network.id_string+"_write_" \
-					+ signal.name + "(msg.all,data)")
-			cog.outl("#define CAN_"+network.id_string+"_update_direct_" \
-					+ signal.name + "(data)\t\t" \
-					+ "CAN_"+network.id_string+"_write_" \
-					+ signal.name + "(unified_buffer,data)")
+			cog.outl("#define " + def_write + pad_write + macro_str)
+			cog.outl("#define " + def_update + pad_update \
+				+ def_write.replace("("+array_str+",","("+array_str+".all,"))
+			cog.outl("#define " + def_update_direct + pad_update_direct \
+				+ def_write.replace("("+array_str+",","(unified_buffer"))
 		
 		cog.outl("")
 ]]] */
@@ -408,7 +460,6 @@ for message in messages_layouts:
 
 /* [[[cog
 # Print include guards
-cog.outl("#endif /"+chr(42)+" COMGEN_CAN_"+network.id_string.upper() \
-		+"_NETWORK_H" + chr(42) + "/")
+cog.outl("#endif /"+chr(42)+" "+ guard_symbol + " "+chr(42) + "/")
 ]]] */
 // [[[end]]]
