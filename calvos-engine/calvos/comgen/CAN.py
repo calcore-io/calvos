@@ -1860,27 +1860,6 @@ class Network_CAN:
         print("INFO: XML generation done")
         #TODO: save XML to file if output_file is different than None
 
-# class CogSources():
-#     """ Models the set of Cog source files for code generation of a given module. """
-#     def __init__(self, module, gen_path):
-#         self.module = module
-#         
-#         self.sources = {} # {source_id : CogSrc object}
-#         
-#     class CogSrc():
-#         def __init__(self, source_id, cog_in_file, cog_out_file = None, is_header = False, relations):
-#             self.source_id = source_id
-#             self.cog_in_file = cog_in_file
-#             # cog_out_file equal to None means that out file is same than cog_in_file
-#             self.cog_out_file = cog_out_file
-#             self.is_header = is_header
-#             
-#             self.relations = [] # List of CogSourceRelation objects
-#             
-#     class CogSrcRel():
-#         def __init__(self, module="", source_id=""):
-#             self.module = module
-#             self.source_id = source_id
     #===============================================================================================        
     def update_cog_sources(self):
         """ Updates the list of cog file(s) for this module. """
@@ -1971,20 +1950,6 @@ class Network_CAN:
         # ----------------------------  
         input_file = str(input_file) 
         comgen_CAN_cog_input_file = gen_path / input_file
-        
-#         #remove "cog_" prefix to output file names
-#         if input_file.find("cog_") == 0:  
-#             cog_output_file = input_file[4:]  
-#         #substitute network name if found (NWID)
-#         if network_name is not None:
-#             cog_output_file = cog_output_file.replace('NWID',network_name)
-#         else:
-#             cog_output_file = cog_output_file.replace('NWID_','')
-#         #substitute node name if found (NODENAME)
-#         if node_name is not None:
-#             cog_output_file = cog_output_file.replace('NODENAME','node')
-#         else:
-#             cog_output_file = cog_output_file.replace('NODENAME_','')
                 
         # Set output file with path
         comgen_CAN_cog_output_file = out_dir / cog_output_file
@@ -2045,23 +2010,9 @@ class Network_CAN:
                 print('Failed to create pickle file %s. Reason: %s' \
                       % (cog_serialized_network_file, e))
         
-#         #----------------------------------------------------------------------
-#         # Generate signal file(s)
-#         #----------------------------------------------------------------------
-#         cog_file_name = "cog_comgen_CAN_NWID_network.h"
-#         self.cog_generator(cog_file_name, network_name, None, out_dir, \
-#                              work_dir, gen_path, cog_serialized_network_file)
-#         
-#         #----------------------------------------------------------------------
-#         # Generate CAN Core file(s)
-#         #----------------------------------------------------------------------
-#         cog_file_name = "cog_comgen_CAN_NWID_core.h"
-#         self.cog_generator(cog_file_name, network_name, None, out_dir, \
-#                              work_dir, gen_path, cog_serialized_network_file)
-#         
-#         cog_file_name = "cog_comgen_CAN_NWID_core.c"
-#         self.cog_generator(cog_file_name, network_name, None, out_dir, \
-#                              work_dir, gen_path, cog_serialized_network_file)
+        #----------------------------------------------------------------------
+        # Generate source file(s)
+        #----------------------------------------------------------------------
         for cog_source in cog_sources.sources.values():
             # Generate includes variable if needed
             variables = None
