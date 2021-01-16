@@ -42,6 +42,8 @@ def log_critical(message):
 #==============================================================================
 # Functions, data for code generation
 #==============================================================================
+calvos_path = None
+calvos_project_path = None
 
 MCU_word_size = 32
 Compiler_max_size = 64
@@ -845,6 +847,32 @@ class GenParams():
             return_data = self.p[name].get_len()
         
         return return_data
+
+class CogSources():
+    """ Models the set of Cog source files for code generation of a given module. """
+    def __init__(self, module, **kwargs):
+        self.module = module
+        self.obj = kwargs.get('obj', None)
+        self.var = kwargs.get('var', None)
+        self.gen_path = kwargs.get('gen_path', None)
+        
+        self.sources = {} # {source_id : CogSrc object}
+        
+    class CogSrc():
+        def __init__(self, source_id, cog_in_file, cog_out_file = None, is_header = False, relations = None):
+            self.source_id = source_id
+            self.cog_in_file = cog_in_file
+            # cog_out_file equal to None means that out file is same than cog_in_file
+            self.cog_out_file = cog_out_file
+            self.is_header = is_header
+            self.additional_info = []
+            
+            self.relations = [] # List of CogSrcRel objects
+            
+    class CogSrcRel():
+        def __init__(self, module="", source_id=""):
+            self.module = module
+            self.source_id = source_id
 
 #===================================================================================================
 def cog_generator(input_file, out_dir, work_dir, gen_path, variables = None):

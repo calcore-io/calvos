@@ -18,6 +18,9 @@ from lxml import etree as ET
 import xml.dom.minidom
 import pickle as pic
 import cogapp as cog
+import pathlib as pl
+import importlib
+import json
 
 import calvos.common.codegen as cg
 import calvos.common.logsys as lg
@@ -80,6 +83,9 @@ BAF = 3
 # Constants for indicating read or write. Used by function get_signal_abstract_read
 READ = 0
 WRITE = 1
+
+# Cog sources to use for code generation of this module
+cog_sources = cg.CogSources("comgen.CAN")
     
 #===================================================================================================
 class Network_CAN:
@@ -148,7 +154,7 @@ class Network_CAN:
         
         # Last input file used to fill-out data for this object
         self.input_file = None
-        
+           
     #===============================================================================================
     @staticmethod
     def split_signal(abs_start_bit, abs_end_bit, \
@@ -1840,7 +1846,7 @@ class Network_CAN:
             
         XML_root.append(XML_level_1)
         
-        print("Generating XML...")
+        print("INFO: Generating CAN Network XML...")
         XML_string = ET.tostring(XML_root)
         
         XML_string = xml.dom.minidom.parseString(XML_string)
@@ -1851,23 +1857,98 @@ class Network_CAN:
         else:
             myfile = open(output_file, "w")
             myfile.write(XML_string)
+        print("INFO: XML generation done")
         #TODO: save XML to file if output_file is different than None
 
-    #===============================================================================================    
-    def cog_generator(self, input_file, network_name, node_name, \
-                             out_dir, work_dir, gen_path, pickle, \
-                             variables = None):
-        """ Invoke cog generator for the specified file.
-        """
-        # Setup input and output files
-        # ----------------------------  
-        input_file = str(input_file) 
-        comgen_CAN_cog_input_file = gen_path / input_file
+# class CogSources():
+#     """ Models the set of Cog source files for code generation of a given module. """
+#     def __init__(self, module, gen_path):
+#         self.module = module
+#         
+#         self.sources = {} # {source_id : CogSrc object}
+#         
+#     class CogSrc():
+#         def __init__(self, source_id, cog_in_file, cog_out_file = None, is_header = False, relations):
+#             self.source_id = source_id
+#             self.cog_in_file = cog_in_file
+#             # cog_out_file equal to None means that out file is same than cog_in_file
+#             self.cog_out_file = cog_out_file
+#             self.is_header = is_header
+#             
+#             self.relations = [] # List of CogSourceRelation objects
+#             
+#     class CogSrcRel():
+#         def __init__(self, module="", source_id=""):
+#             self.module = module
+#             self.source_id = source_id
+    #===============================================================================================        
+    def update_cog_sources(self):
+        """ Updates the list of cog file(s) for this module. """
         
+        global cog_sources
+        # Get location of the cog files      
+        gen_path_lst = __name__.split(".")
+        module_name = gen_path_lst[-1]
+        #gen_path_val = calvos_path
+        gen_path_val = pl.Path()
+        for i, element in enumerate(gen_path_lst):
+            if i > 0 and i < len(gen_path_lst) - 1:
+                gen_path_val = gen_path_val / element
+        gen_path_val = gen_path_val / "gen" / module_name
+        
+        cog_sources = cg.CogSources(module_name, gen_path = gen_path_val)
+        
+        self.add_cog_source("network_h", "cog_comgen_CAN_NWID_network.h", True)
+        self.add_cog_source("core_h", "cog_comgen_CAN_NWID_core.h", True)
+        self.add_cog_source("core", "cog_comgen_CAN_NWID_core.c", False, \
+                            [["comgen.CAN", "network_h"],\
+                             ["comgen.CAN", "core_h"]])
+
+    #===============================================================================================    
+    def get_cog_includes(self, source_id): 
+        """ Returns a list of strings to be used with #include 'string'. """
+        
+        global cog_sources 
+        return_str = []
+        if source_id in cog_sources.sources:
+            for relation in cog_sources.sources[source_id].relations:
+                target_module = importlib.import_module("calvos."+relation.module)
+                target_srcs = target_module.cog_sources
+                if relation.source_id in target_srcs.sources:
+                    return_str.append(target_srcs.sources[relation.source_id].cog_out_file)
+                else:
+                    log_warn("Include file id '%s' of module '%s' not found." \
+                             % (source_id, "calvos."+relation.module))
+        else:
+            log_warn("Include file id '%s' for CAN module not defined.")
+        
+        return return_str
+
+    #===============================================================================================    
+    def add_cog_source(self, cog_id, cog_in_file, is_header = False, relations = None):
+        """ Adds a cog source to this network object's cog files list. 
+        
+            relations should be a list of lists [[module2, source_id1], [modul2, source_id2], ...]
+        """ 
+        
+        global cog_sources
+
+        cog_out_file = self.get_cog_out_name(cog_in_file, self.id_string)
+        cog_sources.sources.update({cog_id: cg.CogSources.CogSrc(\
+                cog_id,cog_in_file, cog_out_file, is_header)})
+        
+        if relations is not None:
+            for relation in relations:
+                relation_obj = cg.CogSources.CogSrcRel(relation[0],relation[1])
+                cog_sources.sources[cog_id].relations.append(relation_obj)
+    
+    #===============================================================================================    
+    def get_cog_out_name(self, cog_in_file, network_name = None, node_name = None): 
+        """ Generates cog output file name as per a given input file name. """
         #remove "cog_" prefix to output file names
-        if input_file.find("cog_") == 0:  
-            cog_output_file = input_file[4:]  
-        #substitute network name if found (NWID)
+        if cog_in_file.find("cog_") == 0:  
+            cog_output_file = cog_in_file[4:]  
+        #substitute network id if found (NWID)
         if network_name is not None:
             cog_output_file = cog_output_file.replace('NWID',network_name)
         else:
@@ -1877,6 +1958,33 @@ class Network_CAN:
             cog_output_file = cog_output_file.replace('NODENAME','node')
         else:
             cog_output_file = cog_output_file.replace('NODENAME_','')
+        
+        return cog_output_file
+        
+    #===============================================================================================    
+    def cog_generator(self, input_file, cog_output_file, \
+                             out_dir, work_dir, gen_path, pickle, \
+                             variables = None):
+        """ Invoke cog generator for the specified file.
+        """
+        # Setup input and output files
+        # ----------------------------  
+        input_file = str(input_file) 
+        comgen_CAN_cog_input_file = gen_path / input_file
+        
+#         #remove "cog_" prefix to output file names
+#         if input_file.find("cog_") == 0:  
+#             cog_output_file = input_file[4:]  
+#         #substitute network name if found (NWID)
+#         if network_name is not None:
+#             cog_output_file = cog_output_file.replace('NWID',network_name)
+#         else:
+#             cog_output_file = cog_output_file.replace('NWID_','')
+#         #substitute node name if found (NODENAME)
+#         if node_name is not None:
+#             cog_output_file = cog_output_file.replace('NODENAME','node')
+#         else:
+#             cog_output_file = cog_output_file.replace('NODENAME_','')
                 
         # Set output file with path
         comgen_CAN_cog_output_file = out_dir / cog_output_file
@@ -1888,16 +1996,19 @@ class Network_CAN:
                    '-D', 'input_worksheet=' + self.metadata_gen_source_file, \
                    '-D', 'project_working_dir=' + str(work_dir), \
                    '-D', 'cog_pickle_file=' + str(pickle), \
-                   '-D', 'node_name=' + str(node_name), \
-                   '-D', 'cog_output_file=' + str(cog_output_file), \
-                   '-o', str(comgen_CAN_cog_output_file), \
-                   str(comgen_CAN_cog_input_file) ]
+                   '-D', 'cog_output_file=' + str(cog_output_file)]
         
         # Append additional variables if required
         if variables is not None:
-            for variable in variables:
+            for variable, variable_val in variables.items():
+                variable_str = str(variable) + "=" +str(variable_val)
                 cog_arguments.append('-D')
-                cog_arguments.append(str(variable))
+                cog_arguments.append(variable_str)
+
+        cog_arguments.append('-o')
+        cog_arguments.append(str(comgen_CAN_cog_output_file))
+        cog_arguments.append(str(comgen_CAN_cog_input_file))
+        
                 
         # Call cogapp engine
         cog_return = cog.Cog().main(cog_arguments)
@@ -1915,6 +2026,8 @@ class Network_CAN:
         """ Generates C code for the given network.
         """
 
+        global cog_sources
+        
         if single_network is True:
             network_name = None
         else:
@@ -1932,19 +2045,34 @@ class Network_CAN:
                 print('Failed to create pickle file %s. Reason: %s' \
                       % (cog_serialized_network_file, e))
         
-        #----------------------------------------------------------------------
-        # Generate signal file(s)
-        #----------------------------------------------------------------------
-        cog_file_name = "cog_comgen_CAN_NWID_network.h"
-        self.cog_generator(cog_file_name, network_name, None, out_dir, \
-                             work_dir, gen_path, cog_serialized_network_file)
-        
-        #----------------------------------------------------------------------
-        # Generate Messages file(s)
-        #----------------------------------------------------------------------
-        cog_file_name = "cog_comgen_CAN_NWID_messages.h"
-        self.cog_generator(cog_file_name, network_name, None, out_dir, \
-                             work_dir, gen_path, cog_serialized_network_file)
+#         #----------------------------------------------------------------------
+#         # Generate signal file(s)
+#         #----------------------------------------------------------------------
+#         cog_file_name = "cog_comgen_CAN_NWID_network.h"
+#         self.cog_generator(cog_file_name, network_name, None, out_dir, \
+#                              work_dir, gen_path, cog_serialized_network_file)
+#         
+#         #----------------------------------------------------------------------
+#         # Generate CAN Core file(s)
+#         #----------------------------------------------------------------------
+#         cog_file_name = "cog_comgen_CAN_NWID_core.h"
+#         self.cog_generator(cog_file_name, network_name, None, out_dir, \
+#                              work_dir, gen_path, cog_serialized_network_file)
+#         
+#         cog_file_name = "cog_comgen_CAN_NWID_core.c"
+#         self.cog_generator(cog_file_name, network_name, None, out_dir, \
+#                              work_dir, gen_path, cog_serialized_network_file)
+        for cog_source in cog_sources.sources.values():
+            # Generate includes variable if needed
+            variables = None
+            includes_lst = self.get_cog_includes(cog_source.source_id)
+            if len(includes_lst) > 0:
+                variables = {}
+                include_var = json.dumps(includes_lst)
+                variables.update({"include_var" : include_var})
+                 
+            self.cog_generator(cog_source.cog_in_file, cog_source.cog_out_file, out_dir, \
+                              work_dir, gen_path, cog_serialized_network_file, variables)
         
         # Delete pickle file
         # ------------------
@@ -2397,6 +2525,12 @@ def load_input(input_file, input_type, params):
     try:
         return_object = Network_CAN() 
         return_object.parse_spreadsheet_ods(input_file)
+        
+        try:
+            return_object.update_cog_sources()
+        except Exception as e:
+            log_error('Failed to update cog sources. Reason: %s' % (e))
+        
         input_file_name = input_file.stem
     except Exception as e:
         return_object = None
