@@ -166,7 +166,7 @@ USAGE
             if file_exists(project_file):
                 # Extract project path
                 project_path = project_file.parent.resolve()
-                print("Project path: ", project_path)
+                print("INFO: Project path: ", project_path)
             else:
                 arguments_OK = False
                 print("Error: file: ", project_file, " doesn't exists.")
@@ -218,6 +218,10 @@ USAGE
             
             
             import calvos.common.codegen as cg
+            # Set global variables for code generation
+            cg.calvos_path = calvos_path
+            cg.calvos_project_path = project_path
+            
             #==============================================================================
             # Setup needed calvOS project folders
             #==============================================================================
