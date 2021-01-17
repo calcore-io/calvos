@@ -1,5 +1,6 @@
 
 __pycache__/
+calvos-engine/calvos/doc/doxygen/
 calvos-engine/calvos/rwsd.py
 calvos-engine/calvos/test.py
 project_example/log.log
