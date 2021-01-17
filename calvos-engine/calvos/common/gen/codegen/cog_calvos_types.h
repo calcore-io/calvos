@@ -46,6 +46,9 @@ cog.outl(C_gen_info("File Name"))
 #ifndef CALVOS_TYPES_H
 #define CALVOS_TYPES_H
 
+#define kTrue 	1u
+#define kFalse 	0u
+
 /* [[[cog
 
 # Definition of basic data types
@@ -63,5 +66,125 @@ for key, data_type in cg.dt_compiler.items():
 
  ]]] */
 // [[[end]]]
+
+typedef uint32_t intNative_t;
+
+/* Error symbols */
+typedef enum{
+	kNoError = 0,
+	kError
+}CalvosError;
+
+typedef void (*Callback)(void);
+
+typedef struct{
+	uint32_t value;
+	NodeUint32 * prev;
+	NodeUint32 * next;
+}NodeUint32;
+
+typedef struct{
+	uint8_t value;
+	NodeUint8 * prev;
+	NodeUint8 * next;
+}NodeUint8;
+
+typedef struct{
+	uint16_t value;
+	NodeUint16 * prev;
+	NodeUint16 * next;
+}NodeUint16;
+
+typedef struct{
+	uint64_t value;
+	NodeUint64 * prev;
+	NodeUint64 * next;
+}NodeUint64;
+
+typedef struct{
+	void * value;
+	NodeVoidPtr * prev;
+	NodeVoidPtr * next;
+}NodeVoidPtr;
+
+/* Number of bits depend on target machine/compiler */
+typedef union{
+	struct{
+		flag0 : 1;
+		flag1 : 1;
+		flag2 : 1;
+		flag3 : 1;
+		flag4 : 1;
+		flag5 : 1;
+		flag6 : 1;
+		flag7 : 1;
+		flag8 : 1;
+		flag9 : 1;
+		flag10 : 1;
+		flag11 : 1;
+		flag12 : 1;
+		flag13 : 1;
+		flag14 : 1;
+		flag15 : 1;
+		flag16 : 1;
+		flag17 : 1;
+		flag18 : 1;
+		flag19 : 1;
+		flag20 : 1;
+		flag21 : 1;
+		flag22 : 1;
+		flag23 : 1;
+		flag24 : 1;
+		flag25 : 1;
+		flag26 : 1;
+		flag27 : 1;
+		flag28 : 1;
+		flag29 : 1;
+		flag30 : 1;
+		flag31 : 1;
+	}flags;
+	uint32_t all;
+}FlagsNative;
+
+typedef union{
+	struct{
+		flag0 : 1;
+		flag1 : 1;
+		flag2 : 1;
+		flag3 : 1;
+		flag4 : 1;
+		flag5 : 1;
+		flag6 : 1;
+		flag7 : 1;
+	}flags;
+	uint8_t all;
+}Flags8;
+
+typedef union{
+	struct{
+		flag0 : 1;
+		flag1 : 1;
+		flag2 : 1;
+		flag3 : 1;
+		flag4 : 1;
+		flag5 : 1;
+		flag6 : 1;
+		flag7 : 1;
+		flag8 : 1;
+		flag9 : 1;
+		flag10 : 1;
+		flag11 : 1;
+		flag12 : 1;
+		flag13 : 1;
+		flag14 : 1;
+		flag15 : 1;
+	}flags;
+	uint16_t all;
+}Flags16;
+
+#define kAllOnes8 	0xFFu
+#define kAllOnes16 	0xFFFFu
+#define kAllOnes32 	0xFFFFFFFFul
+#define kAllOnes64 	0xFFFFFFFFFFFFFFFFull
 
 #endif /* CALVOS_TYPES_H */

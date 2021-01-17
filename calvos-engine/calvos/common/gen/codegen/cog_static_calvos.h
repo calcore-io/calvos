@@ -37,4 +37,7 @@ cog.outl(cg.C_license())
 
 #include "calvos_types.h"
 
+/* Error symbols */
+
+
 #endif /* CALVOS_H */

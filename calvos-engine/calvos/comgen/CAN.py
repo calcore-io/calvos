@@ -154,6 +154,8 @@ class Network_CAN:
         
         # Last input file used to fill-out data for this object
         self.input_file = None
+        
+        self.gen_params = {}
            
     #===============================================================================================
     @staticmethod
@@ -2046,6 +2048,17 @@ class Network_CAN:
             log_warn(("Invalid input. No C-Code will be generated for " 
                           + "network: " + self.name + "."))
         
+    #=============================================================================================== 
+    def load_default_gen_params(self):
+        """ Load the default code generation parameters. """
+        
+        # TODO: Make this load from an xml
+        self.gen_params.update({"always_files_full_name": False})
+        self.gen_params.update({"msg_search_max_slot_size": 32})
+        self.gen_params.update({"msg_search_split_by_time": False})
+        self.gen_params.update({"msg_rx_process_single_task": False})
+        self.gen_params.update({"msg_tx_process_single_task": False})
+        
     #===============================================================================================    
     def parse_spreadsheet_ods(self,input_file):
         """ parses an spreadsheet (ods format) to generate this network. """
@@ -2474,9 +2487,9 @@ def load_input(input_file, input_type, params):
     """
     del input_type, params # Unused parameters
     try:
-        return_object = Network_CAN() 
+        return_object = Network_CAN()
+        return_object.load_default_gen_params()
         return_object.parse_spreadsheet_ods(input_file)
-        
         try:
             return_object.update_cog_sources()
         except Exception as e:

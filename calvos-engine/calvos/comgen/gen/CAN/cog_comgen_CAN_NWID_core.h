@@ -68,7 +68,76 @@ cog.outl("#define "+guard_symbol)
 // [[[end]]]
 
 #include "calvos.h"
+/* [[[cog
+# Generate include statements if required
 
+if 'include_var' in locals():
+	includes = json.loads(include_var)
+	for include in includes:
+		cog.outl("#include \"" + include + "\"")
+ ]]] */
+// [[[end]]]
+
+/* Number of Node messages */
+#define kCAN_CT_nOfMsgs		5u
+
+/* TX Types definitions */
+#define kTxCyclic			0u
+#define kTxCyclicSpontan	1u
+#define kTxBAF				2u
+#define kTxSpontan			3u
+
+/* Message direction definitions */
+#define kDirRX				0u
+#define kDirTX				1u
+
+/* Message direction definitions */
+typedef enum{
+	kMsgNotFound = 0,
+	kMsgFound
+}CANmsgFound;
+
+/* Types for CAN messages static data */
+typedef struct{
+	uint8_t id_is_extended : 1;
+	uint8_t len : 4;
+}CANrxMsgStaticFields;
+
+typedef struct{
+	uint32_t id;
+	uint32_t timeout;
+	Callback rx_callback;
+	Callback timeout_callback;
+	CANrxMsgStaticFields data;
+}CANrxMsgStaticData;
+
+typedef struct{
+	uint8_t id_is_extended : 1;
+	uint8_t len : 4;
+	uint8_t tx_type : 2;
+	uint8_t is_BAF : 1;
+}CANtxMsgStaticFields;
+
+typedef struct{
+	uint32_t id;
+	uint32_t period;
+	uint32_t BAF_period;
+	Callback tx_callback;
+	CANtxMsgStaticFields data;
+}CANtxMsgStaticData;
+
+/* Types for CAN messages dynamic data */
+typedef struct{
+	NodeUint32 timeout_queue;
+	FlagsNative available;
+	intNative_t timedout;
+}CANrxMsgDynamicData;
+
+typedef union{
+	NodeUint32 period_queue;
+	FlagsNative transmitted;
+	intNative_t BAF_active;
+}CANtxMsgDynamicFields;
 
 /* [[[cog
 # Print include guards
