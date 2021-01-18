@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grl:ComponentDefinition xmlns:grl="common.general"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="common.general ../common/schemas/_component_defs.xsd "
+	module="comgen.CAN" instances="0,">
+	<grl:Title>CAN Network</grl:Title>
+	<grl:Desc>Models a network for protocol Controller Area Network (CAN).</grl:Desc>
+	<grl:ParamsDefinitions>
+		<grl:Categories>
+			<grl:Category id="catCAN_general">
+				<grl:Title>General</grl:Title>
+			</grl:Category>
+			<grl:Category id="catCAN_network">
+				<grl:Title>Network</grl:Title>
+			</grl:Category>
+		</grl:Categories>
+		<grl:ParamDefinition type="list" id="CAN_gen_nodes"
+			category="catCAN_network" subtype="str">
+			<grl:Title>Nodes to generate</grl:Title>
+			<grl:Desc>List of nodes to generate C-code for.</grl:Desc>
+			<grl:Default>'[]'</grl:Default>
+		</grl:ParamDefinition>
+		<grl:ParamDefinition type="boolean" id="CAN_gen_file_full_names"
+			category="catCAN_general">
+			<grl:Title>Generate files full name</grl:Title>
+			<grl:Desc>
+				If set to "True" always uses full name for CAN generated
+				C-code. Full name includes network and node name in the
+				file in most of the cases. If set to "False"
+				automatically determine if full names are required
+				(generating more than one node in a given network or
+				multiple networks) or not.
+			</grl:Desc>
+			<grl:Default>"False"</grl:Default>
+		</grl:ParamDefinition></grl:ParamsDefinitions>
+</grl:ComponentDefinition>

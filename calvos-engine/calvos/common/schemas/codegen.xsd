@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="common.codegen" elementFormDefault="qualified" xmlns="http://www.w3.org/2001/XMLSchema" xmlns:cg="common.codegen">
+
+    <simpleType name="t_packStructPos">
+    	<restriction base="string">
+    		<enumeration value="before_typedef"></enumeration>
+    		<enumeration value="after_typedef"></enumeration>
+    		<enumeration value="pragma_prev"></enumeration>
+    		<enumeration value="pragma_after"></enumeration>
+    	</restriction>
+    </simpleType>
+</schema>

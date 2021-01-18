@@ -26,11 +26,12 @@ d) 3		-- Exactly 3 instances allowed (no more, no less)</xs:documentation>
 
 
     <xs:simpleType name="t_basicType">
-        <xs:annotation>
-        	<xs:documentation>Parameter type.
-Based on python basic data types.</xs:documentation>
-        </xs:annotation>
-        <xs:restriction base="xs:string">
+    	<xs:annotation>
+    		<xs:documentation>
+    			Parameter type. Based on python basic data types.
+    		</xs:documentation>
+    	</xs:annotation>
+    	<xs:restriction base="xs:string">
     		<xs:enumeration value="int"></xs:enumeration>
     		<xs:enumeration value="float"></xs:enumeration>
     		<xs:enumeration value="complex"></xs:enumeration>
@@ -39,6 +40,8 @@ Based on python basic data types.</xs:documentation>
     		<xs:enumeration value="tuple"></xs:enumeration>
     		<xs:enumeration value="boolean"></xs:enumeration>
     		<xs:enumeration value="dict"></xs:enumeration>
+    		<xs:enumeration value="ref"></xs:enumeration>
+    		<xs:enumeration value="cid"></xs:enumeration>
     	</xs:restriction>
     </xs:simpleType>
 
@@ -49,17 +52,21 @@ Based on python basic data types.</xs:documentation>
     		</xs:documentation>
     	</xs:annotation>
     	<xs:sequence>
-    		<xs:element name="Title" type="grl:t_title" minOccurs="1" maxOccurs="1">
+    		<xs:element name="Title" type="grl:t_title" minOccurs="1"
+    			maxOccurs="1">
     		</xs:element>
-    		<xs:element name="Desc" type="xs:string" minOccurs="1" maxOccurs="1">
+    		<xs:element name="Desc" type="xs:string" minOccurs="1"
+    			maxOccurs="1">
     			<xs:annotation>
     				<xs:documentation>
     					Description. Can use markdown syntax.
     				</xs:documentation>
     			</xs:annotation>
     		</xs:element>
-    		<xs:element name="Default" type="xs:string" minOccurs="0" maxOccurs="1">
+    		<xs:element name="Default" type="xs:string" minOccurs="0"
+    			maxOccurs="1">
     		</xs:element>
+    		<xs:element name="Reference" type="grl:t_reference" maxOccurs="1" minOccurs="0"></xs:element>
     	</xs:sequence>
     	<xs:attribute name="id" type="grl:t_cIdentifier" use="required">
     	</xs:attribute>
@@ -112,12 +119,17 @@ Based on python basic data types.</xs:documentation>
     		</xs:documentation>
     	</xs:annotation>
     	<xs:sequence>
-    		<xs:element name="Title" type="grl:t_title" maxOccurs="1" minOccurs="1">
+    		<xs:element name="Title" type="grl:t_title" maxOccurs="1"
+    			minOccurs="1">
     		</xs:element>
-    		<xs:element name="Desc" type="xs:string" maxOccurs="1" minOccurs="0"></xs:element>
+    		<xs:element name="Desc" type="xs:string" maxOccurs="1"
+    			minOccurs="0">
+    		</xs:element>
     	</xs:sequence>
-    	<xs:attribute name="id" type="grl:t_cIdentifier" use="required">
+    	<xs:attribute name="id" type="grl:t_cIdentifier"
+    		use="required">
     	</xs:attribute>
+    	<xs:attribute name="is_subcategory_of" type="grl:t_cIdentifier" use="optional"></xs:attribute>
     </xs:complexType>
 
     <xs:complexType name="t_commonMetadata">
@@ -157,8 +169,8 @@ Based on python basic data types.</xs:documentation>
     		</xs:element>
     		<xs:element name="ParamsDefinitions" type="grl:t_paramsDefs" maxOccurs="1" minOccurs="0"></xs:element>
     	</xs:sequence>
-    	<xs:attribute name="module" type="grl:t_pyModule"></xs:attribute>
-    	<xs:attribute name="instances" type="grl:t_instances"></xs:attribute>
+    	<xs:attribute name="module" type="grl:t_pyModule" use="required"></xs:attribute>
+    	<xs:attribute name="instances" type="grl:t_instances" use="required"></xs:attribute>
     </xs:complexType>
 
     <xs:complexType name="t_componentsDefs">
@@ -171,5 +183,23 @@ Based on python basic data types.</xs:documentation>
     	<xs:sequence>
     		<xs:element name="Category" type="grl:t_category" maxOccurs="unbounded" minOccurs="1"></xs:element>
     	</xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="t_reference">
+    	<xs:annotation>
+    		<xs:documentation>
+    			Type for referencing a parameter.
+    		</xs:documentation>
+    	</xs:annotation>
+    	<xs:attribute name="target_component" type="grl:t_pyModule"
+    		use="required">
+    		<xs:annotation>
+    			<xs:documentation>
+    				Name of the target component (target python module
+    				defining the referred parameter).
+    			</xs:documentation>
+    		</xs:annotation>
+    	</xs:attribute>
+    	<xs:attribute name="target_param_id" type="grl:t_cIdentifier" use="required"></xs:attribute>
     </xs:complexType>
 </xs:schema>
