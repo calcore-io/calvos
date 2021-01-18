@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="common.general"
+	elementFormDefault="qualified" xmlns="http://www.w3.org/2001/XMLSchema"
+	xmlns:grl="common.general">
+	<include schemaLocation="_general_defs.xsd"></include>
+
+    <element name="ComponentDefinition" type="grl:t_componentDef"></element>
+</schema>

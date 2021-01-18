@@ -6,3 +6,5 @@ project_example/log.log
 project_example/out/
 .~lock*
 ~$*
+*.md.html
+doxygen/
