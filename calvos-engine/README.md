@@ -12,6 +12,8 @@ Argument |  Usage
   -l LOG_LEVEL, --log LOG_LEVEL | Logging level LOG_LEVEL: 0 - Debug, 1 - Info, 2 - Warning, 3 - Error. Default is 1 - Info.
   -V, --version           | show program's version number and exit
   -v, --ver               | show program's version number and exit
+  
+_Note:_ an example project is located in [calvos/project_example/project.xml](../project_example/project.xml). The user inputs for that example project are in [calvos/project_example/usr_in](../project_example/usr_in/) folder (set of libreoffice -ods- files).
 
 ## Engine Modules
 Following modules are currently defined within calvos engine.
