@@ -8,7 +8,8 @@ Module Name | Python module | Description | prefix
 ------------|---------------|-------------|------------
 CAN	|	comgen.CAN	| Implements a Controller Area Network (CAN) interaction layer. | can
 project	|	common.project	| Implements all the handling of a calvos project. | proj
-general	|	common.general	| Defines general symbols to use across calvos engine modules. | grl
+logsys	|	common.logsys	| Logging system to use across all calvos engine modules. Produces a .log file with info/warning/error messages during the processing of a project. | proj
+general	|	common.general	| Defines general symbols to use across all calvos engine modules. | grl
 codegen |	common.codegen	| General utilities for the C-code generation. | cg
 time	| utils.time	| Implement utilities for time management. | tmr
 
