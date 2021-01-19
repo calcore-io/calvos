@@ -13,7 +13,7 @@ Argument |  Usage
   -V, --version           | show program's version number and exit
   -v, --ver               | show program's version number and exit
   
-_Note:_ an example project is located in [calvos/project_example/project.xml](../project_example/project.xml). The user inputs for that example project are in [calvos/project_example/usr_in](../project_example/usr_in/) folder (set of libreoffice -ods- files).
+_Note:_ an project example is located in [calvos/project_example/project.xml](../project_example/project.xml). The user inputs for that project example are in [calvos/project_example/usr_in](../project_example/usr_in/) folder (set of libreoffice -ods- files).
 
 ## Engine Modules
 Following modules are currently defined within calvos engine.
@@ -25,7 +25,7 @@ project	|	common.project	| Implements all the handling of a calvos project. | pr
 logsys	|	common.logsys	| Logging system to use across all calvos engine modules. Produces a .log file with info/warning/error messages generated during the processing of a project. | log
 general	|	common.general	| Defines general symbols to use across all calvos engine modules. | grl
 codegen |	common.codegen	| General utilities for the C-code generation. | cg
-time	| utils.time	| Implement utilities for time management. | tmr
+time	| utils.time	| Implements utilities for time management. | tmr
 
 _Note:_ Prefixes are used as namespaces for the XML/XSD and when importing the modules in python.
 
@@ -33,7 +33,7 @@ _Note:_ Prefixes are used as namespaces for the XML/XSD and when importing the m
 ### Python
 Calvos engine requires python >= 3.7.
 Following python modules are also required:
-- cogapp
+- **cogapp**
 - lxml
 - pyexcel
 - pyexcel-ods
@@ -43,3 +43,6 @@ Suggested development environment is Eclipse. Will need at least following plugi
 - PyDev: Python IDE for Eclipse
 - CDT: Eclipse Embedded C/C++
 - Eclipse XML Editors and Tools
+
+### LibreOffice
+User input files are created with LibreOffice Calc so it is recommended to edit them with it. However, it should be possible to also edit those files in MS Excel.
