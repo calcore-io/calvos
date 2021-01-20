@@ -909,7 +909,7 @@ def cog_generator(input_file, out_dir, work_dir, gen_path, variables = None):
         log_info("Code generation successful: '%s'" % (str(out_dir / cog_output_file_str)))
         print("INFO: code generation successful: ",cog_output_file)
     else:
-        log_warn("Code generation error for '%s'. Cogapp return code: '%s'" \
+        log_error("Code generation error for '%s'. Cogapp return code: '%s'" \
                  % ((str(out_dir / cog_output_file_str)), str(cog_return)))
         print("INFO: code generation return value: ",cog_return)
 

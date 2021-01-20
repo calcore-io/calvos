@@ -1983,7 +1983,7 @@ class Network_CAN:
             log_info("Code generation successful: '%s'" % comgen_CAN_cog_output_file)
             print("INFO: code generation successful: ",comgen_CAN_cog_output_file)
         else:
-            log_warn("Code generation error for '%s'. Cogapp return code: '%s'" \
+            log_error("Code generation error for '%s'. Cogapp return code: '%s'" \
                  % (comgen_CAN_cog_output_file, str(cog_return)))
             print("INFO: code generation return value: ",cog_return)
         
