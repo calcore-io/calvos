@@ -248,7 +248,7 @@ USAGE
             
             calvos_project.load_project()
             
-            calvos_project.process_project()
+            #calvos_project.process_project()
                      
             log.info("main","======= Finished calvOS project processing. =======")
             for counter_name, counts in log.counters.items():

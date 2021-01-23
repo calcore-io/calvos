@@ -1,36 +1,69 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<grl:ComponentDefinition xmlns:grl="common.general"
+<clv:ComponentDefinition xmlns:clv="calvos"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="common.general ../common/schemas/_component_defs.xsd "
+	xsi:schemaLocation="calvos ../common/schemas/_component_defs.xsd "
 	module="comgen.CAN" instances="0,">
-	<grl:Title>CAN Network</grl:Title>
-	<grl:Desc>Models a network for protocol Controller Area Network (CAN).</grl:Desc>
-	<grl:ParamsDefinitions>
-		<grl:Categories>
-			<grl:Category id="catCAN_general">
-				<grl:Title>General</grl:Title>
-			</grl:Category>
-			<grl:Category id="catCAN_network">
-				<grl:Title>Network</grl:Title>
-			</grl:Category>
-		</grl:Categories>
-		<grl:ParamDefinition type="list" id="CAN_gen_nodes"
+	<clv:Title>CAN Network</clv:Title>
+	<clv:Desc>Models a network for protocol Controller Area Network (CAN).</clv:Desc>
+	<clv:ParamsDefinitions>
+		<clv:Categories>
+			<clv:Category id="catCAN_general">
+				<clv:Title>General</clv:Title>
+			</clv:Category>
+			<clv:Category id="catCAN_network">
+				<clv:Title>Network</clv:Title>
+			</clv:Category>
+			<clv:Category id="catCAN_messages">
+				<clv:Title>Messages</clv:Title>
+			</clv:Category>
+		</clv:Categories>
+		<clv:ParamDefinition id="CAN_gen_nodes" type="list"
 			category="catCAN_network" subtype="str">
-			<grl:Title>Nodes to generate</grl:Title>
-			<grl:Desc>List of nodes to generate C-code for.</grl:Desc>
-			<grl:Default>'[]'</grl:Default>
-		</grl:ParamDefinition>
-		<grl:ParamDefinition type="boolean" id="CAN_gen_file_full_names"
+			<clv:Title>Nodes to generate</clv:Title>
+			<clv:Desc>List of nodes to generate C-code for.</clv:Desc>
+			<clv:Default>[]</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition id="CAN_gen_file_full_names" type="boolean"
 			category="catCAN_general">
-			<grl:Title>Generate files full name</grl:Title>
-			<grl:Desc>
+			<clv:Title>Generate files full name</clv:Title>
+			<clv:Desc>
 				If set to "True" always uses full name for CAN generated
 				C-code. Full name includes network and node name in the
 				file in most of the cases. If set to "False"
 				automatically determine if full names are required
 				(generating more than one node in a given network or
 				multiple networks) or not.
-			</grl:Desc>
-			<grl:Default>"False"</grl:Default>
-		</grl:ParamDefinition></grl:ParamsDefinitions>
-</grl:ComponentDefinition>
+			</clv:Desc>
+			<clv:Default>False</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="enum" id="CAN_msg_search_algorithm"
+			category="catCAN_general">
+			<clv:Title>Msg search algorithm</clv:Title>
+			<clv:Desc>Type of search algorithm to implement for processing RX can messages.</clv:Desc>
+			<clv:Default>auto</clv:Default>
+			<clv:Enumeration default="auto">auto, linear, search_tree, multi_search_tree, hash</clv:Enumeration>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="int"
+			id="CAN_msg_search_algorithm_param1" category="catCAN_general"
+			is_optional="true" is_advanced="true">
+			<clv:Title>Msg search algorithm - Parameter 1</clv:Title>
+			<clv:Desc>
+				Parameter 1 of the selected search algorithm.
+			</clv:Desc>
+			<clv:Default>32</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="int"
+			id="CAN_msg_search_algorithm_param2" category="catCAN_general"
+			is_optional="true" is_advanced="true">
+			<clv:Title>Msg search algorithm - Parameter 2</clv:Title>
+			<clv:Desc>
+				Parameter 2 of the selected search algorithm.
+			</clv:Desc>
+			<clv:Default>0</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="boolean" id="CAN_start_timeouts_at_init">
+			<clv:Title>Msgs timeout starts at init</clv:Title>
+			<clv:Desc>If set to true timeout of rx CAN messages will start counting down from init. If set to false, user will need to start the timeout manually.</clv:Desc>
+			<clv:Default>True</clv:Default>
+		</clv:ParamDefinition></clv:ParamsDefinitions>
+</clv:ComponentDefinition>

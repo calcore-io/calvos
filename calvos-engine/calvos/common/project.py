@@ -7,13 +7,16 @@ Module for managing a calvos project.
 @copyright:  2020 Carlos Calvillo. All rights reserved.
 @license:    GPL v3
 """
-
 __version__ = '0.1.0'
+from pickle import TRUE
+from calvos.common.codegen import calvos_path
 __date__ = '2020-11-12'
 __updated__ = '2020-11-12'
 
 import xml.etree.ElementTree as ET
+import pathlib as plib
 import importlib
+import json
 
 import calvos.common.codegen as cg
 import calvos.common.logsys as lg
@@ -214,35 +217,166 @@ class Project:
         pass
     
     #===============================================================================================
-    def load_component_definitions(self, XML_root):
-        """ Loads the component definitions from the given xml file. """
-        for component in XML_root.findall("./Components/Component"):
-            component_type = component.get("type")
+    def load_component_definitions(self, XML_root, comp_def_ojb):
+        """ Loads the component definitions from the given xml file.
+        comp_def_ojb: CompDefinition type """
 
+        nsmap = {"clv":"calvos"}
+        
+        component = XML_root.get("module", "")
+        print("Component: ", component)
 
-            if component_type is not None \
-            and component_type not in self.components_definitions:
-                component_title = str(component.findtext("Title"))
-                component_desc = str(component.findtext("Desc"))
-                component_module = str(component.findtext("Module"))
-                component_instances = component.get("instances")
-                component_params = {}
-                for param in component.findall("./Params/Param"):
-                    param_name = param.get("name")
-                    param_value = param.text
-                    if param_name is not None:
-                        component_params.update( \
-                            { param_name : param_value })
-                    else:
-                        log_warn('Invalid component parameter name "%s".' % param_name)
-                comp_definition = self.CompDefinition( \
-                    component_type, component_module, component_title, component_desc, \
-                    component_instances, component_params)
-                
-                self.components_definitions.update( \
-                    {component_type : comp_definition })
+        for param in XML_root.findall("./clv:ParamsDefinitions/clv:ParamDefinition", nsmap):
+            error_msg = ""
+            param_id = param.get("id", None)
+            if param_id != None:
+                param_type = param.get("type", None)
             else:
-                log_warn("Component type invalid or duplicated.")
+                error_msg = ("Id '%s' not found for a parameter of component '%s'. " \
+                             + "Parameter not added") % component
+            
+            param_type = param.get("type", None)
+            if error_msg == "" and param_type is not None:
+                if param_type == "int":
+                    param_value = param.findtext("./clv:Default", None, nsmap)
+                    if param_value is not None:
+                        try:
+                            param_value = int(json.loads(param_value))
+                        except Exception as e:
+                            param_value = None
+                            error_msg = "Expected int value for parameter \"" + param_id \
+                                + "\" of component \"" + component + "\". Assumed 'None'.\n" \
+                                + "JSON error: " + str(e)
+                    else:
+                        error_msg = ("Missing default value for parameter '%s' of component '%s'." \
+                                     + " Assumed None.") % (param_id, component)
+                elif param_type == "float":
+                    param_value = param.findtext("./clv:Default", None, nsmap)
+                    if param_value is not None:
+                        try:
+                            param_value = float(json.loads(param_value))
+                        except Exception as e:
+                            param_value = None
+                            error_msg = "Expected float value for parameter \"" + param_id \
+                                + "\" of component \"" + component + "\". Assumed 'None'.\n" \
+                                + "JSON error: " + str(e)
+                    else:
+                        error_msg = ("Missing default value for parameter '%s' of component '%s'." \
+                                     + " Assumed None.") % (param_id, component)
+                elif param_type == "str":
+                    param_value = param.findtext("./clv:Default", None, nsmap)
+                    if param_value is None:
+                        error_msg = ("Missing default value for parameter '%s' of component '%s'." \
+                                     + " Assumed None.") % (param_id, component)
+                elif param_type == "list":
+                    param_value = param.findtext("./clv:Default", None, nsmap)
+                    if param_value is not None:
+                        try:
+                            param_value = list(json.loads(param_value))
+                        except Exception as e:
+                            param_value = None
+                            error_msg = "Expected list type value for parameter \"" + param_id \
+                                + "\" of component \"" + component + "\". Assumed 'None'.\n" \
+                                + "JSON error: " + str(e)
+                    else:
+                        error_msg = ("Missing default value for parameter '%s' of component '%s'." \
+                                     + " Assumed None.") % (param_id, component)
+                elif param_type == "dict":
+                    param_value = param.findtext("./clv:Default", None, nsmap)
+                    if param_value is not None:
+                        try:
+                            param_value = dict(json.loads(param_value))
+                        except Exception as e:
+                            param_value = None
+                            error_msg = "Expected dictionary value for parameter \"" + param_id \
+                                + "\" of component \"" + component + "\". Assumed 'None'.\n" \
+                                + "JSON error: " + str(e)
+                    else:
+                        error_msg = ("Missing default value for parameter '%s' of component '%s'." \
+                                     + " Assumed None.") % (param_id, component)
+                elif param_type == "boolean":
+                    param_value = param.findtext("./clv:Default", None, nsmap)
+                    if param_value is not None:
+                        if param_value == "True":
+                            param_value = True
+                        elif param_value == "False":
+                            param_value = False
+                        else:
+                            param_value = None
+                            error_msg = "Expected boolean value for parameter \"" + param_id \
+                                + "\" of component \"" + component + "\". "\
+                                + "Allowed values are 'True' or 'False'. " \
+                                + "\Assumed 'None'."
+                    else:
+                        error_msg = ("Missing default value for parameter '%s' of component '%s'." \
+                                     + " Assumed None.") % (param_id, component)
+                elif param_type == "cid":
+                    param_value = param.findtext("./clv:Default", None, nsmap)
+                    if param_value is not None:
+                        if cg.is_valid_identifier(param_value) is False:
+                            param_value = None
+                            error_msg = "Expected C-identifier value for parameter \"" + param_id \
+                                + "\" of component \"" + component + "\". " + "\Assumed 'None'."
+                    else:
+                        error_msg = ("Missing default value for parameter '%s' of component '%s'." \
+                                     + " Assumed None.") % (param_id, component)
+                elif param_type == "enum":
+                    param_value = param.findtext("./clv:Default", None, nsmap)
+                    if param_value is not None:
+                        param_value = cg.parse_special_string(param_value)
+                        if len(param_value) == 0:
+                            param_value = None
+                            error_msg ="Expected special string value for parameter \"" + param_id \
+                                + "\" of component \"" + component + "\". " + "\Assumed 'None'."
+                    else:
+                        error_msg = ("Missing default value for parameter '%s' of component '%s'." \
+                                     + " Assumed None.") % (param_id, component)
+                else:
+                    param_value = None
+                    error_msg = ("Unknown parameter type for parameter '%s' of component '%s'." \
+                                 + " Assumed None.") % (param_id, component)
+
+                # Update simple parameter
+                comp_def_ojb.simple_params.update({param_id : param_value})
+                log_debug("Added parameter '%s' of component '%s' with default value '%s'." \
+                          % (param_id, component, param_value))
+            else:
+                if param_type is None:
+                    error_msg = ("Parameter type not found for parameter '%s' of component '%s'." \
+                                 + " Assumed None.") % (param_id, component)
+            
+            # Throw warning if any
+            if error_msg != "":
+                log_warn(error_msg)
+            
+            
+#         for component in XML_root.findall("./Components/Component"):
+#             component_type = component.get("type")
+# 
+# 
+#             if component_type is not None \
+#             and component_type not in self.components_definitions:
+#                 component_title = str(component.findtext("Title"))
+#                 component_desc = str(component.findtext("Desc"))
+#                 component_module = str(component.findtext("Module"))
+#                 component_instances = component.get("instances")
+#                 component_params = {}
+#                 for param in component.findall("./Params/Param"):
+#                     param_name = param.get("name")
+#                     param_value = param.text
+#                     if param_name is not None:
+#                         component_params.update( \
+#                             { param_name : param_value })
+#                     else:
+#                         log_warn('Invalid component parameter name "%s".' % param_name)
+#                 comp_definition = self.CompDefinition( \
+#                     component_type, component_module, component_title, component_desc, \
+#                     component_instances, component_params)
+#                 
+#                 self.components_definitions.update( \
+#                     {component_type : comp_definition })
+#             else:
+#                 log_warn("Component type invalid or duplicated.")
    
     #===============================================================================================    
     def add_component(self, type_name, \
@@ -294,7 +428,55 @@ class Project:
             self.load_params_definitions(XML_root)
             
             # Load component definitions
-            self.load_component_definitions(XML_root)
+            
+            
+            
+            # Search for calvos components
+            # A calvos component shall have a module.py together with a module.xml at same path
+            calvos_components = {} # {name : xml_path}
+            for path in sorted(calvos_path.rglob('*.py')):
+                module_name = path.stem
+                xml_path = path.with_suffix(".xml")
+                # Check if corresponding xml file is found
+                if xml_path.is_file() is True:
+                    # Python module is a calvos component, now gather its module string
+                    calvos_path_found = False
+                    module_name_list = []
+                    module_name_string = ""
+                    for parent in xml_path.parents:
+                        if parent.name == "calvos":
+                            calvos_path_found = True
+                            break;
+                        else:
+                            module_name_list.append(str(parent.name))
+                    if calvos_path_found is True:
+                        # Form module name string
+                        for piece in module_name_list:
+                            module_name_string = piece + "." + module_name_string
+                        module_name_string += module_name
+                        calvos_components.update({module_name_string : xml_path})
+            
+            print(calvos_components)
+            
+            for comp_name, comp_xml in calvos_components.items():
+                # Create component definition object
+                self.components_definitions.update({comp_name : self.CompDefinition(comp_name)})
+                
+                XML_tree = ET.parse(comp_xml)
+                XML_root = XML_tree.getroot()
+                self.load_component_definitions(XML_root, self.components_definitions[comp_name])  
+                
+            print(self.get_simple_param("common.project", "project_allowedComponents"))
+            
+            
+            
+            
+            
+            
+#             project_definitions_file2 = self.calvos_path / "common/project.xml"
+#             XML_tree2 = ET.parse(project_definitions_file2)
+#             XML_root2 = XML_tree2.getroot()
+#             self.load_component_definitions(XML_root2)
             
             log_info('Loading completed.')
         else:
@@ -413,18 +595,45 @@ class Project:
             except Exception as e:
                 log_error('Failed to process component "%s". Reason: %s' % (component.name, e) )
                 
+    #===============================================================================================
+    def get_simple_param(self, component, param_id, default = None):
+        """ Gets a component parameter.
+        Returns the provided default value if parameter is not found. """
+        return_value = default
+        if component in self.components_definitions:
+            if param_id in self.components_definitions[component].simple_params:
+                return_value = self.components_definitions[component].simple_params[param_id]
+            else:
+                log_warn("Parameter '%s' not found in component type '%'." % (component, component))
+        else:
+            log_warn("Component '%s' is not defined. Parameter '%s' can't be retrieved." \
+                     % (component, param_id))
+        
+        return return_value
+    
+    #===============================================================================================
+    def update_simple_param(self, component, param_id, write_value):
+        """ Updates a component parameter if existing. """
+        if component in self.components_definitions:
+            if param_id in self.components_definitions[component].simple_params:
+                self.components_definitions[component].simple_params = write_value
+            else:
+                log_warn("Parameter '%s' not found in component type '%'." % (component, component))
+        else:
+            log_warn("Component '%s' is not defined. Parameter '%s' can't be updated." \
+                     % (component, param_id))
+                
               
     #===============================================================================================        
     class CompDefinition:
         """ Class for modeling a calvos project component definition. """
-        def __init__(self, type_name, module, \
-                     title = "", desc = "", instances = None, params = None):
+        def __init__(self, type_name, title = "", desc = "", instances = None, params = None):
             self.type = type_name
-            self.module = module
             self.title = title
             self.desc = desc
             self.instances = instances
             self.params = params
+            self.simple_params = {} # {param_id, param_value}
     
     #===============================================================================================
     class Component:
@@ -450,6 +659,13 @@ class Project:
             self.params = params
             
             self.component_object = None
+            
+            self.simple_params = {}
+        
+        #===========================================================================================    
+        def load_param_defaults(self):
+            """ Loads the default parameter values for this component type. """
+            pass
         
         #===========================================================================================    
         def add_param(self, param_name, value):

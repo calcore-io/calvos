@@ -1,52 +1,53 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<grl:ComponentDefinition module="common.codegen" instances="1" xmlns:grl="common.general" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cg="common.codegen" xsi:schemaLocation="common.general schemas/_component_defs.xsd common.codegen schemas/codegen.xsd ">
-	<grl:Title>Code-generation</grl:Title>
-	<grl:Desc>Component for controlling common aspects of the C-code generation.</grl:Desc>
-	<grl:ParamsDefinitions>
-		<grl:Categories>
-			<grl:Category id="catcodegen_general">
-				<grl:Title>General</grl:Title>
-			</grl:Category>
-			<grl:Category id="catcodegen_compiler">
-				<grl:Title>Compiler and Micro-architecture</grl:Title>
-			</grl:Category>
-			<grl:Category id="catcodegen_data_types"
+<clv:ComponentDefinition module="common.codegen" instances="1" xmlns:clv="calvos" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cg="common.codegen" xsi:schemaLocation="calvos schemas/_component_defs.xsd common.codegen schemas/codegen.xsd ">
+	<clv:Title>Code-generation</clv:Title>
+	<clv:Desc>Component for controlling common aspects of the C-code generation.</clv:Desc>
+	<clv:ParamsDefinitions>
+		<clv:Categories>
+			<clv:Category id="catcodegen_general">
+				<clv:Title>General</clv:Title>
+			</clv:Category>
+			<clv:Category id="catcodegen_compiler">
+				<clv:Title>Compiler and Micro-architecture</clv:Title>
+			</clv:Category>
+			<clv:Category id="catcodegen_data_types"
 				is_subcategory_of="catcodegen_compiler">
-				<grl:Title>Data Types</grl:Title>
-			</grl:Category>
-		</grl:Categories>
-		<grl:ParamDefinition type="int" id="codegen_word_size" category="catcodegen_compiler">
-			<grl:Title>MCU word size</grl:Title>
-			<grl:Desc>Bits-lenght of a native word in the target MCU. E.g., 32 for a 33-bit architecture. </grl:Desc>
-			<grl:Default>32</grl:Default>
-		</grl:ParamDefinition>
-		<grl:ParamDefinition type="boolean" id="codegen_is_big_endian" category="catcodegen_compiler">
-			<grl:Title>MCU is big-endian</grl:Title>
-			<grl:Desc>Set to "True" if the MCU is big-endian, set to "False" if it is little-endian.</grl:Desc>
-			<grl:Default>True</grl:Default>
-		</grl:ParamDefinition>
-		<grl:ParamDefinition type="str" id="codegen_pack_struct_str"
+				<clv:Title>Data Types</clv:Title>
+			</clv:Category>
+		</clv:Categories>
+		<clv:ParamDefinition id="codegen_word_size" type="int" category="catcodegen_compiler">
+			<clv:Title>MCU word size</clv:Title>
+			<clv:Desc>Bits-lenght of a native word in the target MCU. E.g., 32 for a 33-bit architecture. </clv:Desc>
+			<clv:Default>32</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition id="codegen_is_big_endian" type="boolean" category="catcodegen_compiler">
+			<clv:Title>MCU is big-endian</clv:Title>
+			<clv:Desc>Set to "True" if the MCU is big-endian, set to "False" if it is little-endian.</clv:Desc>
+			<clv:Default>True</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition id="codegen_pack_struct_str" type="str"
 			category="catcodegen_compiler">
-			<grl:Title>Pack structs string</grl:Title>
-			<grl:Desc>
+			<clv:Title>Pack structs string</clv:Title>
+			<clv:Desc>
 				String to use for indicating the compiler that a
 				_struct_ needs to be packed in its smaller size as
 				possible. E.g., for arm gcc compiler this string is
 				typically "__attribute__((packed))".
-			</grl:Desc>
-			<grl:Default>__attribute__((packed))</grl:Default>
-		</grl:ParamDefinition>
-		<grl:ParamDefinition type="str" id="codegen_pack_struct_str_pos"
+			</clv:Desc>
+			<clv:Default>__attribute__((packed))</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition id="codegen_pack_struct_str_pos" type="str"
 			category="catcodegen_compiler">
-			<grl:Title>Pack structs string position</grl:Title>
-			<grl:Desc>
+			<clv:Title>Pack structs string position</clv:Title>
+			<clv:Desc>
 				Position where to locate the pack struct string. E.g.,
 				before type, after type, after struct keyword, etc.
-			</grl:Desc>
-		</grl:ParamDefinition>
-		<grl:ParamDefinition type="str" id="codegen_uint32_t">
-			<grl:Title>Unsigned int 32-bits</grl:Title>
-			<grl:Desc>C-type for an unsigned int of 32 bits. E.g., unsigned int</grl:Desc>
-			<grl:Default>unsigned int</grl:Default>
-		</grl:ParamDefinition></grl:ParamsDefinitions>
-</grl:ComponentDefinition>
+			</clv:Desc>
+			<clv:Default>clv:Default</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition id="codegen_uint32_t" type="str">
+			<clv:Title>Unsigned int 32-bits</clv:Title>
+			<clv:Desc>C-type for an unsigned int of 32 bits. E.g., unsigned int</clv:Desc>
+			<clv:Default>unsigned int</clv:Default>
+		</clv:ParamDefinition></clv:ParamsDefinitions>
+</clv:ComponentDefinition>

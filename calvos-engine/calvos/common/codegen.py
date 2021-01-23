@@ -478,7 +478,7 @@ def parse_special_string(input_string):
                 if is_valid_identifier(string_element):
                     #Valid symbol string, check if it is duplicated
                     if string_element not in return_dictionary:
-                        #Not duplitacted symbol string, add it to the output
+                        #Not duplicated symbol string, add it to the output
                         return_dictionary.update({string_element : None})
                     else:
                         #warning, duplicated symbol string

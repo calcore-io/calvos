@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<schema targetNamespace="common.general"
+<schema targetNamespace="calvos"
 	elementFormDefault="qualified" xmlns="http://www.w3.org/2001/XMLSchema"
-	xmlns:grl="common.general">
+	xmlns:clv="calvos">
 	<include schemaLocation="_general_defs.xsd"></include>
 
-    <element name="ComponentDefinition" type="grl:t_componentDef"></element>
+    <element name="ComponentDefinition" type="clv:t_componentDef"></element>
 </schema>

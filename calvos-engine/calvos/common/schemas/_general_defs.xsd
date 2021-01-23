@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xs:schema targetNamespace="common.general" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:grl="common.general">
+<xs:schema targetNamespace="calvos" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:clv="calvos">
 
 
 
@@ -34,14 +34,13 @@ d) 3		-- Exactly 3 instances allowed (no more, no less)</xs:documentation>
     	<xs:restriction base="xs:string">
     		<xs:enumeration value="int"></xs:enumeration>
     		<xs:enumeration value="float"></xs:enumeration>
-    		<xs:enumeration value="complex"></xs:enumeration>
     		<xs:enumeration value="str"></xs:enumeration>
     		<xs:enumeration value="list"></xs:enumeration>
-    		<xs:enumeration value="tuple"></xs:enumeration>
     		<xs:enumeration value="boolean"></xs:enumeration>
     		<xs:enumeration value="dict"></xs:enumeration>
     		<xs:enumeration value="ref"></xs:enumeration>
     		<xs:enumeration value="cid"></xs:enumeration>
+    		<xs:enumeration value="enum"></xs:enumeration>
     	</xs:restriction>
     </xs:simpleType>
 
@@ -52,7 +51,7 @@ d) 3		-- Exactly 3 instances allowed (no more, no less)</xs:documentation>
     		</xs:documentation>
     	</xs:annotation>
     	<xs:sequence>
-    		<xs:element name="Title" type="grl:t_title" minOccurs="1"
+    		<xs:element name="Title" type="clv:t_title" minOccurs="1"
     			maxOccurs="1">
     		</xs:element>
     		<xs:element name="Desc" type="xs:string" minOccurs="1"
@@ -63,16 +62,33 @@ d) 3		-- Exactly 3 instances allowed (no more, no less)</xs:documentation>
     				</xs:documentation>
     			</xs:annotation>
     		</xs:element>
-    		<xs:element name="Default" type="xs:string" minOccurs="0"
+    		<xs:element name="Default" type="xs:string" minOccurs="1"
     			maxOccurs="1">
     		</xs:element>
-    		<xs:element name="Reference" type="grl:t_reference" maxOccurs="1" minOccurs="0"></xs:element>
+    		<xs:element name="Enumeration" type="clv:t_simpleEnum"
+    			maxOccurs="1" minOccurs="0">
+    		</xs:element>
+    		<xs:element name="Reference" type="clv:t_reference"
+    			maxOccurs="1" minOccurs="0">
+    		</xs:element>
     	</xs:sequence>
-    	<xs:attribute name="id" type="grl:t_cIdentifier" use="required">
+    	<xs:attribute name="id" type="clv:t_cIdentifier"
+    		use="required">
     	</xs:attribute>
-    	<xs:attribute name="type" type="grl:t_basicType" use="required"></xs:attribute>
-    	<xs:attribute name="subtype" type="grl:t_basicType" use="optional"></xs:attribute>
+    	<xs:attribute name="type" type="clv:t_basicType"
+    		use="required">
+    	</xs:attribute>
+    	<xs:attribute name="subtype" type="clv:t_basicType"
+    		use="optional">
+    	</xs:attribute>
     	<xs:attribute name="category" type="xs:string" use="optional"></xs:attribute>
+    	<xs:attribute name="is_optional" type="xs:boolean"
+    		use="optional">
+    	</xs:attribute>
+    	<xs:attribute name="is_advanced" type="xs:boolean"
+    		use="optional">
+    	</xs:attribute>
+    	<xs:attribute name="is_read_only" type="xs:boolean" use="optional"></xs:attribute>
     </xs:complexType>
 
     <xs:simpleType name="t_cIdentifier">
@@ -106,9 +122,9 @@ d) 3		-- Exactly 3 instances allowed (no more, no less)</xs:documentation>
     		</xs:documentation>
     	</xs:annotation>
     	<xs:sequence>
-    		<xs:element name="Categories" type="grl:t_categories" maxOccurs="1" minOccurs="0">
+    		<xs:element name="Categories" type="clv:t_categories" maxOccurs="1" minOccurs="0">
     		</xs:element>
-    		<xs:element name="ParamDefinition" type="grl:t_paramDef" maxOccurs="unbounded" minOccurs="0"></xs:element>
+    		<xs:element name="ParamDefinition" type="clv:t_paramDef" maxOccurs="unbounded" minOccurs="0"></xs:element>
     	</xs:sequence>
     </xs:complexType>
 
@@ -119,17 +135,17 @@ d) 3		-- Exactly 3 instances allowed (no more, no less)</xs:documentation>
     		</xs:documentation>
     	</xs:annotation>
     	<xs:sequence>
-    		<xs:element name="Title" type="grl:t_title" maxOccurs="1"
+    		<xs:element name="Title" type="clv:t_title" maxOccurs="1"
     			minOccurs="1">
     		</xs:element>
     		<xs:element name="Desc" type="xs:string" maxOccurs="1"
     			minOccurs="0">
     		</xs:element>
     	</xs:sequence>
-    	<xs:attribute name="id" type="grl:t_cIdentifier"
+    	<xs:attribute name="id" type="clv:t_cIdentifier"
     		use="required">
     	</xs:attribute>
-    	<xs:attribute name="is_subcategory_of" type="grl:t_cIdentifier" use="optional"></xs:attribute>
+    	<xs:attribute name="is_subcategory_of" type="clv:t_cIdentifier" use="optional"></xs:attribute>
     </xs:complexType>
 
     <xs:complexType name="t_commonMetadata">
@@ -144,44 +160,44 @@ d) 3		-- Exactly 3 instances allowed (no more, no less)</xs:documentation>
     		</xs:element>
     		<xs:element name="TemplateDate" type="xs:string" maxOccurs="1" minOccurs="0">
     		</xs:element>
-    		<xs:element name="Schema" type="grl:t_schemaInfo" maxOccurs="1" minOccurs="1"></xs:element>
+    		<xs:element name="Schema" type="clv:t_schemaInfo" maxOccurs="1" minOccurs="1"></xs:element>
     	</xs:sequence>
     </xs:complexType>
 
     <xs:complexType name="t_metadata">
     	<xs:sequence>
-    		<xs:element name="Metadata" type="grl:t_commonMetadata" maxOccurs="1" minOccurs="1">
+    		<xs:element name="Metadata" type="clv:t_commonMetadata" maxOccurs="1" minOccurs="1">
     		</xs:element>
     		<xs:any></xs:any>
     	</xs:sequence>
     </xs:complexType>
 
     <xs:complexType name="t_schemaInfo">
-    	<xs:attribute name="id" type="grl:t_cIdentifier" use="required" fixed="general_defs_xsd"></xs:attribute>
+    	<xs:attribute name="id" type="clv:t_cIdentifier" use="required" fixed="general_defs_xsd"></xs:attribute>
     	<xs:attribute name="ver" type="xs:string" fixed="0.0.1" use="required"></xs:attribute>
     </xs:complexType>
 
     <xs:complexType name="t_componentDef">
     	<xs:sequence>
-    		<xs:element name="Title" type="grl:t_title" maxOccurs="1" minOccurs="1">
+    		<xs:element name="Title" type="clv:t_title" maxOccurs="1" minOccurs="1">
     		</xs:element>
     		<xs:element name="Desc" type="xs:string" maxOccurs="1" minOccurs="1">
     		</xs:element>
-    		<xs:element name="ParamsDefinitions" type="grl:t_paramsDefs" maxOccurs="1" minOccurs="0"></xs:element>
+    		<xs:element name="ParamsDefinitions" type="clv:t_paramsDefs" maxOccurs="1" minOccurs="0"></xs:element>
     	</xs:sequence>
-    	<xs:attribute name="module" type="grl:t_pyModule" use="required"></xs:attribute>
-    	<xs:attribute name="instances" type="grl:t_instances" use="required"></xs:attribute>
+    	<xs:attribute name="module" type="clv:t_pyModule" use="required"></xs:attribute>
+    	<xs:attribute name="instances" type="clv:t_instances" use="required"></xs:attribute>
     </xs:complexType>
 
     <xs:complexType name="t_componentsDefs">
     	<xs:sequence>
-    		<xs:element name="ComponentDefinition" type="grl:t_componentDef" maxOccurs="unbounded" minOccurs="0"></xs:element>
+    		<xs:element name="ComponentDefinition" type="clv:t_componentDef" maxOccurs="unbounded" minOccurs="0"></xs:element>
     	</xs:sequence>
     </xs:complexType>
 
     <xs:complexType name="t_categories">
     	<xs:sequence>
-    		<xs:element name="Category" type="grl:t_category" maxOccurs="unbounded" minOccurs="1"></xs:element>
+    		<xs:element name="Category" type="clv:t_category" maxOccurs="unbounded" minOccurs="1"></xs:element>
     	</xs:sequence>
     </xs:complexType>
 
@@ -191,7 +207,7 @@ d) 3		-- Exactly 3 instances allowed (no more, no less)</xs:documentation>
     			Type for referencing a parameter.
     		</xs:documentation>
     	</xs:annotation>
-    	<xs:attribute name="target_component" type="grl:t_pyModule"
+    	<xs:attribute name="target_component" type="clv:t_pyModule"
     		use="required">
     		<xs:annotation>
     			<xs:documentation>
@@ -200,6 +216,60 @@ d) 3		-- Exactly 3 instances allowed (no more, no less)</xs:documentation>
     			</xs:documentation>
     		</xs:annotation>
     	</xs:attribute>
-    	<xs:attribute name="target_param_id" type="grl:t_cIdentifier" use="required"></xs:attribute>
+    	<xs:attribute name="target_param_id" type="clv:t_cIdentifier" use="required"></xs:attribute>
+    </xs:complexType>
+
+    
+
+    <xs:complexType name="t_Enum">
+    	<xs:sequence>
+    		<xs:element name="Title" type="clv:t_title" maxOccurs="1"
+    			minOccurs="0">
+    		</xs:element>
+    		<xs:element name="Desc" type="xs:string" maxOccurs="1"
+    			minOccurs="0">
+    		</xs:element>
+    		<xs:element name="EnumValue" type="clv:t_EnumValue" maxOccurs="unbounded" minOccurs="1"></xs:element>
+    	</xs:sequence>
+    	<xs:attribute name="id" type="clv:t_cIdentifier"
+    		use="required">
+    	</xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="t_EnumValue">
+    	<xs:attribute name="number" type="xs:int" use="optional"></xs:attribute>
+    	<xs:attribute name="is_default" type="xs:boolean" use="optional"></xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="t_simpleEnum">
+    	<xs:annotation>
+    		<xs:documentation>
+    			Models an enumeration type. Expects a string with
+    			format: symbol1 (val1), symbol2 (val2), .... symbolN
+    			(valN) Element (valX) is optional so it can be
+    			individually for each item. If default is not or it is
+    			invalid as per the defined enumerated then first item
+    			will be taken.
+    		</xs:documentation>
+    	</xs:annotation>
+    	<xs:simpleContent>
+    		<xs:extension base="xs:string">
+    			<xs:attribute name="id" type="clv:t_cIdentifier" use="optional"></xs:attribute>
+    			<xs:attribute name="default" type="xs:string" use="optional"></xs:attribute>
+    		</xs:extension>
+    	</xs:simpleContent>
+    </xs:complexType>
+
+    <xs:complexType name="t_codegen">
+    	<xs:all>
+    		<xs:element name="Prefix" type="xs:string" maxOccurs="1"
+    			minOccurs="0">
+    		</xs:element>
+    		<xs:element name="Suffix" type="xs:string"></xs:element>
+    		<xs:element name="OwnName" type="clv:t_cIdentifier"></xs:element>
+    	</xs:all>
+
+
+    	<xs:attribute name="generate" type="xs:boolean" use="optional" default="true"></xs:attribute>
     </xs:complexType>
 </xs:schema>

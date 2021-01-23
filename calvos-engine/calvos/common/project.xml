@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<clv:ComponentDefinition xmlns:clv="calvos"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="calvos ../common/schemas/_component_defs.xsd "
+	module="common.project" instances="0,">
+	<clv:Title>Project</clv:Title>
+	<clv:Desc>Models a calvos project.</clv:Desc>
+	<clv:ParamsDefinitions>
+		<clv:Categories>
+			<clv:Category id="catproject_general">
+				<clv:Title>General</clv:Title>
+				<clv:Desc>General project settings</clv:Desc>
+			</clv:Category>
+			<clv:Category id="catproject_folders">
+				<clv:Title>Project Folders</clv:Title>
+				<clv:Desc>Location of project folders. Use $Folder$ to point to current project's location for relative paths. For example, $project$/usr_in, etc. Can use windows or linux path styles.</clv:Desc>
+			</clv:Category>
+		</clv:Categories>
+		<clv:ParamDefinition id="project_allowedComponents" type="list"
+			category="catproject_general" subtype="str" is_read_only="true">
+			<clv:Title>Allowed components for calvos project</clv:Title>
+			<clv:Desc>
+				List of component names allowed in a calvos project.
+			</clv:Desc>
+			<clv:Default>["comgen.CAN", "common.codegen"]</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition id="project_root" type="str"
+			category="catproject_folders" is_read_only="true">
+			<clv:Title>Root path of project</clv:Title>
+			<clv:Desc>Root path of project</clv:Desc>
+			<clv:Default>$project$</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="str" id="project_path_usr_in"
+			category="catproject_folders">
+			<clv:Title>Project input path</clv:Title>
+			<clv:Desc>Folder with user input files.</clv:Desc>
+			<clv:Default>$project$/usr_in</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="str" id="project_path_out"
+			category="catproject_folders">
+			<clv:Title>Project output path.</clv:Title>
+			<clv:Desc>Folder with user input files.</clv:Desc>
+			<clv:Default>$project$/out</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="str" id="project_path_working"
+			category="catproject_folders">
+			<clv:Title>Working path</clv:Title>
+			<clv:Desc>Folder where working files are to be placed.</clv:Desc>
+			<clv:Default>$project$/$project_path_out$/working</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="str" id="project_path_doc"
+			category="catproject_folders">
+			<clv:Title>Documents path</clv:Title>
+			<clv:Desc>Folder where generated documents are to be placed.</clv:Desc>
+			<clv:Default>$project$/$project_path_out$/doc</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="str" id="project_path_templates"
+			category="catproject_folders">
+			<clv:Title>Templates folder</clv:Title>
+			<clv:Desc>Folder where templates for user inputs are to be placed.</clv:Desc>
+			<clv:Default>$project$/$project_path_out$/$project_path_doc$/templates</clv:Default>
+		</clv:ParamDefinition></clv:ParamsDefinitions>
+</clv:ComponentDefinition>

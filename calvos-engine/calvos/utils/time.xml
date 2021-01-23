@@ -1,29 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<grl:ComponentDefinition xmlns:grl="common.general"
+<clv:ComponentDefinition xmlns:clv="calvos"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="common.general ../common/schemas/_component_defs.xsd "
+	xsi:schemaLocation="calvos ../common/schemas/_component_defs.xsd "
 	module="utils.time" instances="0,1">
-	<grl:Title>Time Utilities</grl:Title>
-	<grl:Desc>
+	<clv:Title>Time Utilities</clv:Title>
+	<clv:Desc>
 		Provides utilities for time management like slow timers, fast
 		timers, timer wheels, etc.
-	</grl:Desc>
-	<grl:ParamsDefinitions>
-		<grl:Categories>
-			<grl:Category id="time_general">
-				<grl:Title>General</grl:Title>
-			</grl:Category>
-			<grl:Category id="time_timers">
-				<grl:Title>Timers</grl:Title>
-			</grl:Category>
-		</grl:Categories>
-		<grl:ParamDefinition type="list" id="time_tasks">
-			<grl:Title>Time Tasks Periods</grl:Title>
-			<grl:Desc>
+	</clv:Desc>
+	<clv:ParamsDefinitions>
+		<clv:Categories>
+			<clv:Category id="time_general">
+				<clv:Title>General</clv:Title>
+			</clv:Category>
+			<clv:Category id="time_timers">
+				<clv:Title>Timers</clv:Title>
+			</clv:Category>
+		</clv:Categories>
+		<clv:ParamDefinition type="list" id="time_tasks">
+			<clv:Title>Time Tasks Periods</clv:Title>
+			<clv:Desc>
 				List of tasks (periods in ms) used for processing
 				timers.
-			</grl:Desc>
-			<grl:Default>[5,10,20,100,1000]</grl:Default>
-		</grl:ParamDefinition>
-	</grl:ParamsDefinitions>
-</grl:ComponentDefinition>
+			</clv:Desc>
+			<clv:Default>[5,10,20,100,1000]</clv:Default>
+		</clv:ParamDefinition>
+	</clv:ParamsDefinitions>
+</clv:ComponentDefinition>
