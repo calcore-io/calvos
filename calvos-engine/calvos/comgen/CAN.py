@@ -21,6 +21,7 @@ import cogapp as cog
 import pathlib as pl
 import importlib
 import json
+import copy
 
 import calvos.common.codegen as cg
 import calvos.common.logsys as lg
@@ -2007,6 +2008,17 @@ class Network_CAN:
             network_name = None
         else:
             network_name = self.id_string
+            
+        # Create subnetwork if needed
+        node_lst = self.get_simple_param("CAN_gen_nodes")
+        if len(node_lst) > 0:
+            print(node_lst)
+            subnetwork = self.get_subnetwork(node_lst)
+            if len(subnetwork.nodes) == 0:
+                log_warn("No node found for subnetwork. Input node list '%s'" % node_lst)
+                subnetwork = self
+        else:
+            subnetwork = self
         
         # Create temporal file with network object pickle.
         # ------------------------------------------------
@@ -2015,7 +2027,7 @@ class Network_CAN:
         
         try:
             with open(cog_serialized_network_file, 'wb') as f:
-                pic.dump(self, f, pic.HIGHEST_PROTOCOL)
+                pic.dump(subnetwork, f, pic.HIGHEST_PROTOCOL)
         except Exception as e:
                 print('Failed to create pickle file %s. Reason: %s' \
                       % (cog_serialized_network_file, e))
@@ -2066,6 +2078,68 @@ class Network_CAN:
         self.gen_params.update({"msg_search_split_by_time": False})
         self.gen_params.update({"msg_rx_process_single_task": False})
         self.gen_params.update({"msg_tx_process_single_task": False})
+        
+    #===============================================================================================
+    def get_simple_param(self, param_id):
+        """ Returns local parameter if defined otherwise returns the default one. """
+        if param_id in self.simple_params:
+            return_value = self.simple_params[param_id].param_value
+        else:
+            return_value = self.project_obj.get_simple_param_val(self.module, param_id, None)
+        
+        return return_value
+    
+    #===============================================================================================
+    def get_subnetwork(self, nodes_list):
+        """ Returns local parameter if defined otherwise returns the default one. """
+        
+        if len(nodes_list) > 0:
+            subnetwork = copy.deepcopy(self)
+    
+            # Clean nodes
+            subnetwork.nodes.clear()
+            for node in self.nodes.values():
+                # Only keep specified nodes
+                if node.name in nodes_list:
+                    subnetwork.nodes.update({node.name : node})
+                    
+            # Clean messages
+            subnetwork.messages.clear()
+            for message in self.messages.values():
+                # Only keep messages related to the specified nodes
+                keep_message = False
+                # See if message is subscribed or published by any of the specified nodes
+                for subnet_node in subnetwork.nodes.values():
+                    if message.name in subnet_node.subscribed_messages:
+                        keep_message = True
+                        break
+                    elif message.publisher == subnet_node.name:
+                        keep_message = True
+                        break
+                
+                if keep_message is True:
+                    subnetwork.messages.update({message.name : message})
+    
+            # Clean signals
+            subnetwork.signals.clear()
+            for signal in self.signals.values():
+                if signal.message in subnetwork.messages:
+                    subnetwork.signals.update({signal.name : signal})
+            
+            # Clean types
+            subnetwork.enum_types.clear()
+            for enum_type in self.enum_types.values():
+                keep_type = False
+                for signal in subnetwork.signals.values():
+                    if enum_type.name == signal.data_type:
+                        keep_type = True
+                        break;
+                if keep_type is True:
+                    subnetwork.enum_types.update({enum_type.name : enum_type})
+        else:
+            subnetwork = None
+            
+        return subnetwork
         
     #===============================================================================================    
     def parse_spreadsheet_ods(self,input_file):
