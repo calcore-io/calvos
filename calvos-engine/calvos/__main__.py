@@ -112,11 +112,13 @@ USAGE
 
     try:
         # Setup argument parser
-        parser = ArgumentParser(description=program_license, formatter_class=RawDescriptionHelpFormatter)
+        parser = ArgumentParser(description=program_license, \
+                                formatter_class=RawDescriptionHelpFormatter)
         parser.add_argument("-p","--project", dest="project", required=True, \
             help="Mandatory. Full path with file name of the calvos project to be processed")
         parser.add_argument("-c","--calvos", dest="calvos", required=False, \
-            help="Path where the calvos python package is located. If not provided, will look from installed python packages.")
+            help=("Path where the calvos python package is located. " \
+                  +"If not provided, will look from installed python packages."))
         parser.add_argument("-l","--log", dest="log_level", required=False, \
             help="Logging level: 0 - Debug, 1 - Info, 2 - Warning, 3 - Error. Default is 1 - Info.")
         parser.add_argument('-V', '--version', action='version', version=program_version_message)
@@ -200,12 +202,7 @@ USAGE
             lg.log_system = lg.Log(log_level, log_output_file)
             log = lg.log_system
             log.add_logger("main")
-            log.info("main","======= Started calvOS project processing. =======")
-            
-            prueba = 1
-            prueba2 = 2
-            
-            log.info("main", ("testing" + " concatenation: " + str(prueba) +", "+ str(prueba2)) )
+            log.info("main","============== Started calvOS project processing. ==============")
              
             #==============================================================================
             # calvOS project folders
@@ -241,16 +238,16 @@ USAGE
             #==============================================================================
             import calvos.common.project as pj
 
-            log.info("main","======= Loading project infrastructure. =======")
+            log.info("main","============== Loading project infrastructure. ==============")
             
             log.info("main",'Create instance for project in "%s"' % project_file)
             calvos_project = pj.Project("Project Name", project_file, calvos_path)
             
             calvos_project.load_project()
             
-            #calvos_project.process_project()
+            calvos_project.process_project()
                      
-            log.info("main","======= Finished calvOS project processing. =======")
+            log.info("main","============== Finished calvOS project processing. ==============")
             for counter_name, counts in log.counters.items():
                 log.info("main", "\"" + counter_name + "\" messages : " + str(counts))
               

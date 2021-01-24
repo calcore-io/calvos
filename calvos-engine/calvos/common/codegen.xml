@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<clv:ComponentDefinition module="common.codegen" instances="1" xmlns:clv="calvos" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cg="common.codegen" xsi:schemaLocation="calvos schemas/_component_defs.xsd common.codegen schemas/codegen.xsd ">
+<clv:ComponentDefinition module="common.codegen" instances="[1]" xmlns:clv="calvos" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cg="common.codegen" xsi:schemaLocation="calvos schemas/_component_defs.xsd common.codegen schemas/codegen.xsd ">
 	<clv:Title>Code-generation</clv:Title>
 	<clv:Desc>Component for controlling common aspects of the C-code generation.</clv:Desc>
 	<clv:ParamsDefinitions>
@@ -48,6 +48,6 @@
 		<clv:ParamDefinition id="codegen_uint32_t" type="str">
 			<clv:Title>Unsigned int 32-bits</clv:Title>
 			<clv:Desc>C-type for an unsigned int of 32 bits. E.g., unsigned int</clv:Desc>
-			<clv:Default>unsigned int</clv:Default>
+			<clv:Default>{"hola" : 1, "quiubo" : ["jeje", 1, 2]}</clv:Default>
 		</clv:ParamDefinition></clv:ParamsDefinitions>
 </clv:ComponentDefinition>

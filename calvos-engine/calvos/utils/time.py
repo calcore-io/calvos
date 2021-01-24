@@ -134,7 +134,7 @@ class Timers():
                 
 
 #===================================================================================================
-def load_input(input_file, input_type, params):
+def load_input(input_file, input_type, params, project_obj):
     """ Loads input file and returns the corresponding object.
     
     This function is invoked from the project handler.

@@ -68,7 +68,6 @@ for key, data_type in cg.dt_compiler.items():
 // [[[end]]]
 
 typedef uint32_t intNative_t;
-typedef uintX_t /* [[[cog cog.outl("hey") ]]] */ g // [[[end]]];
 
 /* Error symbols */
 typedef enum{

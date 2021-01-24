@@ -2,7 +2,7 @@
 <clv:ComponentDefinition xmlns:clv="calvos"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="calvos ../common/schemas/_component_defs.xsd "
-	module="utils.time" instances="0,1">
+	module="utils.time" instances="[0,1]">
 	<clv:Title>Time Utilities</clv:Title>
 	<clv:Desc>
 		Provides utilities for time management like slow timers, fast

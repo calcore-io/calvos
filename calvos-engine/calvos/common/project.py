@@ -8,7 +8,7 @@ Module for managing a calvos project.
 @license:    GPL v3
 """
 __version__ = '0.1.0'
-from pickle import TRUE
+from pickle import TRUE, NONE
 from calvos.common.codegen import calvos_path
 __date__ = '2020-11-12'
 __updated__ = '2020-11-12'
@@ -20,7 +20,7 @@ import json
 
 import calvos.common.codegen as cg
 import calvos.common.logsys as lg
-import calvos.common.general as g
+import calvos.common.general as grl
 
 
 IN_TYPE_XML = 0
@@ -93,290 +93,187 @@ class Project:
         
         self.param_categories = {} # {category id : objects ParamCategory }
     
-    #===============================================================================================
-    def load_params_categories(self, XML_root):
-        """ Loads parameter categories definitions.
-        
-        Needs to be called prior to call to load_param_definitions function.
-        """
-        for category in XML_root.findall("./Params/Categories/Category"):
-            category_id = category.get("id")
-            if category_id not in self.param_categories:
-                # Add new category
-                category_name = category.findtext("Name")
-                category_desc = category.findtext("Desc")
-                
-                self.param_categories.update({category_id : \
-                        g.ParamCategory(category_id, category_name, category_desc)})
-            else:
-                log_warn('Category id "%s" duplicated. Only added first appearance' % category_id)
-            
-            
-    #===============================================================================================    
-    def load_params_definitions(self, XML_root):
-        """ Loads parameter definitions and their default values.
-        
-        Function load_params_categories needs to be called prior to this one.
-        """
-        for param in XML_root.findall("./Params/Param"):
-            
-            param_id = param.get("id")
-            if param_id not in self.params:
-                param_name = param.get("Name")
-                param_desc = param.get("Desc")
-                param_default = param.findtext("Default")
-                param_category = param.get("category")
-                param_type = param.get("type")
-                
-                param_object = g.Parameter(param_id, param_default, \
-                                               param_default, param_name, param_desc)
-                
-                # Check if category is valid
-                if param_category in self.param_categories:
-                    param_object.category = param_category
-                else:
-                    log_warn('Invalid category "%s" for parameter id "%s".' \
-                             % (param_category,param_id))
-                
-                # Set rest of parameter attributes bases on its type
-                if param_type == "scalar":
-                    param_min = param.findtext("Min")
-                    param_max = param.findtext("Max")
-                    param_offset = param.findtext("Offset")
-                    param_res = param.findtext("Resolution")
-                    param_unit = param.findtext("Unit")
-                    
-                    param_object.type = g.TYPE_SCALAR
-                    param_object.min = param_min
-                    param_object.max = param_max
-                    param_object.offset = param_offset
-                    param_object.resolution = param_res
-                    param_object.unit = param_unit
-                    
-                    param_object.default = param_object.default
-                    
-                elif param_type == "enum":
-                    # Get enumerated values
-                    enum_values = {}
-                    for entry in param.findall("./Enumeration/Entry"):
-                        entry_id = entry.get("name")
-                        if entry_id not in enum_values:
-                            enum_values.update( {entry_id : entry.text} )
-                        else:
-                            log_warn(('Duplicated entry id %s for parameter id %s. ' \
-                                     +' Only first occurrence was taken.') \
-                                       % (entry_id, param_id))
-                    
-                    # Check if enum default is a valid entry
-                    if param_default != "" and param_default not in enum_values:
-                        log_warn(('Default value "%s" for parameter id "%s" is not ' \
-                                 + 'a valid value as per the enumerated values.') \
-                                 % (param_default, param_id))
-                    
-                    # Update Parameter Object with enumeration
-                    param_object.type = g.TYPE_ENUM
-                    param_object.enumeration = enum_values
-                    
-                elif param_type == "string":
-                    param_min = param.findtext("Min")
-                    param_max = param.findtext("Max")
-                    
-                    param_object.type = g.TYPE_STRING
-                    param_object.min = param_min
-                    param_object.max = param_max
-                    
-                    param_object.default = str(param_object.default)
-                    
-                    # Check if default value complies with min/max characters
-                    if param_min is not None and param_max is not None:
-                        if int(param_max) < int(param_min):
-                            log_warn(( 'Max value for parameter id "%s" is not greater than or '\
-                                     + 'equal to Min.') % param_id)
-                        else:
-                            if len(param_object.default) < param_min \
-                            or len(param_object.default) > param_max:
-                                log_warn(('Default value "%s" for parameter id "%s" is not a ' \
-                                         + 'valid value as per the min/max characters definition.')\
-                                         % (param_default, param_id))
-
-                else:
-                    log_warn('Invalid parameter type "%s" for parameter id "%s".' \
-                             % (param_type, param_id))  
-                
-                self.params.update({param_id : param_object}) 
-            else:
-                log_warn('Parameter id "%s" is duplicated. Only considered first appearance' \
-                         % param_id)
-    
-    #===============================================================================================
-    def write_param(self, param_id, param_value):
-        pass
-    
-    #===============================================================================================
-    def load_project_params(self, XML_root):
-        pass
+#     #===============================================================================================
+#     def load_params_categories(self, XML_root):
+#         """ Loads parameter categories definitions.
+#         
+#         Needs to be called prior to call to load_param_definitions function.
+#         """
+#         for category in XML_root.findall("./Params/Categories/Category"):
+#             category_id = category.get("id")
+#             if category_id not in self.param_categories:
+#                 # Add new category
+#                 category_name = category.findtext("Name")
+#                 category_desc = category.findtext("Desc")
+#                 
+#                 self.param_categories.update({category_id : \
+#                         g.ParamCategory(category_id, category_name, category_desc)})
+#             else:
+#                 log_warn('Category id "%s" duplicated. Only added first appearance' % category_id)
+#             
+#             
+#     #===============================================================================================    
+#     def load_params_definitions(self, XML_root):
+#         """ Loads parameter definitions and their default values.
+#         
+#         Function load_params_categories needs to be called prior to this one.
+#         """
+#         for param in XML_root.findall("./Params/Param"):
+#             
+#             param_id = param.get("id")
+#             if param_id not in self.params:
+#                 param_name = param.get("Name")
+#                 param_desc = param.get("Desc")
+#                 param_default = param.findtext("Default")
+#                 param_category = param.get("category")
+#                 param_type = param.get("type")
+#                 
+#                 param_object = g.Parameter(param_id, param_default, \
+#                                                param_default, param_name, param_desc)
+#                 
+#                 # Check if category is valid
+#                 if param_category in self.param_categories:
+#                     param_object.category = param_category
+#                 else:
+#                     log_warn('Invalid category "%s" for parameter id "%s".' \
+#                              % (param_category,param_id))
+#                 
+#                 # Set rest of parameter attributes bases on its type
+#                 if param_type == "scalar":
+#                     param_min = param.findtext("Min")
+#                     param_max = param.findtext("Max")
+#                     param_offset = param.findtext("Offset")
+#                     param_res = param.findtext("Resolution")
+#                     param_unit = param.findtext("Unit")
+#                     
+#                     param_object.type = g.TYPE_SCALAR
+#                     param_object.min = param_min
+#                     param_object.max = param_max
+#                     param_object.offset = param_offset
+#                     param_object.resolution = param_res
+#                     param_object.unit = param_unit
+#                     
+#                     param_object.default = param_object.default
+#                     
+#                 elif param_type == "enum":
+#                     # Get enumerated values
+#                     enum_values = {}
+#                     for entry in param.findall("./Enumeration/Entry"):
+#                         entry_id = entry.get("name")
+#                         if entry_id not in enum_values:
+#                             enum_values.update( {entry_id : entry.text} )
+#                         else:
+#                             log_warn(('Duplicated entry id %s for parameter id %s. ' \
+#                                      +' Only first occurrence was taken.') \
+#                                        % (entry_id, param_id))
+#                     
+#                     # Check if enum default is a valid entry
+#                     if param_default != "" and param_default not in enum_values:
+#                         log_warn(('Default value "%s" for parameter id "%s" is not ' \
+#                                  + 'a valid value as per the enumerated values.') \
+#                                  % (param_default, param_id))
+#                     
+#                     # Update Parameter Object with enumeration
+#                     param_object.type = g.TYPE_ENUM
+#                     param_object.enumeration = enum_values
+#                     
+#                 elif param_type == "string":
+#                     param_min = param.findtext("Min")
+#                     param_max = param.findtext("Max")
+#                     
+#                     param_object.type = g.TYPE_STRING
+#                     param_object.min = param_min
+#                     param_object.max = param_max
+#                     
+#                     param_object.default = str(param_object.default)
+#                     
+#                     # Check if default value complies with min/max characters
+#                     if param_min is not None and param_max is not None:
+#                         if int(param_max) < int(param_min):
+#                             log_warn(( 'Max value for parameter id "%s" is not greater than or '\
+#                                      + 'equal to Min.') % param_id)
+#                         else:
+#                             if len(param_object.default) < param_min \
+#                             or len(param_object.default) > param_max:
+#                                 log_warn(('Default value "%s" for parameter id "%s" is not a ' \
+#                                          + 'valid value as per the min/max characters definition.')\
+#                                          % (param_default, param_id))
+# 
+#                 else:
+#                     log_warn('Invalid parameter type "%s" for parameter id "%s".' \
+#                              % (param_type, param_id))  
+#                 
+#                 self.params.update({param_id : param_object}) 
+#             else:
+#                 log_warn('Parameter id "%s" is duplicated. Only considered first appearance' \
+#                          % param_id)
+#     
+#     #===============================================================================================
+#     def write_param(self, param_id, param_value):
+#         pass
+#     
+#     #===============================================================================================
+#     def load_project_params(self, XML_root):
+#         pass
     
     #===============================================================================================
     def load_component_definitions(self, XML_root, comp_def_ojb):
         """ Loads the component definitions from the given xml file.
         comp_def_ojb: CompDefinition type """
 
+        # Define XML namespace(s)
         nsmap = {"clv":"calvos"}
         
-        component = XML_root.get("module", "")
-        print("Component: ", component)
+        component = comp_def_ojb.type
+        
+        log_debug("Loading definitions for component '%s'..." % component)
 
         for param in XML_root.findall("./clv:ParamsDefinitions/clv:ParamDefinition", nsmap):
-            error_msg = ""
             param_id = param.get("id", None)
+            log_debug("Loading parameter '%s:%s'..." % (component, param_id))
             if param_id != None:
                 param_type = param.get("type", None)
-            else:
-                error_msg = ("Id '%s' not found for a parameter of component '%s'. " \
-                             + "Parameter not added") % component
-            
-            param_type = param.get("type", None)
-            if error_msg == "" and param_type is not None:
-                if param_type == "int":
+                if param_type is not None:
                     param_value = param.findtext("./clv:Default", None, nsmap)
                     if param_value is not None:
-                        try:
-                            param_value = int(json.loads(param_value))
-                        except Exception as e:
-                            param_value = None
-                            error_msg = "Expected int value for parameter \"" + param_id \
-                                + "\" of component \"" + component + "\". Assumed 'None'.\n" \
-                                + "JSON error: " + str(e)
+                        param_value = grl.process_simple_param(param_type, param_value)
                     else:
-                        error_msg = ("Missing default value for parameter '%s' of component '%s'." \
-                                     + " Assumed None.") % (param_id, component)
-                elif param_type == "float":
-                    param_value = param.findtext("./clv:Default", None, nsmap)
-                    if param_value is not None:
-                        try:
-                            param_value = float(json.loads(param_value))
-                        except Exception as e:
-                            param_value = None
-                            error_msg = "Expected float value for parameter \"" + param_id \
-                                + "\" of component \"" + component + "\". Assumed 'None'.\n" \
-                                + "JSON error: " + str(e)
+                        log_warn(("Missing default value for parameter '%s' of component '%s'." \
+                                     + " Assumed 'None'.") % (param_id, component))
+                    
+                    param_read_only = param.get("is_read_only", None)
+                    if param_read_only is None:
+                        # If parameter is not found then it is not read-only
+                        param_read_only = False
                     else:
-                        error_msg = ("Missing default value for parameter '%s' of component '%s'." \
-                                     + " Assumed None.") % (param_id, component)
-                elif param_type == "str":
-                    param_value = param.findtext("./clv:Default", None, nsmap)
-                    if param_value is None:
-                        error_msg = ("Missing default value for parameter '%s' of component '%s'." \
-                                     + " Assumed None.") % (param_id, component)
-                elif param_type == "list":
-                    param_value = param.findtext("./clv:Default", None, nsmap)
-                    if param_value is not None:
-                        try:
-                            param_value = list(json.loads(param_value))
-                        except Exception as e:
-                            param_value = None
-                            error_msg = "Expected list type value for parameter \"" + param_id \
-                                + "\" of component \"" + component + "\". Assumed 'None'.\n" \
-                                + "JSON error: " + str(e)
-                    else:
-                        error_msg = ("Missing default value for parameter '%s' of component '%s'." \
-                                     + " Assumed None.") % (param_id, component)
-                elif param_type == "dict":
-                    param_value = param.findtext("./clv:Default", None, nsmap)
-                    if param_value is not None:
-                        try:
-                            param_value = dict(json.loads(param_value))
-                        except Exception as e:
-                            param_value = None
-                            error_msg = "Expected dictionary value for parameter \"" + param_id \
-                                + "\" of component \"" + component + "\". Assumed 'None'.\n" \
-                                + "JSON error: " + str(e)
-                    else:
-                        error_msg = ("Missing default value for parameter '%s' of component '%s'." \
-                                     + " Assumed None.") % (param_id, component)
-                elif param_type == "boolean":
-                    param_value = param.findtext("./clv:Default", None, nsmap)
-                    if param_value is not None:
-                        if param_value == "True":
-                            param_value = True
-                        elif param_value == "False":
-                            param_value = False
-                        else:
-                            param_value = None
-                            error_msg = "Expected boolean value for parameter \"" + param_id \
-                                + "\" of component \"" + component + "\". "\
-                                + "Allowed values are 'True' or 'False'. " \
-                                + "\Assumed 'None'."
-                    else:
-                        error_msg = ("Missing default value for parameter '%s' of component '%s'." \
-                                     + " Assumed None.") % (param_id, component)
-                elif param_type == "cid":
-                    param_value = param.findtext("./clv:Default", None, nsmap)
-                    if param_value is not None:
-                        if cg.is_valid_identifier(param_value) is False:
-                            param_value = None
-                            error_msg = "Expected C-identifier value for parameter \"" + param_id \
-                                + "\" of component \"" + component + "\". " + "\Assumed 'None'."
-                    else:
-                        error_msg = ("Missing default value for parameter '%s' of component '%s'." \
-                                     + " Assumed None.") % (param_id, component)
-                elif param_type == "enum":
-                    param_value = param.findtext("./clv:Default", None, nsmap)
-                    if param_value is not None:
-                        param_value = cg.parse_special_string(param_value)
-                        if len(param_value) == 0:
-                            param_value = None
-                            error_msg ="Expected special string value for parameter \"" + param_id \
-                                + "\" of component \"" + component + "\". " + "\Assumed 'None'."
-                    else:
-                        error_msg = ("Missing default value for parameter '%s' of component '%s'." \
-                                     + " Assumed None.") % (param_id, component)
+                        param_read_only = grl.process_simple_param('boolean', param_read_only)
+                        if param_read_only is None:
+                            # If there is a problem converting read only parameter assume True
+                            param_read_only = True
+                            log_warn(("Wrong value for 'is_read_only' attribute of parameter '%s'" \
+                                + " of component '%s'. Assumed read only.")%(param_id, component))
+                    
+                    param_validator = param.get("validator", None)
+                    if param_validator is not None:
+                        log_debug("Processing validator '%s'..." % param_validator)
+                        param_validator = grl.process_simple_param('list', param_validator)
+                        if param_validator is None:
+                            # If there is a problem converting validator assume None
+                            param_validator = None
+                            log_warn(("Wrong value for 'validator' attribute of parameter '%s'" \
+                                + " of component '%s'. Assumed 'None'.")%(param_id, component))
+                            
+                    param_ojb = grl.SimpleParam(param_id, param_type, param_value, \
+                                                param_read_only, param_validator)
+                    comp_def_ojb.simple_params.update({param_id : param_ojb})
                 else:
-                    param_value = None
-                    error_msg = ("Unknown parameter type for parameter '%s' of component '%s'." \
-                                 + " Assumed None.") % (param_id, component)
-
-                # Update simple parameter
-                comp_def_ojb.simple_params.update({param_id : param_value})
-                log_debug("Added parameter '%s' of component '%s' with default value '%s'." \
-                          % (param_id, component, param_value))
+                    log_warn(("Missing parameter type for parameter '%s' of component '%s'. " \
+                              + "Component not added.") % (param_id, component))
             else:
-                if param_type is None:
-                    error_msg = ("Parameter type not found for parameter '%s' of component '%s'." \
-                                 + " Assumed None.") % (param_id, component)
-            
-            # Throw warning if any
-            if error_msg != "":
-                log_warn(error_msg)
-            
-            
-#         for component in XML_root.findall("./Components/Component"):
-#             component_type = component.get("type")
-# 
-# 
-#             if component_type is not None \
-#             and component_type not in self.components_definitions:
-#                 component_title = str(component.findtext("Title"))
-#                 component_desc = str(component.findtext("Desc"))
-#                 component_module = str(component.findtext("Module"))
-#                 component_instances = component.get("instances")
-#                 component_params = {}
-#                 for param in component.findall("./Params/Param"):
-#                     param_name = param.get("name")
-#                     param_value = param.text
-#                     if param_name is not None:
-#                         component_params.update( \
-#                             { param_name : param_value })
-#                     else:
-#                         log_warn('Invalid component parameter name "%s".' % param_name)
-#                 comp_definition = self.CompDefinition( \
-#                     component_type, component_module, component_title, component_desc, \
-#                     component_instances, component_params)
-#                 
-#                 self.components_definitions.update( \
-#                     {component_type : comp_definition })
-#             else:
-#                 log_warn("Component type invalid or duplicated.")
+                log_warn(("Id '%s' not found for a parameter of component '%s'. " \
+                             + "Parameter not added.") % component)
+        
+        log_debug("Loading of definitions completed.")   
    
     #===============================================================================================    
     def add_component(self, type_name, \
@@ -396,6 +293,49 @@ class Project:
         else:
             log_warn("Undefined component type '%s'. Component not added." % type_name)
     
+    #===============================================================================================        
+    def find_components(self, _calvos_path):
+        """ Search for calvos components within calvos package.
+        
+        Parameters
+        ----------
+            _calvos_path : Path
+                Path of the calvos package.
+        
+        Returns
+        -------
+            If at least one component is found returns a dictionary with following format:
+            {component_name1 : component_xml_path1, component_name2 : component_xml_path2, ...}
+            If no component is found then returns an empty dictionary.
+        """
+        
+        calvos_components = {} # {name : xml_path}
+        for path in sorted(calvos_path.rglob('*.py')):
+            module_name = path.stem
+            xml_path = path.with_suffix(".xml")
+            # Check if corresponding xml file is found
+            if xml_path.is_file() is True:
+                # Python module is a calvos component, now gather its module string
+                calvos_path_found = False
+                module_name_list = []
+                module_name_string = ""
+                for parent in xml_path.parents:
+                    if parent.name == "calvos":
+                        calvos_path_found = True
+                        break;
+                    else:
+                        module_name_list.append(str(parent.name))
+                if calvos_path_found is True:
+                    # Form module name string
+                    for piece in module_name_list:
+                        module_name_string = piece + "." + module_name_string
+                    module_name_string += module_name
+                    calvos_components.update({module_name_string : xml_path})
+                    log_debug("Found component: '%s', XML: '%s'" \
+                              % (module_name_string, calvos_components[module_name_string])) 
+        
+        return calvos_components
+    
     #===============================================================================================  
     def load_project(self):
         """ Loads current project.
@@ -412,81 +352,30 @@ class Project:
         
         # Load project definitions
         # ------------------------
-        project_definitions_file = self.calvos_path / "common/project_definitions.xml"
+        #project_definitions_file = self.calvos_path / "common/project_definitions.xml"
         
         log_info('Loading project parameters and component definitions...')
         
-        if cg.file_exists(project_definitions_file) is True:
-            XML_tree = ET.parse(project_definitions_file)
+        # Search for calvos components
+        # ----------------------------
+        # A calvos component shall have a module.py together with a module.xml at same path
+        calvos_components = self.find_components(calvos_path)
+        
+        # Load parameters of found components
+        # -----------------------------------
+        for comp_name, comp_xml in calvos_components.items():
+            if success == False:
+                success = True
+            # Create component definition object
+            self.components_definitions.update({comp_name : self.CompDefinition(comp_name)})
+            # Parse XML with component definitions
+            XML_tree = ET.parse(comp_xml)
             XML_root = XML_tree.getroot()
-            
-            
-            # Load parameter categories
-            self.load_params_categories(XML_root)
-            
-            # Load parameters definitions
-            self.load_params_definitions(XML_root)
-            
-            # Load component definitions
-            
-            
-            
-            # Search for calvos components
-            # A calvos component shall have a module.py together with a module.xml at same path
-            calvos_components = {} # {name : xml_path}
-            for path in sorted(calvos_path.rglob('*.py')):
-                module_name = path.stem
-                xml_path = path.with_suffix(".xml")
-                # Check if corresponding xml file is found
-                if xml_path.is_file() is True:
-                    # Python module is a calvos component, now gather its module string
-                    calvos_path_found = False
-                    module_name_list = []
-                    module_name_string = ""
-                    for parent in xml_path.parents:
-                        if parent.name == "calvos":
-                            calvos_path_found = True
-                            break;
-                        else:
-                            module_name_list.append(str(parent.name))
-                    if calvos_path_found is True:
-                        # Form module name string
-                        for piece in module_name_list:
-                            module_name_string = piece + "." + module_name_string
-                        module_name_string += module_name
-                        calvos_components.update({module_name_string : xml_path})
-            
-            print(calvos_components)
-            
-            for comp_name, comp_xml in calvos_components.items():
-                # Create component definition object
-                self.components_definitions.update({comp_name : self.CompDefinition(comp_name)})
-                
-                XML_tree = ET.parse(comp_xml)
-                XML_root = XML_tree.getroot()
-                self.load_component_definitions(XML_root, self.components_definitions[comp_name])  
-                
-            print(self.get_simple_param("common.project", "project_allowedComponents"))
-            
-            
-            
-            
-            
-            
-#             project_definitions_file2 = self.calvos_path / "common/project.xml"
-#             XML_tree2 = ET.parse(project_definitions_file2)
-#             XML_root2 = XML_tree2.getroot()
-#             self.load_component_definitions(XML_root2)
-            
-            log_info('Loading completed.')
-        else:
-            log_error('Failed to load project definitions from calvos module. File "%s"' \
-                      % project_definitions_file)
-            success = False
+            self.load_component_definitions(XML_root, self.components_definitions[comp_name])  
         
         if success is True:
             # Load project components
-            log_info('Loading project components...')
+            log_info("============== Loading project components. ==============")
             
             project_file_path = self.project_file
             XML_tree = ET.parse(project_file_path)
@@ -497,6 +386,9 @@ class Project:
                 
                 if component_type is not None \
                 and component_type in self.components_definitions:
+                
+                    log_info("-------------- Loading component of type '%s'." \
+                             % component_type)
                 
                     component_name = str(component.findtext("Name"))
                     component_desc = str(component.findtext("Desc"))
@@ -536,7 +428,7 @@ class Project:
                 else:
                     log_warn('Component type is invalid: "%s".' % component_type)
     
-            log_info('Loading completed.')
+            log_info('Loading project components completed.')
     
     #===============================================================================================    
     def load_component_data(self, component):
@@ -544,13 +436,13 @@ class Project:
         # Get module corresponding to the component type
         if component.type in self.components_definitions:
             # Get processing calvos module
-            module_name = self.components_definitions[component.type].module
+            module_name = component.type
             # Add prefix for calvos package
             module_name = "calvos." + module_name
             # Call load_input function
             module = importlib.import_module(module_name)
             return_object = module.load_input(component.input_file_path, \
-                                              component.input_type, component.params)
+                                              component.input_type, component.params, self)
             component.component_object = return_object
         else:
             log_warn("Invalid component type: '%s'" % component.type)
@@ -563,7 +455,7 @@ class Project:
         if component.component_object is not None:
             # Call the code generation function for the object.
             if component.type in self.components_definitions:
-                module_name = self.components_definitions[component.type].module
+                module_name = component.type
                 # Add prefix for calvos package
                 module_name = "calvos." + module_name
                 # Call generate function
@@ -582,13 +474,14 @@ class Project:
     def process_project(self):
         """ Processes all defined components for this project. 
         load_project function shall be called before this one. """
+        log_info("============== Processing project components. ==============")
         for component in self.components:
             try:
-                log_info('Loading data for component "%s" of type "%s".' \
+                log_info('-------------- Loading data for component "%s" of type "%s".' \
                          % (component.name, component.type))
                 self.load_component_data(component)
                 
-                log_info('Generating code for component "%s" of type "%s".' \
+                log_info('-------------- Generating code for component "%s" of type "%s".' \
                          % (component.name, component.type))
                 self.generate_component_code(component, component.params)
                 
@@ -596,13 +489,95 @@ class Project:
                 log_error('Failed to process component "%s". Reason: %s' % (component.name, e) )
                 
     #===============================================================================================
-    def get_simple_param(self, component, param_id, default = None):
+    def simple_param_exists(self, component, param_id):
+        """ Check if a component parameter is defined. """
+        
+        return_value = False
+        if component in self.components_definitions:
+            if param_id in self.components_definitions[component].simple_params:
+                return_value = True
+                
+        return return_value
+    
+    #===============================================================================================
+    def simple_param_is_read_only(self, component, param_id):
+        """ Check if a component parameter is defined. """
+        
+        return_value = None
+        if component in self.components_definitions:
+            if param_id in self.components_definitions[component].simple_params:
+                return_value = \
+                    self.components_definitions[component].simple_params[param_id].read_only
+                
+        return return_value
+    
+    #===============================================================================================
+    def validate_simple_param(self, component, param_id, validator_comp, validator_id):
+        return_value = None
+        if component in self.components_definitions \
+        and param_id in self.components_definitions[component].simple_params \
+        and validator_comp in self.components_definitions \
+        and validator_id in self.components_definitions[component].simple_params:
+            # See if param_id is within validator allowed values. Validator shall be of 'list'
+            # type.
+            if self.get_simple_param_type(validator_comp, validator_id) == 'list':
+                param_val = \
+                    self.components_definitions[component].simple_params[param_id].param_value
+                validator_list = \
+                 self.components_definitions[validator_comp].simple_params[validator_id].param_value
+                if param_val in validator_list:
+                    return_value = True
+                else:
+                    return_value = False
+            else:
+                log_warn("Validator param '%s' of component '%s' is not of 'list' type." \
+                         % (validator_id, validator_comp))
+            
+        else:
+            log_warn("Either param to be compared '%s:%s' or validator '%s:%s' not Found." \
+                     % (component, param_id, validator_comp, validator_id))
+        
+        return return_value
+    
+    #===============================================================================================
+    def get_simple_param_default(self, component, param_id):
+        """ Get component parameter default value. """
+
+        # Value of parameters in project's component_definitions is always the default           
+        return self.get_simple_param_val(component, param_id)
+    
+    #===============================================================================================
+    def get_simple_param_type(self, component, param_id):
+        """ Get component parameter type. """
+        
+        return_value = None
+        if component in self.components_definitions:
+            if param_id in self.components_definitions[component].simple_params:
+                return_value = \
+                    self.components_definitions[component].simple_params[param_id].param_type
+                
+        return return_value
+    
+    #===============================================================================================
+    def get_simple_param_validator(self, component, param_id):
+        """ Get component parameter type. """
+        return_value = None
+        if component in self.components_definitions:
+            if param_id in self.components_definitions[component].simple_params:
+                return_value = \
+                    self.components_definitions[component].simple_params[param_id].validator
+                
+        return return_value
+    
+    #===============================================================================================
+    def get_simple_param_val(self, component, param_id, default = None):
         """ Gets a component parameter.
         Returns the provided default value if parameter is not found. """
         return_value = default
         if component in self.components_definitions:
             if param_id in self.components_definitions[component].simple_params:
-                return_value = self.components_definitions[component].simple_params[param_id]
+                return_value = \
+                    self.components_definitions[component].simple_params[param_id].param_value
             else:
                 log_warn("Parameter '%s' not found in component type '%'." % (component, component))
         else:
@@ -610,13 +585,14 @@ class Project:
                      % (component, param_id))
         
         return return_value
-    
+
     #===============================================================================================
     def update_simple_param(self, component, param_id, write_value):
         """ Updates a component parameter if existing. """
         if component in self.components_definitions:
             if param_id in self.components_definitions[component].simple_params:
-                self.components_definitions[component].simple_params = write_value
+                self.components_definitions[component].simple_params[param_id].param_value \
+                    = write_value
             else:
                 log_warn("Parameter '%s' not found in component type '%'." % (component, component))
         else:
@@ -627,13 +603,14 @@ class Project:
     #===============================================================================================        
     class CompDefinition:
         """ Class for modeling a calvos project component definition. """
-        def __init__(self, type_name, title = "", desc = "", instances = None, params = None):
+        def __init__(self, type_name, **kwargs):
             self.type = type_name
-            self.title = title
-            self.desc = desc
-            self.instances = instances
-            self.params = params
-            self.simple_params = {} # {param_id, param_value}
+            
+            self.title = kwargs.get('title', None)
+            self.desc = kwargs.get('desc', None)
+            self.instances = kwargs.get('instances', None)
+            self.params = kwargs.get('params', None)
+            self.simple_params = {} # {param_id, SimpleParam object}
     
     #===============================================================================================
     class Component:

@@ -2,7 +2,7 @@
 <clv:ComponentDefinition xmlns:clv="calvos"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="calvos ../common/schemas/_component_defs.xsd "
-	module="comgen.CAN" instances="0,">
+	module="comgen.CAN" instances="[0]">
 	<clv:Title>CAN Network</clv:Title>
 	<clv:Desc>Models a network for protocol Controller Area Network (CAN).</clv:Desc>
 	<clv:ParamsDefinitions>
@@ -36,12 +36,21 @@
 			</clv:Desc>
 			<clv:Default>False</clv:Default>
 		</clv:ParamDefinition>
-		<clv:ParamDefinition type="enum" id="CAN_msg_search_algorithm"
-			category="catCAN_general">
+		<clv:ParamDefinition type="list" id="CAN_msg_search_algorithms"
+			category="catCAN_general" is_read_only="true" is_advanced="false">
+			<clv:Title>Msg search algorithms</clv:Title>
+			<clv:Desc>Type of search algorithms to implement for processing RX
+				can messages.</clv:Desc>
+			<clv:Default>["auto", "linear", "search_tree", "multi_search_tree", "hash"]</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="str" id="CAN_msg_search_algorithm"
+			category="catCAN_general" is_advanced="false" validator='["comgen.CAN", "CAN_msg_search_algorithms"]'>
 			<clv:Title>Msg search algorithm</clv:Title>
-			<clv:Desc>Type of search algorithm to implement for processing RX can messages.</clv:Desc>
+			<clv:Desc>
+				Type of search algorithms to use for processing RX can
+				messages.
+			</clv:Desc>
 			<clv:Default>auto</clv:Default>
-			<clv:Enumeration default="auto">auto, linear, search_tree, multi_search_tree, hash</clv:Enumeration>
 		</clv:ParamDefinition>
 		<clv:ParamDefinition type="int"
 			id="CAN_msg_search_algorithm_param1" category="catCAN_general"

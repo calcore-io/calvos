@@ -7,21 +7,20 @@
 
 
     <xs:simpleType name="t_instances">
-        <xs:annotation>
-        	<xs:documentation>Allowed instances of the given component in a project.
-**Format**:
-    _initial_number_ &lt;,&gt; &lt;_final_number_&gt; 
-Note: _initial_number_ and _final_number_ shall be greater than zero.
+    	<xs:annotation>
+    		<xs:documentation>
+    			Allowed instances of the given component in a project.
+    			**Format**: _initial_number_ &lt;,&gt;
+    			&lt;_final_number_&gt; Note: _initial_number_ and
+    			_final_number_ shall be greater than zero.
 
-**Examples**:
-a) 1		-- Only one instance allowed
-b) 1,	-- One or more instances allowed
-c) 1, 5	-- From 1 to 5 allowed instances
-d) 3		-- Exactly 3 instances allowed (no more, no less)</xs:documentation>
-        </xs:annotation>
-        <xs:restriction base="xs:string">
-    		<xs:pattern value="\s*\d+\s*(,|,\s*\d+\s*)?\s*"></xs:pattern>
-    	</xs:restriction>
+    			**Examples**: a) 1 -- Only one instance allowed b) 1, --
+    			One or more instances allowed c) 1, 5 -- From 1 to 5
+    			allowed instances d) 3 -- Exactly 3 instances allowed
+    			(no more, no less)
+    		</xs:documentation>
+    	</xs:annotation>
+    	<xs:restriction base="xs:string"></xs:restriction>
     </xs:simpleType>
 
 
@@ -88,7 +87,10 @@ d) 3		-- Exactly 3 instances allowed (no more, no less)</xs:documentation>
     	<xs:attribute name="is_advanced" type="xs:boolean"
     		use="optional">
     	</xs:attribute>
-    	<xs:attribute name="is_read_only" type="xs:boolean" use="optional"></xs:attribute>
+    	<xs:attribute name="is_read_only" type="xs:boolean"
+    		use="optional">
+    	</xs:attribute>
+    	<xs:attribute name="validator" type="xs:string" use="optional"></xs:attribute>
     </xs:complexType>
 
     <xs:simpleType name="t_cIdentifier">

@@ -914,7 +914,7 @@ def cog_generator(input_file, out_dir, work_dir, gen_path, variables = None):
         print("INFO: code generation return value: ",cog_return)
 
 #===================================================================================================
-def load_input(input_file, input_type, params):
+def load_input(input_file, input_type, params, project_obj):
     """ Loads input file and returns the corresponding object. """
     del input_type, params # Unused parameters
     

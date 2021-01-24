@@ -24,6 +24,7 @@ import json
 
 import calvos.common.codegen as cg
 import calvos.common.logsys as lg
+import calvos.common.general as grl
 
 # --------------------------------------------------------------------------------------------------
 # Definitions for the logging system
@@ -109,7 +110,8 @@ class Network_CAN:
                 "templateDesc": "Models a CAN Network"}
     
     #===============================================================================================    
-    def __init__(self, id_string = "", name = "", description = "", version = "", date = ""):
+    def __init__(self, id_string = "", name = "", description = "", version = "", date = "", \
+                 project_obj = None):
         """ Class constructor.
         
         Parameters
@@ -135,6 +137,10 @@ class Network_CAN:
         self.version = str(version)
 
         self.date = str(date)
+        
+        self.project_obj = project_obj
+        
+        self.module = "comgen.CAN"
 
         #Dynamic data
         self.enum_types = {} # {type name, type object}
@@ -151,6 +157,8 @@ class Network_CAN:
         self.gP.add_p("part_px", \
             ["","p_","part_","_"], 0, \
             "List of prefixes to use for naming signal parts when fragmented.")
+        
+        self.simple_params = {} # Non-default params for this object {param_id:SimpleParam obj, ...}
         
         # Last input file used to fill-out data for this object
         self.input_file = None
@@ -2067,9 +2075,12 @@ class Network_CAN:
         
         self.input_file = cg.string_to_path(input_file)
         
+        log_debug("Loading CAN information from file: '%s'..." % input_file)
+        
         # -----------------------
         # Parse Network Data
         # -----------------------
+        log_debug("Parsing network data.")
         working_sheet = book["Network_and_Nodes"]
                 
         self.name = working_sheet[0,1]
@@ -2081,6 +2092,7 @@ class Network_CAN:
         # -----------------------
         # Parse Network Nodes
         # -----------------------
+        log_debug("Parsing nodes data.")
         NODES_TITLE_ROW = 6 # Row where the node's titles are located
         working_sheet.name_columns_by_row(NODES_TITLE_ROW)
         
@@ -2096,6 +2108,7 @@ class Network_CAN:
         # -----------------------
         # Parse Enum Types
         # -----------------------
+        log_debug("Parsing enums type data.")
         working_sheet = book["Data Types"]
         working_sheet.name_columns_by_row(0)
         
@@ -2109,6 +2122,7 @@ class Network_CAN:
         # -----------------------
         # Parse Messages
         # -----------------------
+        log_debug("Parsing messages data.")
         working_sheet = book["Messages"]
         working_sheet.name_columns_by_row(0)
         
@@ -2146,6 +2160,7 @@ class Network_CAN:
         # -----------------------
         # Parse Signals
         # -----------------------
+        log_debug("Parsing signals data.")
         working_sheet = book["Signals"]
         working_sheet.name_columns_by_row(0)
         
@@ -2199,7 +2214,68 @@ class Network_CAN:
                 
                 if str(signal_unit) != "":
                     self.signals[signal_name].fail_value = signal_unit
-    
+        
+        # -----------------------
+        # Parse Parameters
+        # -----------------------
+        log_debug("Parsing parameters data.")
+        CONFIG_TITLE_ROW = 1 # Row number with titles
+        working_sheet = book["Config"]
+        working_sheet.name_columns_by_row(CONFIG_TITLE_ROW)
+        
+        for idx, row in enumerate(working_sheet):
+            # Ignore rows that are before the "config's" title row
+            if idx >= CONFIG_TITLE_ROW:
+                param_id = row[working_sheet.colnames.index("Parameter")]
+                param_value = row[working_sheet.colnames.index("User Value")]
+                if param_id != "" \
+                and self.project_obj.simple_param_exists(self.module, param_id) is True:
+                    read_only = self.project_obj.simple_param_is_read_only(self.module, param_id)
+                    if read_only is False and param_value != "":
+                        # Add parameter user's value to this object
+                        param_type = self.project_obj.get_simple_param_type(self.module, param_id)
+                        # Force read value from ODS to be a string and substitute quotes characters
+                        # out of utf-8 if present.
+                        param_value = str(param_value)
+                        param_value = param_value.encode(encoding='utf-8')
+                        param_value = param_value.replace(b'\xe2\x80\x9c', b'\"')
+                        param_value = param_value.replace(b'\xe2\x80\x9d', b'\"')
+                        param_value = param_value.decode('utf-8')
+                        log_debug("Processing parameter '%s' with value '%s'..." \
+                                  % (param_id, param_value))
+                        param_value = grl.process_simple_param(param_type, param_value)
+                        
+                        # Check if validation is required
+                        validator = \
+                            self.project_obj.get_simple_param_validator(self.module, param_id)
+                        if validator is not None:
+                            # Validate parameter
+                            valid = self.project_obj.validate_simple_param(self.module, param_id, \
+                                                                           validator[0], \
+                                                                           validator[1])
+                        else:
+                            # If no validator is defined assume data is valid.
+                            valid = True
+                        
+                        if valid is True:
+                            param_obj = grl.SimpleParam(param_id, param_type, param_value)
+                            self.simple_params.update({param_id: param_obj})
+                            log_debug("Added CAN user parameter '%s', type '%s' with value '%s'" \
+                                      % (param_id, param_type, param_value))
+                        else:
+                            log_warn(("Parameter '%s:%s' is invalid as per its " \
+                                     + "validator '%s:%s''. Parameter ignored.") \
+                                     % (self.module, param_id, validator[0], validator[1]))
+                    elif param_value != "":
+                        log_warn("Parameter '%s' is read-only. Ignored user value." % param_id)
+                    else:
+                        pass
+                elif param_id != "":
+                    log_warn("Parameter '%s' is meaningless for component '%s'. Parameter ignored." \
+                             % (param_id, self.module))
+                else:
+                    pass
+
     #===============================================================================================        
     class EnumType:
         """ Class to model an enumerated data type. """
@@ -2464,7 +2540,7 @@ class CodeGen():
 input_file_name = None # Used for determining name of output network xml file.
 
 #===================================================================================================
-def load_input(input_file, input_type, params):
+def load_input(input_file, input_type, params, project_obj):
     """ Loads input file and returns the corresponding object.
     
     This function is invoked from the project handler.
@@ -2488,6 +2564,7 @@ def load_input(input_file, input_type, params):
     del input_type, params # Unused parameters
     try:
         return_object = Network_CAN()
+        return_object.project_obj = project_obj
         return_object.load_default_gen_params()
         return_object.parse_spreadsheet_ods(input_file)
         try:
