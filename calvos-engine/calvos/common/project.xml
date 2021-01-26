@@ -36,45 +36,46 @@
 "project_doc": "$p:common.project,project_path_doc$", 
 "project_templates": "$p:common.project,project_path_templates$"}</clv:Default>
 		</clv:ParamDefinition>
-		<clv:ParamDefinition id="project_root" type="str"
+		<clv:ParamDefinition id="project_root" type="path"
 			category="catproject_folders" is_read_only="true">
 			<clv:Title>Root path of project</clv:Title>
 			<clv:Desc>Root path of project</clv:Desc>
 			<clv:Default>$v:project_path$</clv:Default>
 		</clv:ParamDefinition>
-		<clv:ParamDefinition type="str" id="project_path_usr_in"
+		<clv:ParamDefinition type="path" id="project_path_usr_in"
 			category="catproject_folders">
 			<clv:Title>Project input path</clv:Title>
 			<clv:Desc>Folder with user input files.</clv:Desc>
 			<clv:Default>$project_root$/usr_in</clv:Default>
 		</clv:ParamDefinition>
-		<clv:ParamDefinition type="str" id="project_path_out"
+		<clv:ParamDefinition type="path" id="project_path_out"
 			category="catproject_folders">
 			<clv:Title>Project output path.</clv:Title>
 			<clv:Desc>Folder with user input files.</clv:Desc>
 			<clv:Default>$project_root$/out</clv:Default>
 		</clv:ParamDefinition>
-		<clv:ParamDefinition type="str" id="project_path_working"
+		<clv:ParamDefinition type="path" id="project_path_working"
 			category="catproject_folders">
 			<clv:Title>Working path</clv:Title>
 			<clv:Desc>Folder where working files are to be placed.</clv:Desc>
 			<clv:Default>$project_out$/working_dir</clv:Default>
 		</clv:ParamDefinition>
-		<clv:ParamDefinition type="str" id="project_path_doc"
+		<clv:ParamDefinition type="path" id="project_path_doc"
 			category="catproject_folders">
 			<clv:Title>Documents path</clv:Title>
 			<clv:Desc>Folder where generated documents are to be placed.</clv:Desc>
 			<clv:Default>$project_out$/doc</clv:Default>
 		</clv:ParamDefinition>
-		<clv:ParamDefinition type="str" id="project_path_templates"
+		<clv:ParamDefinition type="path" id="project_path_templates"
 			category="catproject_folders">
 			<clv:Title>Templates folder</clv:Title>
 			<clv:Desc>Folder where templates for user inputs are to be placed.</clv:Desc>
 			<clv:Default>$project_doc$/templates</clv:Default>
 		</clv:ParamDefinition>
-		<clv:ParamDefinition type="dict" id="project_test1">
-			<clv:Title>clv:Title</clv:Title>
-			<clv:Desc>clv:Desc</clv:Desc>
-			<clv:Default>{"hola" : 1, "jeje" : ["hh", 1, 2]}</clv:Default>
+		<clv:ParamDefinition type="path" id="project_pickle"
+			category="catproject_folders">
+			<clv:Title>Project picke file</clv:Title>
+			<clv:Desc>Name of project picke file.</clv:Desc>
+			<clv:Default>common_Project_object.pickle</clv:Default>
 		</clv:ParamDefinition></clv:ParamsDefinitions>
 </clv:ComponentDefinition>

@@ -1955,8 +1955,8 @@ class Network_CAN:
         
     #===============================================================================================    
     def cog_generator(self, input_file, cog_output_file, \
-                             out_dir, work_dir, gen_path, pickle_file, \
-                             variables = None):
+                             out_dir, work_dir, gen_path, project_pickle_file, \
+                             comp_pickle_file, variables = None):
         """ Invoke cog generator for the specified file.
         """
         # Setup input and output files
@@ -1973,7 +1973,8 @@ class Network_CAN:
                    '-d', \
                    '-D', 'input_worksheet=' + self.metadata_gen_source_file, \
                    '-D', 'project_working_dir=' + str(work_dir), \
-                   '-D', 'cog_pickle_file=' + str(pickle_file), \
+                   '-D', 'cog_proj_pickle_file=' + str(project_pickle_file), \
+                   '-D', 'cog_pickle_file=' + str(comp_pickle_file), \
                    '-D', 'cog_output_file=' + str(cog_output_file)]
         
         # Append additional variables if required
@@ -2033,6 +2034,10 @@ class Network_CAN:
         except Exception as e:
                 print('Failed to create pickle file %s. Reason: %s' \
                       % (cog_serialized_network_file, e))
+                
+        # Get project picke full file name
+        project_pickle = work_dir / \
+            self.project_obj.get_simple_param_val("common.project","project_pickle")
         
         #----------------------------------------------------------------------
         # Generate source file(s)
@@ -2047,7 +2052,8 @@ class Network_CAN:
                 variables.update({"include_var" : include_var})
                  
             self.cog_generator(cog_source.cog_in_file, cog_source.cog_out_file, out_dir, \
-                              work_dir, gen_path, cog_serialized_network_file, variables)
+                              work_dir, gen_path, project_pickle, cog_serialized_network_file, \
+                              variables)
         
         # Delete pickle file
         # ------------------

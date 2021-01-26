@@ -316,6 +316,10 @@ class Project:
                     log_warn('Component type is invalid: "%s".' % component_type)
     
             log_info('Loading project components completed.')
+            
+            log_info("============== Resolving project paths. ==============")   
+            self.resolve_paths()
+            log_info("Paths expansion completed.") 
     
     #===============================================================================================    
     def load_component_data(self, component):
@@ -372,7 +376,7 @@ class Project:
             except Exception as e:
                 log_error('Failed to load user input for component "%s". Reason: %s' \
                           % (component.name, e) )
-        
+
         log_info("============== Generating components code. ==============")
         
         
@@ -386,17 +390,10 @@ class Project:
         
 #        for string in test_str:
 #            self.expand_all_tokens(string)
-            
-        working_path = self.get_simple_param_val(self.module, "project_path_working")
-        working_path = self.expand_all_tokens(working_path)["out_str"]
-        working_path = cg.string_to_path(working_path)
-        print("working_path: ", working_path)
-            
-        
+  
         # Create a pickle of all project object to be available for source generators.
-        pickle_file_name = "common_Project_obj.pickle"
-        pickle_full_file_name = working_path / pickle_file_name
-        print("pickle_full_file_name: ", pickle_full_file_name)
+        pickle_full_file_name = self.get_simple_param_val(self.module, "project_path_working") / \
+            self.get_simple_param_val(self.module, "project_pickle")
         try:
             with open(pickle_full_file_name, 'wb') as f:
                 pickle.dump(self, f, pickle.HIGHEST_PROTOCOL)
@@ -798,7 +795,27 @@ class Project:
             
         return return_value
             
-                  
+    #===============================================================================================
+    def resolve_paths(self):
+        """ Expands all parameters of type "path". """
+        print(self.simple_params)
+        
+        for param in self.simple_params.values():
+            if param.param_type == "path":
+                current_path = self.expand_all_tokens(param.param_value)["out_str"]
+                current_path = cg.string_to_path(current_path)
+                param.param_value = current_path                
+                log_debug("Resolved path '%s': '%s'" % (param.param_id, param.param_value))
+                
+        for comp_def in self.components_definitions.values():
+            for param in comp_def.simple_params.values():
+                if param.param_type == "path":
+                    current_path = self.expand_all_tokens(param.param_value)["out_str"]
+                    current_path = cg.string_to_path(current_path)
+                    param.param_value = current_path  
+                    log_debug("Resolved component '%s' path '%s': '%s'" \
+                              % (comp_def.type, param.param_id, param.param_value))
+                          
     #===============================================================================================        
     class CompDefinition:
         """ Class for modeling a calvos project component definition. """
@@ -809,7 +826,7 @@ class Project:
             self.desc = kwargs.get('desc', None)
             self.instances = kwargs.get('instances', None)
             self.params = kwargs.get('params', None)
-            self.simple_params = {} # {param_id, SimpleParam object}
+            self.simple_params = {} # {param_id : SimpleParam object}
     
     #===============================================================================================
     class Component:

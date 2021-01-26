@@ -40,6 +40,7 @@
     		<xs:enumeration value="ref"></xs:enumeration>
     		<xs:enumeration value="cid"></xs:enumeration>
     		<xs:enumeration value="enum"></xs:enumeration>
+    		<xs:enumeration value="path"></xs:enumeration>
     	</xs:restriction>
     </xs:simpleType>
 

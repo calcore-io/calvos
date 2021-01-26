@@ -68,7 +68,7 @@ def process_simple_param(param_type, param_value):
             param_value = None
             error_msg = "Expected float value for given parameter. Assumed 'None'.\n" \
                 + "JSON error: " + str(e)
-    elif param_type == "str":
+    elif param_type == "str" or param_type == "path":
         param_value = str(param_value)
     elif param_type == "list":
         try:

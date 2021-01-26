@@ -18,6 +18,12 @@ try:
 		network = pic.load(f)
 except Exception as e:
         print('Failed to access pickle file %s. Reason: %s' % (cog_pickle_file, e))
+
+try:
+	with open(cog_proj_pickle_file, 'rb') as f:
+		project_obj = pic.load(f)
+except Exception as e:
+        print('Failed to access pickle file %s. Reason: %s' % (cog_pickle_file, e))
 ]]] */
 // [[[end]]]
 /*============================================================================*/
