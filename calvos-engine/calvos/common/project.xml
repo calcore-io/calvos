@@ -24,41 +24,53 @@
 			</clv:Desc>
 			<clv:Default>["comgen.CAN", "common.codegen"]</clv:Default>
 		</clv:ParamDefinition>
+		<clv:ParamDefinition type="dict" id="project_alias_dict"
+			category="catproject_folders" is_advanced="true"
+			is_read_only="true">
+			<clv:Title>Aliased names</clv:Title>
+			<clv:Desc>Aliased names for string substitutions.</clv:Desc>
+			<clv:Default>{"project_root": "$p:common.project,project_root$",
+"project_usr_in": "$p:common.project,project_path_usr_in$", 
+"project_out": "$p:common.project,project_path_out$", 
+"project_working": "$p:common.project,project_path_working$", 
+"project_doc": "$p:common.project,project_path_doc$", 
+"project_templates": "$p:common.project,project_path_templates$"}</clv:Default>
+		</clv:ParamDefinition>
 		<clv:ParamDefinition id="project_root" type="str"
 			category="catproject_folders" is_read_only="true">
 			<clv:Title>Root path of project</clv:Title>
 			<clv:Desc>Root path of project</clv:Desc>
-			<clv:Default>$project$</clv:Default>
+			<clv:Default>$v:project_path$</clv:Default>
 		</clv:ParamDefinition>
 		<clv:ParamDefinition type="str" id="project_path_usr_in"
 			category="catproject_folders">
 			<clv:Title>Project input path</clv:Title>
 			<clv:Desc>Folder with user input files.</clv:Desc>
-			<clv:Default>$project$/usr_in</clv:Default>
+			<clv:Default>$project_root$/usr_in</clv:Default>
 		</clv:ParamDefinition>
 		<clv:ParamDefinition type="str" id="project_path_out"
 			category="catproject_folders">
 			<clv:Title>Project output path.</clv:Title>
 			<clv:Desc>Folder with user input files.</clv:Desc>
-			<clv:Default>$project$/out</clv:Default>
+			<clv:Default>$project_root$/out</clv:Default>
 		</clv:ParamDefinition>
 		<clv:ParamDefinition type="str" id="project_path_working"
 			category="catproject_folders">
 			<clv:Title>Working path</clv:Title>
 			<clv:Desc>Folder where working files are to be placed.</clv:Desc>
-			<clv:Default>$project$/$project_path_out$/working</clv:Default>
+			<clv:Default>$project_out$/working_dir</clv:Default>
 		</clv:ParamDefinition>
 		<clv:ParamDefinition type="str" id="project_path_doc"
 			category="catproject_folders">
 			<clv:Title>Documents path</clv:Title>
 			<clv:Desc>Folder where generated documents are to be placed.</clv:Desc>
-			<clv:Default>$project$/$project_path_out$/doc</clv:Default>
+			<clv:Default>$project_out$/doc</clv:Default>
 		</clv:ParamDefinition>
 		<clv:ParamDefinition type="str" id="project_path_templates"
 			category="catproject_folders">
 			<clv:Title>Templates folder</clv:Title>
 			<clv:Desc>Folder where templates for user inputs are to be placed.</clv:Desc>
-			<clv:Default>$project$/$project_path_out$/$project_path_doc$/templates</clv:Default>
+			<clv:Default>$project_doc$/templates</clv:Default>
 		</clv:ParamDefinition>
 		<clv:ParamDefinition type="dict" id="project_test1">
 			<clv:Title>clv:Title</clv:Title>

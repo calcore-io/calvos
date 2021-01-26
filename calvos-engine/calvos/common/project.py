@@ -8,8 +8,6 @@ Module for managing a calvos project.
 @license:    GPL v3
 """
 __version__ = '0.1.0'
-from pickle import TRUE, NONE
-from calvos.common.codegen import calvos_path
 __date__ = '2020-11-12'
 __updated__ = '2020-11-12'
 
@@ -17,6 +15,8 @@ import xml.etree.ElementTree as ET
 import pathlib as plib
 import importlib
 import json
+import re
+import pickle
 
 import calvos.common.codegen as cg
 import calvos.common.logsys as lg
@@ -92,129 +92,16 @@ class Project:
         self.params = {} # param objects {param_id : param value}
         
         self.param_categories = {} # {category id : objects ParamCategory }
-    
-#     #===============================================================================================
-#     def load_params_categories(self, XML_root):
-#         """ Loads parameter categories definitions.
-#         
-#         Needs to be called prior to call to load_param_definitions function.
-#         """
-#         for category in XML_root.findall("./Params/Categories/Category"):
-#             category_id = category.get("id")
-#             if category_id not in self.param_categories:
-#                 # Add new category
-#                 category_name = category.findtext("Name")
-#                 category_desc = category.findtext("Desc")
-#                 
-#                 self.param_categories.update({category_id : \
-#                         g.ParamCategory(category_id, category_name, category_desc)})
-#             else:
-#                 log_warn('Category id "%s" duplicated. Only added first appearance' % category_id)
-#             
-#             
-#     #===============================================================================================    
-#     def load_params_definitions(self, XML_root):
-#         """ Loads parameter definitions and their default values.
-#         
-#         Function load_params_categories needs to be called prior to this one.
-#         """
-#         for param in XML_root.findall("./Params/Param"):
-#             
-#             param_id = param.get("id")
-#             if param_id not in self.params:
-#                 param_name = param.get("Name")
-#                 param_desc = param.get("Desc")
-#                 param_default = param.findtext("Default")
-#                 param_category = param.get("category")
-#                 param_type = param.get("type")
-#                 
-#                 param_object = g.Parameter(param_id, param_default, \
-#                                                param_default, param_name, param_desc)
-#                 
-#                 # Check if category is valid
-#                 if param_category in self.param_categories:
-#                     param_object.category = param_category
-#                 else:
-#                     log_warn('Invalid category "%s" for parameter id "%s".' \
-#                              % (param_category,param_id))
-#                 
-#                 # Set rest of parameter attributes bases on its type
-#                 if param_type == "scalar":
-#                     param_min = param.findtext("Min")
-#                     param_max = param.findtext("Max")
-#                     param_offset = param.findtext("Offset")
-#                     param_res = param.findtext("Resolution")
-#                     param_unit = param.findtext("Unit")
-#                     
-#                     param_object.type = g.TYPE_SCALAR
-#                     param_object.min = param_min
-#                     param_object.max = param_max
-#                     param_object.offset = param_offset
-#                     param_object.resolution = param_res
-#                     param_object.unit = param_unit
-#                     
-#                     param_object.default = param_object.default
-#                     
-#                 elif param_type == "enum":
-#                     # Get enumerated values
-#                     enum_values = {}
-#                     for entry in param.findall("./Enumeration/Entry"):
-#                         entry_id = entry.get("name")
-#                         if entry_id not in enum_values:
-#                             enum_values.update( {entry_id : entry.text} )
-#                         else:
-#                             log_warn(('Duplicated entry id %s for parameter id %s. ' \
-#                                      +' Only first occurrence was taken.') \
-#                                        % (entry_id, param_id))
-#                     
-#                     # Check if enum default is a valid entry
-#                     if param_default != "" and param_default not in enum_values:
-#                         log_warn(('Default value "%s" for parameter id "%s" is not ' \
-#                                  + 'a valid value as per the enumerated values.') \
-#                                  % (param_default, param_id))
-#                     
-#                     # Update Parameter Object with enumeration
-#                     param_object.type = g.TYPE_ENUM
-#                     param_object.enumeration = enum_values
-#                     
-#                 elif param_type == "string":
-#                     param_min = param.findtext("Min")
-#                     param_max = param.findtext("Max")
-#                     
-#                     param_object.type = g.TYPE_STRING
-#                     param_object.min = param_min
-#                     param_object.max = param_max
-#                     
-#                     param_object.default = str(param_object.default)
-#                     
-#                     # Check if default value complies with min/max characters
-#                     if param_min is not None and param_max is not None:
-#                         if int(param_max) < int(param_min):
-#                             log_warn(( 'Max value for parameter id "%s" is not greater than or '\
-#                                      + 'equal to Min.') % param_id)
-#                         else:
-#                             if len(param_object.default) < param_min \
-#                             or len(param_object.default) > param_max:
-#                                 log_warn(('Default value "%s" for parameter id "%s" is not a ' \
-#                                          + 'valid value as per the min/max characters definition.')\
-#                                          % (param_default, param_id))
-# 
-#                 else:
-#                     log_warn('Invalid parameter type "%s" for parameter id "%s".' \
-#                              % (param_type, param_id))  
-#                 
-#                 self.params.update({param_id : param_object}) 
-#             else:
-#                 log_warn('Parameter id "%s" is duplicated. Only considered first appearance' \
-#                          % param_id)
-#     
-#     #===============================================================================================
-#     def write_param(self, param_id, param_value):
-#         pass
-#     
-#     #===============================================================================================
-#     def load_project_params(self, XML_root):
-#         pass
+        
+        self.simple_params = {}
+        
+        self.module = "common.project"
+        
+        
+        
+        self.test_dict = {"hola1" : 1, "hola2" : 2, "hola3" : 3, "hola4" : 4, "hola5" : 5}
+        self.test_list = ["lst1", "lst2", "lst3", "lst4", "lst5"]
+        self.test_var = 100
     
     #===============================================================================================
     def load_component_definitions(self, XML_root, comp_def_ojb):
@@ -273,7 +160,7 @@ class Project:
                 log_warn(("Id '%s' not found for a parameter of component '%s'. " \
                              + "Parameter not added.") % component)
         
-        log_debug("Loading of definitions completed.")   
+        log_info("Loading of definitions for component '%s' completed." % component)   
    
     #===============================================================================================    
     def add_component(self, type_name, \
@@ -310,7 +197,7 @@ class Project:
         """
         
         calvos_components = {} # {name : xml_path}
-        for path in sorted(calvos_path.rglob('*.py')):
+        for path in sorted(_calvos_path.rglob('*.py')):
             module_name = path.stem
             xml_path = path.with_suffix(".xml")
             # Check if corresponding xml file is found
@@ -359,7 +246,7 @@ class Project:
         # Search for calvos components
         # ----------------------------
         # A calvos component shall have a module.py together with a module.xml at same path
-        calvos_components = self.find_components(calvos_path)
+        calvos_components = self.find_components(self.calvos_path)
         
         # Load parameters of found components
         # -----------------------------------
@@ -479,14 +366,54 @@ class Project:
             try:
                 log_info('-------------- Loading data for component "%s" of type "%s".' \
                          % (component.name, component.type))
+                # Loads user input and creates a component specific object. Such object will be
+                # set in component.component_object
                 self.load_component_data(component)
-                
+            except Exception as e:
+                log_error('Failed to load user input for component "%s". Reason: %s' \
+                          % (component.name, e) )
+        
+        log_info("============== Generating components code. ==============")
+        
+        
+        test_str = ["rew ert wer\"$v:calvos_path$\" wert ewr", \
+"wert er\"$d:test_dict,hola1$\"  erte rt \"$d:test_dict,hola1$\" tre w", \
+" wert \"$func:function_name$\" tttt", \
+"trey rt\"$d:test_dict,hola2$\" ttt", \
+" rtyert \"$l:test_list,3$\"ttttt", \
+"rrty \"$d:test_dict,hola1$\"asda\"$v:calvos_path$\"sdasd\"$l:test_list,4$\"asaaa asd  sa a dsa da\"$d:test_dict,hola4$\"", \
+"hello \"$project_working$\""]
+        
+#        for string in test_str:
+#            self.expand_all_tokens(string)
+            
+        working_path = self.get_simple_param_val(self.module, "project_path_working")
+        working_path = self.expand_all_tokens(working_path)["out_str"]
+        working_path = cg.string_to_path(working_path)
+        print("working_path: ", working_path)
+            
+        
+        # Create a pickle of all project object to be available for source generators.
+        pickle_file_name = "common_Project_obj.pickle"
+        pickle_full_file_name = working_path / pickle_file_name
+        print("pickle_full_file_name: ", pickle_full_file_name)
+        try:
+            with open(pickle_full_file_name, 'wb') as f:
+                pickle.dump(self, f, pickle.HIGHEST_PROTOCOL)
+        except Exception as e:
+                print('Failed to create pickle file %s. Reason: %s' \
+                      % (pickle_full_file_name, e))
+        
+        
+        for component in self.components:
+            try:
                 log_info('-------------- Generating code for component "%s" of type "%s".' \
                          % (component.name, component.type))
                 self.generate_component_code(component, component.params)
                 
             except Exception as e:
-                log_error('Failed to process component "%s". Reason: %s' % (component.name, e) )
+                log_error('Failed to generate code for component "%s". Reason: %s' \
+                          % (component.name, e) )
                 
     #===============================================================================================
     def simple_param_exists(self, component, param_id):
@@ -599,7 +526,279 @@ class Project:
             log_warn("Component '%s' is not defined. Parameter '%s' can't be updated." \
                      % (component, param_id))
                 
-              
+    
+    #===============================================================================================
+    TOKEN_ERROR = 0
+    TOKENS_NOT_FOUND = 1
+    TOKENS_REPLACED = 2
+    def expand_direct_tokens(self, input_str, module = None):
+        """ Retrieves local data based on the input retrieve string.
+        
+        retrieve string can have combination of the following elements:
+          - $v:variable_name$
+          - $f:function_name$
+          - $d:dict_name,key$
+          - $l:list_name,idx$
+          - $p:module,param_id$ --> get global param_id
+          - $p:module,param_id$ --> get global param_id
+          - $k:string_name$ --> get named string from self.simple_params["<module>_named_strings"]
+          - $alias$ --> get a new retrieve string from self.simple_params["<module>_alias_data"]
+        """
+        # TODO: make function also be able to provide arguments, for example with **kwargs  
+        if module is None:
+            module = self.module
+            
+        token_error = False
+        current_expansion = None
+        
+        # Resolve direct tokens
+        # ---------------------
+        # Search for direct tokens $token_type:token_value$
+        regex = re.compile(r"(\$(v|f|d|l|p):(.+?)\$)")
+        regex_matches = re.findall(regex,str(input_str))
+        
+        expanded_str = input_str
+        
+        for match in regex_matches:
+            # Element TOKEN_TYPE corresponds to the token_type, element TOKEN_VALUE to token_value
+            token_full = match[0]
+            token_type = match[1]
+            token_value = match[2]
+            current_expansion = None
+             
+            if token_type == "v":
+                log_debug("Processing variable token '$%s:%s$'..." % (token_type, token_value))
+                if hasattr(self, token_value):
+                    current_expansion = getattr(self, token_value)
+                    log_debug("Token expanded to: '%s'" % current_expansion)
+                else:
+                    log_warn("Local variable '%s' not found in object" % (token_value))
+            elif token_type == "f":
+                # TODO: implement this
+                pass
+            elif token_type == "d":
+                log_debug("Processing dictionary token '$%s:%s$'..." % (token_type, token_value))
+                token_val_args = token_value.split(",")
+                if len(token_val_args) == 2:
+                    # Element zero of splitted string is the variable name, element one is the key
+                    if hasattr(self, token_val_args[0]):
+                        key_str = str(token_val_args[1])
+                        dict_var = getattr(self, token_val_args[0])
+                        if key_str in dict_var:
+                            current_expansion = dict_var[key_str]
+                            log_debug("Token expanded to: '%s'" % current_expansion)
+                        else:
+                            log_warn("In token '$%s:%s$', key '%s' doesn't exist." \
+                                     % (token_type, token_value, str(key_str)))
+                    else:
+                        log_warn("Local variable '%s' not found. Returned 'None'." % (token_value))
+                else:
+                    log_warn(("In token '$%s:%s$' separator ',' is missing or has more than one." \
+                             + " Returned 'None'.") % (token_type, token_value))
+            elif token_type == "l":
+                log_debug("Processing list token '$%s:%s$'..." % (token_type, token_value))
+                token_val_args = token_value.split(",")
+                if len(token_val_args) == 2:
+                    # Element zero of splitted string is the variable name, element one is the index
+                    if hasattr(self, token_val_args[0]):
+                        index = int(token_val_args[1])
+                        list_var = getattr(self, token_val_args[0])
+                        if index < len(list_var):
+                            current_expansion = list_var[index]
+                            log_debug("Token expanded to: '%s'" % current_expansion)
+                        else:
+                            log_warn("In token '$%s:%s$', index '%s' is out of range." \
+                                     % (token_type, token_value, str(index)))
+                    else:
+                        log_warn("Local variable '%s' not found. Returned 'None'." % (token_value))
+                else:
+                    log_warn(("In token '$%s:%s$' separator ',' is missing or has more than one." \
+                             + " Returned 'None'.") % (token_type, token_value))
+            elif token_type == "p":
+                log_debug("Processing parameter token '$%s:%s$'..." % (token_type, token_value))
+                token_val_args = token_value.split(",")
+                if len(token_val_args) == 1:
+                    # Element zero of splitted string is the local param_id.
+                    current_expansion = self.get_simple_param_val(self.module, token_val_args[0])
+                    log_debug("Token expanded to: '%s'" % current_expansion)
+                elif len(token_val_args) == 2:
+                    # Element zero of splitted string is the parameter module name, element one 
+                    # is the param_id.
+                    current_expansion = \
+                        self.get_simple_param_val(token_val_args[0], token_val_args[1])
+                    log_debug("Token expanded to: '%s'" % current_expansion)
+                else:
+                    log_warn(("In token '$%s:%s$' separator ',' appears more than once." \
+                             + " Returned 'None'.") % (token_type, token_value))
+            else:
+                log_warn("In token '$%s:%s$', unknown token type '%s." \
+                         % (token_type, token_value, token_type))
+            
+            # Substitute value in input string
+            if current_expansion is None:
+                token_error = True
+                
+            # If expansion has a single back slash \ need to use a temporal set of characters
+            # like '#####' since it causes problems with regex 'sub' function.
+            escaping_chars = '#####'
+            escape_diag_regex = re.compile(r"\\(?!\\)")
+            escaped_str = escape_diag_regex.sub(escaping_chars,str(current_expansion))
+            # Perform replacements
+            expanded_str = regex.sub(str(escaped_str),str(expanded_str), 1)
+            # Un-scape back slashes if any was escaped.
+            expanded_str = expanded_str.replace(escaping_chars, "\\")
+        
+        output_str = expanded_str
+        
+        if token_error == True:
+            return_stat = self.TOKEN_ERROR
+        elif current_expansion is None:
+            return_stat = self.TOKENS_NOT_FOUND
+        else:
+            return_stat = self.TOKENS_REPLACED
+            
+        return {"status" : return_stat, "out_str" : output_str}
+        
+    #===============================================================================================
+    def expand_alias_tokens(self, input_str, module = None):
+        """ Expands alias tokens.
+        
+        input_str can have combination of the following elements:
+          - $alias$ --> get a new retrieve string from self.simple_params["<module>_alias_data"]
+        """
+        
+        if module is None:
+            module = self.module
+            
+        component_name = module.split(".")
+        component_name = component_name[-1]
+        
+        token_error = False
+        retrieve_string = None
+        
+        expanded_str = input_str
+        
+        # Resolve aliased tokens
+        # ----------------------
+        # Search for aliased tokens $alias$. Alias name shall comply with C-identifier syntax.
+        regex = re.compile(r"(\$([a-zA-Z_][a-zA-Z0-9_]*)\$)")
+        regex_matches = re.findall(regex,str(input_str))
+        
+        for match in regex_matches:
+            # new retrieve string will be taken from get_simple_param_val(<module>, alias_data)
+            token_value = match[1]
+            retrieve_string = None
+            
+            log_debug("Processing aliased token '$%s$'..." % token_value)
+            
+            # Get retrieve string
+            if cg.is_valid_identifier(token_value):
+                alias_dict_name = str(component_name)+"_alias_dict"
+                if self.simple_param_exists(module, alias_dict_name):
+                    alias_dict = self.get_simple_param_val(module, alias_dict_name)
+                    if token_value in alias_dict:
+                        retrieve_string = str(alias_dict[token_value])
+                        log_debug("Token expanded to: '%s'" % retrieve_string)
+                    else:
+                        log_warn("Alias name '%s' not defined. Returned 'None'. " % token_value)
+                else:
+                    log_warn("Alias dictionary not found for component '%s'." % module)
+            else:
+                log_warn("Alias name '%s' shall comply with C-identifier syntax." % token_value)
+            
+            if retrieve_string is None:
+                token_error = True
+
+            # Substitute value in input string
+            expanded_str = regex.sub(str(retrieve_string),expanded_str, 1)
+
+        output_str = expanded_str
+    
+        if token_error == True:
+            return_stat = self.TOKEN_ERROR
+        elif retrieve_string is None:
+            return_stat = self.TOKENS_NOT_FOUND
+        else:
+            return_stat = self.TOKENS_REPLACED
+        
+        return {"status" : return_stat, "out_str" : output_str}
+    
+    #===============================================================================================
+    def expand_all_tokens(self, input_str, module = None):
+        """ Expand all replacing tokens in the given string. """
+        
+        if module is None:
+            module = self.module
+        
+        tokens_found = False
+        token_error = False
+        
+        # First expand direct tokens then expand aliased tokens and finally expand again possible
+        # direct tokens generated while expanding aliased tokens. The order is important since
+        # one first replacement of direct tokens needs to occur before the aliased tokens to
+        # avoid confusing 'non-token' text in between tokens as if they were aliased tokens.
+        log_debug("Expanding string: '%s'..." % input_str)
+        return_value = self.expand_direct_tokens(input_str, module)
+        if return_value["status"] == self.TOKENS_REPLACED:
+            tokens_found = True
+            log_debug("String with direct tokens replaced: '%s'" % return_value["out_str"])
+        elif return_value["status"] == self.TOKEN_ERROR:
+            token_error = True
+        
+        # Keep expanding all aliased/direct tokens until no one is found
+        while_guard = grl.LOOP_GUARD_MED
+        last_loop = False
+        while while_guard > 0:
+            while_guard -= 1
+            if while_guard == 0:
+                log_error(("Error expanding tokens. Search took %s loops without success " \
+                          + "and was canceled.") % str(grl.LOOP_GUARD_MED))
+                
+            alias_tokens_this_loop = False
+            direct_tokens_this_loop = False
+                
+            return_value = self.expand_alias_tokens(return_value["out_str"], module)
+            
+            if return_value["status"] == self.TOKEN_ERROR:
+                token_error = True
+                break
+            elif return_value["status"] == self.TOKENS_REPLACED:
+                tokens_found = True
+                alias_tokens_this_loop = True
+                log_debug("Expanded string: '%s'" % return_value["out_str"])
+            
+            # Process direct tokens resulting from expansion of aliased ones
+            return_value = self.expand_direct_tokens(return_value["out_str"], module)
+            if return_value["status"] == self.TOKEN_ERROR:
+                token_error = True
+                break
+            elif return_value["status"] == self.TOKENS_REPLACED:
+                tokens_found = True
+                direct_tokens_this_loop = True
+                
+            if alias_tokens_this_loop is True or direct_tokens_this_loop is True:
+                last_loop = False
+            elif alias_tokens_this_loop is False and direct_tokens_this_loop is False:
+                if last_loop is True:
+                    break
+                else:
+                    last_loop = True
+            
+            
+        # Determine returning values
+        if token_error == True:
+            return_value["status"] = self.TOKEN_ERROR
+            log_warn("Final expanded string with errors: '%s'" % return_value["out_str"])
+        elif tokens_found == True:
+            return_value["status"] = self.TOKENS_REPLACED
+            log_debug("Final expanded string: '%s'" % return_value["out_str"]) 
+        else:
+            return_value["status"] = self.TOKENS_NOT_FOUND
+            log_debug("No replacements performed.")
+            
+        return return_value
+            
+                  
     #===============================================================================================        
     class CompDefinition:
         """ Class for modeling a calvos project component definition. """
@@ -616,10 +815,14 @@ class Project:
     class Component:
         """ Models a calvos project Component. """
         
+        component_idx = 0
+        
         #===========================================================================================
         def __init__(self, type_name, \
                      input_file = None, input_type = IN_TYPE_XML, params = {}, \
                      name = None, desc = None):
+            
+            self.comp_idx = self.get_and_increase_comp_idx()
             
             self.name = str(name)
             self.desc = str(desc)
@@ -638,6 +841,15 @@ class Project:
             self.component_object = None
             
             self.simple_params = {}
+        
+        #===========================================================================================
+        @classmethod
+        def get_and_increase_comp_idx(cls):
+            """ Returns current class component index and then increase it by 1. """
+            
+            return_value = cls.component_idx
+            cls.component_idx += 1
+            return return_value
         
         #===========================================================================================    
         def load_param_defaults(self):

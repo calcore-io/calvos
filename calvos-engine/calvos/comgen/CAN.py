@@ -16,7 +16,7 @@ import pyexcel as pe
 import math
 from lxml import etree as ET
 import xml.dom.minidom
-import pickle as pic
+import pickle
 import cogapp as cog
 import pathlib as pl
 import importlib
@@ -165,6 +165,8 @@ class Network_CAN:
         self.input_file = None
         
         self.gen_params = {}
+        
+        self.subnetwork = None # Expect object of class Network_CAN
            
     #===============================================================================================
     @staticmethod
@@ -1953,7 +1955,7 @@ class Network_CAN:
         
     #===============================================================================================    
     def cog_generator(self, input_file, cog_output_file, \
-                             out_dir, work_dir, gen_path, pickle, \
+                             out_dir, work_dir, gen_path, pickle_file, \
                              variables = None):
         """ Invoke cog generator for the specified file.
         """
@@ -1971,7 +1973,7 @@ class Network_CAN:
                    '-d', \
                    '-D', 'input_worksheet=' + self.metadata_gen_source_file, \
                    '-D', 'project_working_dir=' + str(work_dir), \
-                   '-D', 'cog_pickle_file=' + str(pickle), \
+                   '-D', 'cog_pickle_file=' + str(pickle_file), \
                    '-D', 'cog_output_file=' + str(cog_output_file)]
         
         # Append additional variables if required
@@ -2027,7 +2029,7 @@ class Network_CAN:
         
         try:
             with open(cog_serialized_network_file, 'wb') as f:
-                pic.dump(subnetwork, f, pic.HIGHEST_PROTOCOL)
+                pickle.dump(subnetwork, f, pickle.HIGHEST_PROTOCOL)
         except Exception as e:
                 print('Failed to create pickle file %s. Reason: %s' \
                       % (cog_serialized_network_file, e))
@@ -2091,7 +2093,7 @@ class Network_CAN:
     
     #===============================================================================================
     def get_subnetwork(self, nodes_list):
-        """ Returns local parameter if defined otherwise returns the default one. """
+        """ Returns a network only with data of the passed nodes. """
         
         if len(nodes_list) > 0:
             subnetwork = copy.deepcopy(self)

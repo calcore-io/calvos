@@ -44,6 +44,8 @@ def log_critical(message):
     log.critical(LOGGER_LABEL, message)
 # --------------------------------------------------------------------------------------------------
 
+LOOP_GUARD_MED = 500
+
 TYPE_SCALAR = 0
 TYPE_ENUM = 1
 TYPE_STRING = 2
