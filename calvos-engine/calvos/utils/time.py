@@ -112,6 +112,15 @@ class Timers():
             callback_str = kwargs.get('callback', None)
             if callback_str is not None and cg.is_valid_identifier(callback_str):
                 self.callback = callback_str
+            
+            # callback_cycle triggers when a cycle finishes, for example if timer auto-reloads
+            # 10 times, it will be called once the 10 times elapsed.
+            # TODO: This can be a flag instead of a callback.
+            callback_str = kwargs.get('callback_cycle', None)
+            if callback_str is not None and cg.is_valid_identifier(callback_str):
+                self.callback_cycle = callback_str
+                
+            self.auto_reloads = kwargs.get('reload_times', 0) # 0...n or "inf"
         
         def get_task_tick_time(self, timer_time_ms):
             """ Returns the cycle time of the closes task for processing the given timer value. """

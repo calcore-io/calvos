@@ -10,20 +10,41 @@
 	</clv:Desc>
 	<clv:ParamsDefinitions>
 		<clv:Categories>
-			<clv:Category id="time_general">
+			<clv:Category id="cattime_general">
 				<clv:Title>General</clv:Title>
 			</clv:Category>
-			<clv:Category id="time_timers">
+			<clv:Category id="cattime_timers">
 				<clv:Title>Timers</clv:Title>
 			</clv:Category>
 		</clv:Categories>
-		<clv:ParamDefinition type="list" id="time_tasks">
+		<clv:ParamDefinition type="list" id="time_tasks"
+			category="cattime_timers" is_advanced="true">
 			<clv:Title>Time Tasks Periods</clv:Title>
 			<clv:Desc>
 				List of tasks (periods in ms) used for processing
 				timers.
 			</clv:Desc>
 			<clv:Default>[5,10,20,100,1000]</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="list" id="time_timer_mechanisms" category="cattime_timers"
+			is_read_only="true" is_advanced="true">
+			<clv:Title>Timer tasks mechanisms</clv:Title>
+			<clv:Desc>Timer tasks mechanism to use: linear, time wheel, auto determine.</clv:Desc>
+			<clv:Default>["auto","linear","wheel"]</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="str" id="time_timer_mechanism"
+			category="cattime_timers"
+			validator='["utils.time", "time_timer_mechanisms"]'
+			is_advanced="true">
+			<clv:Title>Selected timer mechanism</clv:Title>
+			<clv:Desc>Selected timer mechanism.</clv:Desc>
+			<clv:Default>auto</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="int" id="time_mechanism_param1" category="cattime_timers"
+			is_advanced="true">
+			<clv:Title>Timer mechanism parameter 1</clv:Title>
+			<clv:Desc>Timer mechanism parameter 1.</clv:Desc>
+			<clv:Default>16</clv:Default>
 		</clv:ParamDefinition>
 	</clv:ParamsDefinitions>
 </clv:ComponentDefinition>
