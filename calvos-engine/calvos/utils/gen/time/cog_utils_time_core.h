@@ -5,18 +5,19 @@ import warnings
 import time
 import sys
 import pickle as pic
+import json
 import pathlib as plib
 
-import calvos.comgen.time as tmr
+import calvos.utils.time as tmr
 import calvos.common.codegen as cg
 
 from cog_time import log_debug, log_info, log_warn, log_error, log_critical, C_gen_info
 
 try:
-	with open(cog_pickle_file, 'rb') as f:
-		network = pic.load(f)
+	with open(cog_proj_pickle_file, 'rb') as f:
+		project_obj = pic.load(f)
 except Exception as e:
-        print('Failed to access pickle file %s. Reason: %s' % (cog_pickle_file, e))
+        print('Failed to access pickle file %s. Reason: %s' % (cog_proj_pickle_file, e))
 ]]] */
 // [[[end]]]
 /*============================================================================*/
@@ -48,7 +49,7 @@ cog.outl(cg.C_license())
 /* [[[cog
 
 # Print generation information
-cog.outl(C_gen_info(input_worksheet,network))
+cog.outl(C_gen_info(input_worksheet,project_obj))
 ]]] */
 // [[[end]]]
 /* [[[cog

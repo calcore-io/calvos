@@ -76,6 +76,8 @@ class Timers():
         
         self.gen_path = self.project_obj.get_component_gen_path(self.module)
         
+        self.metadata_gen_source_file = None
+        
     def update_timer_tasks(self):
         """ Define which timer tasks to use for timers handling. """
         self.tasks = []
@@ -419,13 +421,11 @@ class Timers():
         """
         # Setup input and output files
         # ----------------------------
-        input_file
-        out_dir
-        work_dir
-        gen_path
+        out_dir = self.project_obj.get_simple_param_val("common.project", "project_path_out")
+        work_dir = self.project_obj.get_simple_param_val("common.project", "project_path_working")
+        gen_path = self.gen_path
         
-        input_file = str(input_file) 
-        comgen_CAN_cog_input_file = gen_path / input_file
+        comgen_CAN_cog_input_file = gen_path / str(input_file)
                 
         # Set output file with path
         comgen_CAN_cog_output_file = out_dir / cog_output_file
@@ -437,7 +437,6 @@ class Timers():
                    '-D', 'input_worksheet=' + self.metadata_gen_source_file, \
                    '-D', 'project_working_dir=' + str(work_dir), \
                    '-D', 'cog_proj_pickle_file=' + str(project_pickle_file), \
-                   '-D', 'cog_pickle_file=' + str(comp_pickle_file), \
                    '-D', 'cog_output_file=' + str(cog_output_file)]
         
         # Append additional variables if required
