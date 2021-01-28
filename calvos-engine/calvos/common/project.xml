@@ -77,5 +77,26 @@
 			<clv:Title>Project picke file</clv:Title>
 			<clv:Desc>Name of project picke file.</clv:Desc>
 			<clv:Default>common_Project_object.pickle</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="boolean" id="project_generate_code" category="catproject_general">
+			<clv:Title>Generate C-Code</clv:Title>
+			<clv:Desc>If true C-code will be generated.</clv:Desc>
+			<clv:Default>true</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="boolean" id="project_generate_XML" category="catproject_general">
+			<clv:Title>Generate C-Code</clv:Title>
+			<clv:Desc>If true XML files corresponding to user inputs will be generated.</clv:Desc>
+			<clv:Default>true</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="boolean" id="project_generate_docs" category="catproject_general">
+			<clv:Title>Generate C-Code</clv:Title>
+			<clv:Desc>If true automatic documentation be generated.</clv:Desc>
+			<clv:Default>true</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="str" id="project_infinite"
+			is_read_only="true" is_advanced="true" category="catproject_general">
+			<clv:Title>String for indicating infinite</clv:Title>
+			<clv:Desc>String for indicating infinite.</clv:Desc>
+			<clv:Default>inf</clv:Default>
 		</clv:ParamDefinition></clv:ParamsDefinitions>
 </clv:ComponentDefinition>

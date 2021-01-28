@@ -384,8 +384,13 @@ def is_valid_identifier(input_string):
         Boolean: Returns True if input string has a C-language identifier syntax,
         returns False otherwise.
     """
+    
     identifier = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*\Z", re.UNICODE)
-    return re.match(identifier, input_string)
+    if re.match(identifier, input_string):
+        return_value = True
+    else:
+        return_value = False
+    return return_value
 
 #==============================================================================
 def is_hex_string(input_string):
@@ -859,6 +864,7 @@ class CogSources():
         self.sources = {} # {source_id : CogSrc object}
         
     class CogSrc():
+        """ Models a single C-code source file. """
         def __init__(self, source_id, cog_in_file, cog_out_file = None, is_header = False, relations = None):
             self.source_id = source_id
             self.cog_in_file = cog_in_file
@@ -869,7 +875,10 @@ class CogSources():
             
             self.relations = [] # List of CogSrcRel objects
             
+            self.generated = False
+            
     class CogSrcRel():
+        """ Models a source code relation for include purposes. """
         def __init__(self, module="", source_id=""):
             self.module = module
             self.source_id = source_id

@@ -12,7 +12,7 @@ __date__ = '2020-11-12'
 __updated__ = '2020-11-12'
 
 import xml.etree.ElementTree as ET
-import pathlib as plib
+import pathlib
 import importlib
 import json
 import re
@@ -142,16 +142,16 @@ class Project:
                     
                     param_validator = param.get("validator", None)
                     if param_validator is not None:
-                        log_debug("Processing validator '%s'..." % param_validator)
+                        log_debug("Validating validator '%s'..." % param_validator)
                         param_validator = grl.process_simple_param('list', param_validator)
                         if param_validator is None:
-                            # If there is a problem converting validator assume None
+                            # If there is a problem converting validator assume invalid
                             param_validator = None
                             log_warn(("Wrong value for 'validator' attribute of parameter '%s'" \
                                 + " of component '%s'. Assumed 'None'.")%(param_id, component))
-                            
+
                     param_ojb = grl.SimpleParam(param_id, param_type, param_value, \
-                                                param_read_only, param_validator)
+                                                    param_read_only, param_validator)
                     comp_def_ojb.simple_params.update({param_id : param_ojb})
                 else:
                     log_warn(("Missing parameter type for parameter '%s' of component '%s'. " \
@@ -258,7 +258,14 @@ class Project:
             # Parse XML with component definitions
             XML_tree = ET.parse(comp_xml)
             XML_root = XML_tree.getroot()
-            self.load_component_definitions(XML_root, self.components_definitions[comp_name])  
+            self.load_component_definitions(XML_root, self.components_definitions[comp_name]) 
+        
+        if success is True:
+            log_info("============== Validating parameters' default data ==============")
+            valid = self.validate_simple_params_defaults()
+            if valid is False:
+                log_warn("Invalid data found during parameters validation.")
+                #TODO. determine wheter or not to continue processing, success = True/False? 
         
         if success is True:
             # Load project components
@@ -411,7 +418,62 @@ class Project:
             except Exception as e:
                 log_error('Failed to generate code for component "%s". Reason: %s' \
                           % (component.name, e) )
-                
+    
+    #===============================================================================================
+    def validate_given_simple_params(self, component, simple_params_list):
+        """ .
+        
+        simple_params_list shall be a list of SimpleParam objects
+        """
+        all_valid = True
+        valid = True
+        if len(simple_params_list) > 0:
+            for param in simple_params_list:
+                param_id = param.param_id
+                validator = param.validator
+                if validator is not None:
+                    log_debug("Validating parameter '%s' against its validator '%s:%s'..." \
+                              % (param_id, validator[0], validator[1]))
+                    valid = self.validate_simple_param(component, param_id, \
+                                                       validator[0], validator[1])
+                    if valid is True:
+                        log_debug("Valid data.")
+                    else:
+                        all_valid = False
+        else:
+            log_debug("List of parameters to validate is empty.")
+        
+        return all_valid
+    
+    #===============================================================================================
+    def validate_simple_params_defaults(self):
+        """. """
+        # Validate local parameters
+        valid = self.validate_given_simple_params(self.module, self.simple_params.values())
+        if valid is True:
+            # Check each component definition's parameters
+            for component in self.components_definitions.values():
+                valid = self.validate_given_simple_params(component.type, \
+                                                         component.simple_params.values())
+                if valid is False:
+                    break
+        
+        return valid
+    
+    #===============================================================================================
+    def validate_comp_params(self):
+        """ Validates defined component's data. """
+        
+        valid = True
+        for component in self.components.values():
+            valid = self.validate_given_simple_params(component.type, \
+                                                     component.simple_params.values())
+            if valid is False:
+                break
+        
+        return valid
+        
+                          
     #===============================================================================================
     def simple_param_exists(self, component, param_id):
         """ Check if a component parameter is defined. """
@@ -452,6 +514,7 @@ class Project:
                 if param_val in validator_list:
                     return_value = True
                 else:
+                    log_warn("Invalid data. Allowed values list: '%s'." % validator_list)
                     return_value = False
             else:
                 log_warn("Validator param '%s' of component '%s' is not of 'list' type." \
@@ -503,7 +566,8 @@ class Project:
                 return_value = \
                     self.components_definitions[component].simple_params[param_id].param_value
             else:
-                log_warn("Parameter '%s' not found in component type '%'." % (component, component))
+                log_warn("Parameter '%s' not found in component type '%s'." \
+                         % (param_id, component))
         else:
             log_warn("Component '%s' is not defined. Parameter '%s' can't be retrieved." \
                      % (component, param_id))
@@ -815,6 +879,39 @@ class Project:
                     param.param_value = current_path  
                     log_debug("Resolved component '%s' path '%s': '%s'" \
                               % (comp_def.type, param.param_id, param.param_value))
+    
+    #===============================================================================================
+    def get_work_file_path(self, comp_id, param_id):
+        """ Returns a Path to the working directory file from a parameter. 
+        File name is extracted from a the parameter comp_id:param_id. """
+        
+        return_value = None
+        work_dir = self.get_simple_param_val(self.module,"project_path_working")
+        work_file = self.get_simple_param_val(comp_id,param_id)
+        if work_dir is not None and work_file is not None:
+            return_value = work_dir / work_file
+        
+        return return_value
+    
+    #===============================================================================================
+    def get_component_gen_path(self, component_id):
+        """ Returns the path with cog files for the given component. 
+        
+        Parameters
+        ----------
+            component_id, str
+                String constituing the component name, for example: "utils.time" or
+                "comgen.CAN", etc.
+        """     
+        gen_path_lst = component_id.split(".")
+        module_name = gen_path_lst[-1]
+        gen_path_val = cg.string_to_path(self.calvos_path)
+        for i, element in enumerate(gen_path_lst):
+            if i < len(gen_path_lst) - 1:
+                gen_path_val = gen_path_val / element
+        gen_path_val = gen_path_val / "gen" / module_name
+        
+        return gen_path_val
                           
     #===============================================================================================        
     class CompDefinition:

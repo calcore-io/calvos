@@ -164,7 +164,7 @@ class Network_CAN:
         # Last input file used to fill-out data for this object
         self.input_file = None
         
-        self.gen_params = {}
+#        self.gen_params = {}
         
         self.subnetwork = None # Expect object of class Network_CAN
            
@@ -1920,7 +1920,11 @@ class Network_CAN:
     def add_cog_source(self, cog_id, cog_in_file, is_header = False, relations = None):
         """ Adds a cog source to this network object's cog files list. 
         
-            relations should be a list of lists [[module2, source_id1], [modul2, source_id2], ...]
+        Parameters
+        ----------
+            relations, list
+                Should be a list of lists to model the relation of cog_id source file with other
+                source files... expected -> [[module2, source_id1], [modul2, source_id2], ...]
         """ 
         
         global cog_sources
@@ -2076,16 +2080,16 @@ class Network_CAN:
             log_warn(("Invalid input. No C-Code will be generated for " 
                           + "network: " + self.name + "."))
         
-    #=============================================================================================== 
-    def load_default_gen_params(self):
-        """ Load the default code generation parameters. """
-        
-        # TODO: Make this load from an xml
-        self.gen_params.update({"always_files_full_name": False})
-        self.gen_params.update({"msg_search_max_slot_size": 32})
-        self.gen_params.update({"msg_search_split_by_time": False})
-        self.gen_params.update({"msg_rx_process_single_task": False})
-        self.gen_params.update({"msg_tx_process_single_task": False})
+#     #=============================================================================================== 
+#     def load_default_gen_params(self):
+#         """ Load the default code generation parameters. """
+#         
+#         # TODO: Make this load from an xml
+#         self.gen_params.update({"always_files_full_name": False})
+#         self.gen_params.update({"msg_search_max_slot_size": 32})
+#         self.gen_params.update({"msg_search_split_by_time": False})
+#         self.gen_params.update({"msg_rx_process_single_task": False})
+#         self.gen_params.update({"msg_tx_process_single_task": False})
         
     #===============================================================================================
     def get_simple_param(self, param_id):
@@ -2159,6 +2163,67 @@ class Network_CAN:
         
         log_debug("Loading CAN information from file: '%s'..." % input_file)
         
+        # -----------------------
+        # Parse Parameters
+        # -----------------------
+        log_debug("Parsing parameters data.")
+        CONFIG_TITLE_ROW = 1 # Row number with titles
+        working_sheet = book["Config"]
+        working_sheet.name_columns_by_row(CONFIG_TITLE_ROW)
+        
+        for idx, row in enumerate(working_sheet):
+            # Ignore rows that are before the "config's" title row
+            if idx >= CONFIG_TITLE_ROW:
+                param_id = row[working_sheet.colnames.index("Parameter")]
+                param_value = row[working_sheet.colnames.index("User Value")]
+                if param_id != "" \
+                and self.project_obj.simple_param_exists(self.module, param_id) is True:
+                    read_only = self.project_obj.simple_param_is_read_only(self.module, param_id)
+                    if read_only is False and param_value != "":
+                        # Add parameter user's value to this object
+                        param_type = self.project_obj.get_simple_param_type(self.module, param_id)
+                        # Force read value from ODS to be a string and substitute quotes characters
+                        # out of utf-8 if present.
+                        param_value = str(param_value)
+                        param_value = param_value.encode(encoding='utf-8')
+                        param_value = param_value.replace(b'\xe2\x80\x9c', b'\"')
+                        param_value = param_value.replace(b'\xe2\x80\x9d', b'\"')
+                        param_value = param_value.decode('utf-8')
+                        log_debug("Processing parameter '%s' with value '%s'..." \
+                                  % (param_id, param_value))
+                        param_value = grl.process_simple_param(param_type, param_value)
+                        
+                        # Check if validation is required
+                        validator = \
+                            self.project_obj.get_simple_param_validator(self.module, param_id)
+                        if validator is not None:
+                            # Validate parameter
+                            valid = self.project_obj.validate_simple_param(self.module, param_id, \
+                                                                           validator[0], \
+                                                                           validator[1])
+                        else:
+                            # If no validator is defined assume data is valid.
+                            valid = True
+                        
+                        if valid is True:
+                            param_obj = grl.SimpleParam(param_id, param_type, param_value)
+                            self.simple_params.update({param_id: param_obj})
+                            log_debug("Added CAN user parameter '%s', type '%s' with value '%s'" \
+                                      % (param_id, param_type, param_value))
+                        else:
+                            log_warn(("Parameter '%s:%s' is invalid as per its " \
+                                     + "validator '%s:%s''. Parameter ignored.") \
+                                     % (self.module, param_id, validator[0], validator[1]))
+                    elif param_value != "":
+                        log_warn("Parameter '%s' is read-only. Ignored user value." % param_id)
+                    else:
+                        pass
+                elif param_id != "":
+                    log_warn("Parameter '%s' is meaningless for component '%s'. Parameter ignored." \
+                             % (param_id, self.module))
+                else:
+                    pass
+                
         # -----------------------
         # Parse Network Data
         # -----------------------
@@ -2296,67 +2361,6 @@ class Network_CAN:
                 
                 if str(signal_unit) != "":
                     self.signals[signal_name].fail_value = signal_unit
-        
-        # -----------------------
-        # Parse Parameters
-        # -----------------------
-        log_debug("Parsing parameters data.")
-        CONFIG_TITLE_ROW = 1 # Row number with titles
-        working_sheet = book["Config"]
-        working_sheet.name_columns_by_row(CONFIG_TITLE_ROW)
-        
-        for idx, row in enumerate(working_sheet):
-            # Ignore rows that are before the "config's" title row
-            if idx >= CONFIG_TITLE_ROW:
-                param_id = row[working_sheet.colnames.index("Parameter")]
-                param_value = row[working_sheet.colnames.index("User Value")]
-                if param_id != "" \
-                and self.project_obj.simple_param_exists(self.module, param_id) is True:
-                    read_only = self.project_obj.simple_param_is_read_only(self.module, param_id)
-                    if read_only is False and param_value != "":
-                        # Add parameter user's value to this object
-                        param_type = self.project_obj.get_simple_param_type(self.module, param_id)
-                        # Force read value from ODS to be a string and substitute quotes characters
-                        # out of utf-8 if present.
-                        param_value = str(param_value)
-                        param_value = param_value.encode(encoding='utf-8')
-                        param_value = param_value.replace(b'\xe2\x80\x9c', b'\"')
-                        param_value = param_value.replace(b'\xe2\x80\x9d', b'\"')
-                        param_value = param_value.decode('utf-8')
-                        log_debug("Processing parameter '%s' with value '%s'..." \
-                                  % (param_id, param_value))
-                        param_value = grl.process_simple_param(param_type, param_value)
-                        
-                        # Check if validation is required
-                        validator = \
-                            self.project_obj.get_simple_param_validator(self.module, param_id)
-                        if validator is not None:
-                            # Validate parameter
-                            valid = self.project_obj.validate_simple_param(self.module, param_id, \
-                                                                           validator[0], \
-                                                                           validator[1])
-                        else:
-                            # If no validator is defined assume data is valid.
-                            valid = True
-                        
-                        if valid is True:
-                            param_obj = grl.SimpleParam(param_id, param_type, param_value)
-                            self.simple_params.update({param_id: param_obj})
-                            log_debug("Added CAN user parameter '%s', type '%s' with value '%s'" \
-                                      % (param_id, param_type, param_value))
-                        else:
-                            log_warn(("Parameter '%s:%s' is invalid as per its " \
-                                     + "validator '%s:%s''. Parameter ignored.") \
-                                     % (self.module, param_id, validator[0], validator[1]))
-                    elif param_value != "":
-                        log_warn("Parameter '%s' is read-only. Ignored user value." % param_id)
-                    else:
-                        pass
-                elif param_id != "":
-                    log_warn("Parameter '%s' is meaningless for component '%s'. Parameter ignored." \
-                             % (param_id, self.module))
-                else:
-                    pass
 
     #===============================================================================================        
     class EnumType:
@@ -2619,7 +2623,7 @@ class CodeGen():
     PRFX_DEFAULT = 0
 
 
-input_file_name = None # Used for determining name of output network xml file.
+#input_file_name = None # Used for determining name of output network xml file.
 
 #===================================================================================================
 def load_input(input_file, input_type, params, project_obj):
@@ -2647,14 +2651,14 @@ def load_input(input_file, input_type, params, project_obj):
     try:
         return_object = Network_CAN()
         return_object.project_obj = project_obj
-        return_object.load_default_gen_params()
+#        return_object.load_default_gen_params()
         return_object.parse_spreadsheet_ods(input_file)
         try:
             return_object.update_cog_sources()
         except Exception as e:
             log_error('Failed to update cog sources. Reason: %s' % (e))
         
-        input_file_name = input_file.stem
+#        input_file_name = input_file.stem
     except Exception as e:
         return_object = None
         log_error('Failed to process input file "%s". Reason: %s' % (input_file, e))

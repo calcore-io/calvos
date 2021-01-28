@@ -18,13 +18,26 @@
 			</clv:Category>
 		</clv:Categories>
 		<clv:ParamDefinition type="list" id="time_tasks"
-			category="cattime_timers" is_advanced="true">
+			category="cattime_timers" is_advanced="true" subtype="int">
 			<clv:Title>Time Tasks Periods</clv:Title>
 			<clv:Desc>
 				List of tasks (periods in ms) used for processing
 				timers.
 			</clv:Desc>
 			<clv:Default>[5,10,20,100,1000]</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="list" id="time_types" category="cattime_timers"
+			is_read_only="true" is_advanced="true">
+			<clv:Title>Timer Types</clv:Title>
+			<clv:Desc>Timer Types.</clv:Desc>
+			<clv:Default>["auto","simple","simple_periodic","full"]</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="str" id="time_types_default"
+			category="cattime_timers" is_read_only="true" is_advanced="true"
+			validator='["utils.time", "time_types"]'>
+			<clv:Title>Timer default type</clv:Title>
+			<clv:Desc>Timer default type.</clv:Desc>
+			<clv:Default>auto</clv:Default>
 		</clv:ParamDefinition>
 		<clv:ParamDefinition type="list" id="time_timer_mechanisms" category="cattime_timers"
 			is_read_only="true" is_advanced="true">

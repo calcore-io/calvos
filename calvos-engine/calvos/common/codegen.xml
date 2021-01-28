@@ -14,6 +14,9 @@
 				is_subcategory_of="catcodegen_compiler">
 				<clv:Title>Data Types</clv:Title>
 			</clv:Category>
+			<clv:Category id="catcodegen_os">
+				<clv:Title>OS settings</clv:Title>
+			</clv:Category>
 		</clv:Categories>
 		<clv:ParamDefinition id="codegen_word_size" type="int" category="catcodegen_compiler">
 			<clv:Title>MCU word size</clv:Title>
@@ -49,5 +52,10 @@
 			<clv:Title>Unsigned int 32-bits</clv:Title>
 			<clv:Desc>C-type for an unsigned int of 32 bits. E.g., unsigned int</clv:Desc>
 			<clv:Default>{"hola" : 1, "quiubo" : ["jeje", 1, 2]}</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="float" id="codegen_os_fastest_task_ms" category="catcodegen_os">
+			<clv:Title>Fastest OS task</clv:Title>
+			<clv:Desc>Period of fastest OS defined task in ms.</clv:Desc>
+			<clv:Default>10</clv:Default>
 		</clv:ParamDefinition></clv:ParamsDefinitions>
 </clv:ComponentDefinition>
