@@ -861,9 +861,7 @@ class Project:
             
     #===============================================================================================
     def resolve_paths(self):
-        """ Expands all parameters of type "path". """
-        print(self.simple_params)
-        
+        """ Expands all parameters of type "path". """ 
         for param in self.simple_params.values():
             if param.param_type == "path":
                 current_path = self.expand_all_tokens(param.param_value)["out_str"]

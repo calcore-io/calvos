@@ -86,6 +86,9 @@ BAF = 3
 READ = 0
 WRITE = 1
 
+CAN_TX = 0
+CAN_RX = 1
+
 # Cog sources to use for code generation of this module
 cog_sources = cg.CogSources("comgen.CAN")
     
@@ -532,20 +535,35 @@ class Network_CAN:
         """ Gets the direction ('Tx', 'Rx' or None) for the given node. """
         return_value = None
         if node_name in self.nodes and message_name in self.messages:
-            if self.messages[message_name].publisher is not None:
-                if self.messages[message_name].publisher == node_name:
-                    # This message is a TX message for the given node
-                    return_value = "Tx"
-                elif node_name in self.nodes[node_name].subscribed_messages:
-                    # This message is an RX message for the given node
-                    return_value = "Rx"
+            if self.messages[message_name].publisher == node_name:
+                # This message is a TX message for the given node
+                return_value = CAN_TX
+            elif message_name in self.nodes[node_name].subscribed_messages:
+                # This message is an RX message for the given node
+                return_value = CAN_RX
+        return return_value
+    
+    #===============================================================================================
+    def get_message_timeout(self, node_name, message_name):
+        """ Gets the timeout for the given message w.r.t. a given node. """
+        return_value = None
+        if node_name in self.nodes and message_name in self.messages:
+            if self.get_message_direction(node_name, message_name) == CAN_RX:
+                if self.nodes[node_name].subscribed_messages[message_name] is not None:
+                    return_value = self.nodes[node_name].subscribed_messages[message_name]
         return return_value
 
-#  
-#    def remove_rx_message_to_node(self, node_name, message_name):
-#           
-        
-
+    #===============================================================================================
+    def get_messages_of_node(self, node_name):
+        """ Gets the direction ('Tx', 'Rx' or None) for the given node. """
+        return_value = [] # List of node names
+        if node_name in self.nodes:
+            for message in self.messages.values():
+                if message.publisher == node_name:
+                    return_value.append(message.name)
+            for message_name in self.nodes[node_name].subscribed_messages.keys():
+                return_value.append(message_name)  
+        return return_value          
     
     #===============================================================================================
     def get_signals_of_message(self, message_name):
@@ -1892,11 +1910,22 @@ class Network_CAN:
         
         cog_sources = cg.CogSources(module_name, gen_path = gen_path_val)
         
-        self.add_cog_source("network_h", "cog_comgen_CAN_NWID_NODEID_network.h", True)
-        self.add_cog_source("core_h", "cog_comgen_CAN_NWID_NODEID_core.h", True)
+        self.add_cog_source("common_h", "cog_comgen_CAN_common.h", True, \
+                            None, {"category" : "common"})
+        self.add_cog_source("network_h", "cog_comgen_CAN_NWID_network.h", True, \
+                            None, {"category" : "network"})
+        self.add_cog_source("node_net_h", "cog_comgen_CAN_NWID_NODEID_network.h", True, \
+                            [["comgen.CAN", "common_h"], \
+                             ["comgen.CAN", "network_h"]], \
+                            {"category" : "node"})
+        self.add_cog_source("core_h", "cog_comgen_CAN_NWID_NODEID_core.h", True, \
+                            [["comgen.CAN", "common_h"], \
+                             ["comgen.CAN", "network_h"]], \
+                            {"category" : "node"})
         self.add_cog_source("core", "cog_comgen_CAN_NWID_NODEID_core.c", False, \
                             [["comgen.CAN", "network_h"],\
-                             ["comgen.CAN", "core_h"]])
+                             ["comgen.CAN", "core_h"]], \
+                            {"category" : "node"})
 
     #===============================================================================================    
     def get_cog_includes(self, source_id): 
@@ -1919,7 +1948,8 @@ class Network_CAN:
         return return_str
 
     #===============================================================================================    
-    def add_cog_source(self, cog_id, cog_in_file, is_header = False, relations = None):
+    def add_cog_source(self, cog_id, cog_in_file, is_header = False, relations = None, \
+                       dparams = {}):
         """ Adds a cog source to this network object's cog files list. 
         
         Parameters
@@ -1933,7 +1963,7 @@ class Network_CAN:
 
         cog_out_file = self.get_cog_out_name(cog_in_file)
         cog_sources.sources.update({cog_id: cg.CogSources.CogSrc(\
-                cog_id,cog_in_file, cog_out_file, is_header)})
+                cog_id,cog_in_file, cog_out_file, is_header, [], dparams)})
         
         if relations is not None:
             for relation in relations:
@@ -1941,17 +1971,19 @@ class Network_CAN:
                 cog_sources.sources[cog_id].relations.append(relation_obj)
     
     #===============================================================================================
-    def update_cog_out_sources_names(self, cog_sources, names_dict):
+    def update_cog_out_sources_names(self, cog_sources, wildcards):
         """ Update cog sources names replacing found wildcards. 
         
         Parameters
         ----------
             cog_sources, CogSources
-            names_dict, dict
+            wildcards, dict
                 Named wildcards to be replaced, e.g., { "NWID" : "NetworkName", "NODEID" : nodeName}
         """
+        
+        #TODO: Optimize this function so that it only updates a selected list of source_ids
         for source_id, source_obj in cog_sources.sources.items():
-            cog_out_file = self.get_cog_out_name(source_obj.cog_in_file, names_dict)
+            cog_out_file = self.get_cog_out_name(source_obj.cog_in_file, wildcards)
             cog_sources.sources[source_id].cog_out_file = cog_out_file
         
         
@@ -2027,13 +2059,8 @@ class Network_CAN:
 
         global cog_sources
         
-#         if single_network is True:
-#             network_name = None
-#         else:
-#             network_name = self.id_string
-            
+        # Determine node list and full_names value    
         full_names = True
-        # Create subnetwork if needed
         node_lst = self.get_simple_param("CAN_gen_nodes")
         if len(node_lst) == 0:
             # assume all network nodes will be generated
@@ -2043,63 +2070,98 @@ class Network_CAN:
             # If network for only one node is to be generated check if full name (including node
             # name) is required for the output C-code files or not
             full_names = self.get_simple_param("CAN_gen_file_full_names")
-        
-        for node in node_lst:
-            if node in self.nodes:
-                subnetwork = self.get_subnetwork(node)
-                print("Node. ",node," lenmsgs: ",len(subnetwork.messages))
-                if len(subnetwork.messages) == 0:
-                    log_warn(("No messages associated with node '%s' in network '%s'. " \
-                             + "Subnetwork not created.") % (node, subnetwork.id_string))
-                else:
-                    log_debug("Creating subnetwork for node '%s'..." % node)
-                    # Create temporal file with network object pickle.
-                    # ------------------------------------------------
-                    cog_pickle_file_name = "comgen_CAN_network_obj.pickle"
-                    work_dir = self.project_obj.get_simple_param_val("common.project", \
-                                                                     "project_path_working")
-                    cog_serialized_network_file = work_dir / cog_pickle_file_name
-                    
-                    try:
-                        with open(cog_serialized_network_file, 'wb') as f:
-                            pickle.dump(subnetwork, f, pickle.HIGHEST_PROTOCOL)
-                    except Exception as e:
-                            print('Failed to create pickle file %s. Reason: %s' \
-                                  % (cog_serialized_network_file, e))
-                            
-                    # Get project pickle full file name  
-                    project_pickle = self.project_obj.get_work_file_path("common.project", \
+            
+        # Get project pickle full file name  
+        project_pickle = self.project_obj.get_work_file_path("common.project", \
                                                                          "project_pickle")
-                    
-                    #----------------------------------------------------------------------
-                    # Generate source file(s)
-                    #----------------------------------------------------------------------
-                    if full_names:
-                        wildcards = {"NWID" : subnetwork.id_string, \
-                                     "NODEID" : node}
-                    else:
-                        wildcards = {"NWID" : subnetwork.id_string, \
-                                     "NODEID" : None}
+         
+        # Create subnetwork will all involved nodes    
+        subnetwork = self.get_subnetwork(node_lst)
+        
+        if subnetwork is not None and len(subnetwork.nodes) > 0 and len(subnetwork.messages) > 0:
+            # Update cog output files names (replace network id wildcard)
+            wildcards = {"NWID" : subnetwork.id_string}
+            self.update_cog_out_sources_names(cog_sources, wildcards)
+            # Create temporal file with subnetwork object pickle.
+            cog_pickle_file_name = "comgen_CAN_network_obj.pickle"
+            work_dir = self.project_obj.get_simple_param_val("common.project", \
+                                                             "project_path_working")
+            cog_serialized_network_file = work_dir / cog_pickle_file_name 
+            try:
+                with open(cog_serialized_network_file, 'wb') as f:
+                    pickle.dump(subnetwork, f, pickle.HIGHEST_PROTOCOL)
+            except Exception as e:
+                    print('Failed to create pickle file %s. Reason: %s' \
+                          % (cog_serialized_network_file, e))
+            
+            # Generate common source file(s)
+            # ------------------------------
+            for cog_source in cog_sources.sources.values():
+                if "category" in cog_source.dparams \
+                and cog_source.dparams["category"] == "common" \
+                and cog_source.generated == False:
+                    # Generate includes variable if needed
+                    log_debug("Generating common network file '%s'..." % cog_source.cog_out_file)
+                    variables = {}
+                    includes_lst = self.get_cog_includes(cog_source.source_id)
+                    if len(includes_lst) > 0:
+                        include_var = json.dumps(includes_lst)
+                        variables.update({"include_var" : include_var})
+                         
+                    self.cog_generator(cog_source.cog_in_file, cog_source.cog_out_file, \
+                                       project_pickle, cog_serialized_network_file, \
+                                       variables)
+            
+            # Generate network source file(s)
+            # -------------------------------
+            for cog_source in cog_sources.sources.values():
+                if "category" in cog_source.dparams and cog_source.dparams["category"] == "network":
+                    # Generate includes variable if needed
+                    log_debug("Generating network specific file '%s'..." % cog_source.cog_out_file)
+                    variables = {}
+                    includes_lst = self.get_cog_includes(cog_source.source_id)
+                    if len(includes_lst) > 0:
+                        include_var = json.dumps(includes_lst)
+                        variables.update({"include_var" : include_var})
+                         
+                    self.cog_generator(cog_source.cog_in_file, cog_source.cog_out_file, \
+                                       project_pickle, cog_serialized_network_file, \
+                                       variables)
+            
+            # Generate Node specific source file(s)
+            # -------------------------------------
+            for node in subnetwork.nodes.values():
+                if len(self.get_messages_of_node(node.name)) > 0:
+                    # Update cog output files names (replace node id wildcard)
+                    wildcards = {"NWID" : subnetwork.id_string, "NODEID" : node.name}
                     self.update_cog_out_sources_names(cog_sources, wildcards)
                     for cog_source in cog_sources.sources.values():
-                        # Generate includes variable if needed
-                        variables = None
-                        includes_lst = self.get_cog_includes(cog_source.source_id)
-                        if len(includes_lst) > 0:
+                        if "category" in cog_source.dparams \
+                        and cog_source.dparams["category"] == "node":
+                            log_debug("Generating Node '%s' file '%s'..." \
+                                      % (node.name, cog_source.cog_out_file))
+                            # Generate includes variable if needed
                             variables = {}
-                            include_var = json.dumps(includes_lst)
-                            variables.update({"include_var" : include_var})
-                             
-                        self.cog_generator(cog_source.cog_in_file, cog_source.cog_out_file, \
-                                           project_pickle, cog_serialized_network_file, \
-                                           variables)
-                    
-                    # Delete pickle file
-                    # ------------------
-                    cg.delete_file(cog_serialized_network_file)
-            else:
-                log_warn(("Node '%s' is not defined in network '%s'. " \
-                         + "Subnetwork not created.") % (node, self.id_string))
+                            includes_lst = self.get_cog_includes(cog_source.source_id)
+                            if len(includes_lst) > 0:
+                                include_var = json.dumps(includes_lst)
+                                variables.update({"include_var" : include_var})
+                            # Add variable containing current's node name
+                            variables.update({"node_name" : str(node.name)})
+                                 
+                            self.cog_generator(cog_source.cog_in_file, cog_source.cog_out_file, \
+                                               project_pickle, cog_serialized_network_file, \
+                                               variables)
+                else:
+                    log_warn("No messages found for node '%s'. No C-code generated for the node." \
+                             % node.name)
+            
+            # Delete pickle file
+            cg.delete_file(cog_serialized_network_file)
+        else:
+            log_warn(("No nodes/messages found for the selected subnetwork '%s', node list: '%s'."
+                     + " No C-code generated.") % (self.id_string, str(node_lst)))
+        
     #===============================================================================================
     def get_simple_param(self, param_id):
         """ Returns local parameter if defined otherwise returns the default one. """
@@ -2111,27 +2173,38 @@ class Network_CAN:
         return return_value
     
     #===============================================================================================
-    def get_subnetwork(self, node_str):
+    def get_subnetwork(self, nodes_list):
         """ Returns a network only with data of the passed nodes. """
         
-        if node_str in self.nodes:
+        if type(nodes_list) is list and len(nodes_list) > 0:
             subnetwork = copy.deepcopy(self)
     
             # Clean nodes
             subnetwork.nodes.clear()
-            # Add back only specified node
-            subnetwork.nodes.update({node_str : self.nodes[node_str]})
-            
-            node = subnetwork.nodes[node_str]
-    
+            for node_str in nodes_list:
+                # Only keep valid nodes
+                if node_str in self.nodes:
+                    subnetwork.nodes.update({node_str : self.nodes[node_str]})
+                else:
+                    log_warn("Node '%s' not found in Network '%s'." % (node_str, self.id_string))
+                    
             # Clean messages
             subnetwork.messages.clear()
             for message in self.messages.values():
                 # Only keep messages related to the specified nodes
-                if message.name in node.subscribed_messages \
-                or message.publisher == node.name:
+                keep_message = False
+                # See if message is subscribed or published by any of the specified nodes
+                for subnet_node in subnetwork.nodes.values():
+                    if message.name in subnet_node.subscribed_messages:
+                        keep_message = True
+                        break
+                    elif message.publisher == subnet_node.name:
+                        keep_message = True
+                        break
+                
+                if keep_message is True:
                     subnetwork.messages.update({message.name : message})
-
+    
             # Clean signals
             subnetwork.signals.clear()
             for signal in self.signals.values():
@@ -2149,7 +2222,7 @@ class Network_CAN:
                 if keep_type is True:
                     subnetwork.enum_types.update({enum_type.name : enum_type})
         else:
-            log_warn("Node '%s' not found in Network '%s'." % (node, self.id_string))
+            log_warn("Provided nodes shall be a list greater than zero. Returned 'None'.")
             subnetwork = None
             
         return subnetwork
@@ -2393,7 +2466,7 @@ class Network_CAN:
 
             self.description = description
     
-            self.subscribed_messages = {} # {message name, message timeout}
+            self.subscribed_messages = {} # {message name : message timeout}
         
         def add_subscriber(self, message_name, timeout_ms):
             """ Adds an RX message for this node """
@@ -2425,8 +2498,8 @@ class Network_CAN:
                 log_warn(("Wrong lenght value: \"" + length \
                               + "\" of message \"" + self.name \
                               + "\". Assumed lenght of 8 bytes."))
-
-            if extended_id is False:
+            
+            if extended_id is False or extended_id == "no":
                 self.extended_id = False
             else:
                 self.extended_id = True

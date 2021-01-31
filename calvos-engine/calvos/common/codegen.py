@@ -865,7 +865,8 @@ class CogSources():
         
     class CogSrc():
         """ Models a single C-code source file. """
-        def __init__(self, source_id, cog_in_file, cog_out_file = None, is_header = False, relations = None):
+        def __init__(self, source_id, cog_in_file, cog_out_file = None, is_header = False, \
+                     relations = [], dparams = {}):
             self.source_id = source_id
             self.cog_in_file = cog_in_file
             # cog_out_file equal to None means that out file is same than cog_in_file
@@ -873,7 +874,11 @@ class CogSources():
             self.is_header = is_header
             self.additional_info = []
             
-            self.relations = [] # List of CogSrcRel objects
+            self.relations = relations # List of CogSrcRel objects
+            
+            self.generated = False
+            
+            self.dparams = dparams # Params in the form of dictionary
             
             self.generated = False
             
@@ -882,6 +887,52 @@ class CogSources():
         def __init__(self, module="", source_id=""):
             self.module = module
             self.source_id = source_id
+
+class TreeNode:
+    def __init__(self, val, prev = None, next = None):
+        self.val = val
+        self.prev = prev
+        self.next = next
+
+def inorderTree(root, result = []): 
+    return_val = []
+    if root: 
+        inorderTree(root.prev, result) 
+        return_val.append(root.val)
+        if root.prev is not None:
+            return_val.append(root.prev.val)
+        else:
+            return_val.append(None)
+        if root.next is not None:
+            return_val.append(root.next.val)
+        else:
+            return_val.append(None)
+        result.append(return_val)
+        inorderTree(root.next, result)
+    
+        
+def formTree(ordered_list, root = None):
+    if len(ordered_list) == 1:
+        node = TreeNode(ordered_list[0])
+        return node
+    else:
+        mid_idx = math.floor(len(ordered_list)/2)
+        if root is None:
+            root = TreeNode(ordered_list[mid_idx])
+        else:
+            root.val = ordered_list[mid_idx]
+        # left list
+        left_list = ordered_list[:mid_idx]
+        root.prev = formTree(left_list, root.prev)
+        # right list
+        if len(ordered_list) > 2:
+            right_list = ordered_list[mid_idx+1:]
+            root.next = formTree(right_list, root.next)
+        else:
+            pass
+        
+        return root
+        
 
 #===================================================================================================
 def cog_generator(input_file, out_dir, work_dir, gen_path, variables = None):

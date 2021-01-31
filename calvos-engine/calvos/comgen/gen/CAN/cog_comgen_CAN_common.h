@@ -6,7 +6,6 @@ import time
 import sys
 import pickle as pic
 import pathlib as plib
-import json
 
 import calvos.comgen.CAN as nw
 import calvos.common.codegen as cg
@@ -78,15 +77,72 @@ if 'include_var' in locals():
 		cog.outl("#include \"" + include + "\"")
  ]]] */
 // [[[end]]]
-/* [[[cog
-TAB_SPACE = 4
-network_name = network.id_string
-# Get subnetwork for this node
-subnet = network.get_subnetwork([node_name])
 
+/* TX Types definitions */
+/* [[[cog
+# Generate include statements if required
+cog.outl("#include kTxSpontan\t\t\t" + str(nw.SPONTAN) + "u")
+cog.outl("#include kTxCyclic\t\t\t" + str(nw.CYCLIC) + "u")
+cog.outl("#include kTxCyclicSpontan\t" + str(nw.CYCLIC_SPONTAN) + "u")
+cog.outl("#include kTxBAF\t\t\t\t" + str(nw.BAF) + "u")
  ]]] */
 // [[[end]]]
 
+/* Message direction definitions */
+/* [[[cog
+# Generate include statements if required
+cog.outl("#include kDirTX\t\t" + str(nw.CAN_TX) + "u")
+cog.outl("#include kDirRX\t\t" + str(nw.CAN_RX) + "u")
+ ]]] */
+// [[[end]]]
+
+/* Message direction definitions */
+typedef enum{
+	kMsgNotFound = 0,
+	kMsgFound
+}CANmsgFound;
+
+/* Types for CAN messages static data */
+typedef struct{
+	uint8_t len : 4;
+	uint8_t id_is_extended : 1;
+}CANrxMsgStaticFields;
+
+typedef struct{
+	uint32_t id;
+	uint32_t timeout;
+	Callback rx_callback;
+	Callback timeout_callback;
+	CANrxMsgStaticFields data;
+	CANrxMsgStaticData * next;
+	CANrxMsgStaticData * prev;
+}CANrxMsgStaticData;
+
+typedef struct{
+	uint8_t len : 4;
+	uint8_t id_is_extended : 1;
+	uint8_t tx_type : 2;
+}CANtxMsgStaticFields;
+
+typedef struct{
+	uint32_t id;
+	uint32_t period;
+	Callback tx_callback;
+	CANtxMsgStaticFields data;
+}CANtxMsgStaticData;
+
+/* Types for CAN messages dynamic data */
+typedef struct{
+	FlagsNative available;
+	intNative_t timedout;
+	NodeUint32 timeout_queue;
+}CANrxMsgDynamicData;
+
+typedef union{
+	FlagsNative transmitted;
+	intNative_t BAF_active;
+	NodeUint32 period_queue;
+}CANtxMsgDynamicFields;
 
 /* [[[cog
 # Print include guards

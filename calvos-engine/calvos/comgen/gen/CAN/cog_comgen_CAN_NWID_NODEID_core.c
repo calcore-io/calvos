@@ -85,37 +85,227 @@ if 'include_var' in locals():
 		cog.outl("#include \"" + include + "\"")
  ]]] */
 // [[[end]]]
+/* [[[cog
+TAB_SPACE = 4
+network_name = network.id_string
+net_name_str = network_name + "_"
+node_name_str = node_name + "_"
+
+# Get subnetwork for this node
+subnet = network.get_subnetwork([node_name])
+
+list_of_tx_msgs = []
+list_of_rx_msgs = []
+for message in subnet.messages.values():
+	if subnet.get_message_direction(node_name,message.name) == nw.CAN_TX:
+		list_of_tx_msgs.append(message.name)
+	elif subnet.get_message_direction(node_name,message.name) == nw.CAN_RX:
+		list_of_rx_msgs.append(message.name)
+	else:
+		log_warn(("Message '%s' direction not determined for node '%s' " \
+			+ "in network '%s'.") % (message.name, node_name, network_name))
+
+# Sort RX messages by ID
+sorted_rx_msgs = {} # Expects {msg_name : msg_id}
+for msg_name in list_of_rx_msgs:
+	sorted_rx_msgs.update({msg_name : subnet.messages[msg_name].id})
+sorted_rx_msgs = dict(sorted(sorted_rx_msgs.items(), key=lambda kv: kv[1]))
+
+ ]]] */
+// [[[end]]]
 
 /* Private macro definitions */
 
 /* Private type definitions */
-typede struct{
-	uint32_t current_idx;
-	uint32_t lower_idx;
-	uint32_t upper_idx;
-}RxSearchNodeVals;
-
-typedef struct{
-	NodeUint32 node;
-	/* Range of indexes within CANmsgStaticData_t to navigate looking for
-	 * the rx message. */
-	RxSearchNodeVals vals;
-}RxSearchTreeNode;
-
-typedef struct{
-	T_native use_current_idx;
-	RxSearchNodeVals vals;
-}RxSearchResult;
 
 /* Exported data */
 
-const CANrxMsgStaticData can_CT_static_rx_msg_data[kCAN_CT_nOfRxMsgs] = [\
-		{kCAN_CT_msgId_MESSAGE1,	kCAN_CT_timeout_MESSAGE1, &can_rx_callback_MESSAGE1, &can_timeout_callback_MESSAGE1, \
-				{kFalse, kCAN_CT_msgLen_MESSAGE1}},
-		{kCAN_CT_msgId_MESSAGE2,	kCAN_CT_timeout_MESSAGE2, &can_rx_callback_MESSAGE2, &can_timeout_callback_MESSAGE2, \
-				{kFalse, kCAN_CT_msgLen_MESSAGE2}}]
+/* Array of Rx messages static data */
+/* [[[cog
+if len(list_of_rx_msgs) > 0:
+	# Create search tree
+	input = [*range(len(list_of_rx_msgs))]
+	root = cg.formTree(input)
+	search_tree = []
+	cg.inorderTree(root, search_tree)
 
-CANrxMsgDynamicData can_CT_dynamic_rx_msg_data[kCAN_CT_nOfRxMsgs];
+	# Create static array
+	sym_data_type = "CANrxMsgStaticData"
+	sym_data_name = "can_" + net_name_str + node_name_str \
+		+ "rxMsgStaticData"
+	sym_data_len = "kCAN_" + net_name_str + node_name_str + "nOfRxMsgs"
+
+	cog.outl("const "+sym_data_type+" "+sym_data_name+"["+sym_data_len+"] = [\\")
+
+	callback_prefix = "can_" + net_name_str + node_name_str
+	callback_rx_sufix = "_rx_callback"
+	callback_tout_sufix = "_timeout_callback"
+
+	array_data = []
+	for i, msg_name in enumerate(sorted_rx_msgs.keys()):
+		array_data.clear()
+		# Msg ID
+		array_data.append("kCAN_" + net_name_str + "msgId_" + msg_name)
+		# Msg Timeout
+		array_data.append("kCAN_" + net_name_str + node_name_str \
+			+ "msgTimeout_" + msg_name)
+		# Msg rx callback
+		array_data.append("&" + callback_prefix + msg_name + callback_rx_sufix)
+		# Msg timeout callback
+		array_data.append("&" + callback_prefix + msg_name + callback_tout_sufix)
+		# Msg Len
+		array_data.append(str(subnet.messages[msg_name].len) + "u")
+		# Msg extended id?
+		if subnet.messages[msg_name].extended_id is True:
+			array_data.append("kTrue")
+		else:
+			array_data.append("kFalse")
+
+		prev_idx = search_tree[i][1]
+		if prev_idx is not None:
+			array_data.append("&"+sym_data_name+"["+str(prev_idx)+"]")
+		else:
+			array_data.append("NULL")
+		next_idx = search_tree[i][2]
+		if next_idx is not None:
+			array_data.append("&"+sym_data_name+"["+str(next_idx)+"]")
+		else:
+			array_data.append("NULL")
+
+		ALL_DATA_END = len(array_data)-1
+		SUB_STRUCT_BEGIN = 4
+		SUB_STRUCT_END = SUB_STRUCT_BEGIN + 1
+		code_string = "{"
+		for j, piece_str in enumerate(array_data):
+			if j == SUB_STRUCT_BEGIN:
+				code_string += "{"
+			code_string += piece_str
+			if j == SUB_STRUCT_END:
+				code_string += "}"
+			if (j < SUB_STRUCT_BEGIN and j < ALL_DATA_END) \
+			or (j >= SUB_STRUCT_BEGIN and j < SUB_STRUCT_END) \
+			or (j >= SUB_STRUCT_END and j < ALL_DATA_END):
+				code_string += ",\t"
+			if j == ALL_DATA_END:
+				code_string += "}"
+		if i < len(sorted_rx_msgs.keys()) - 1:
+			code_string += ", \\"
+		else:
+			code_string += "]"
+		cog.outl("\t\t"+code_string)
+ ]]] */
+// [[[end]]]
+
+/* Rx search tree starting index */
+/* [[[cog
+if len(list_of_rx_msgs) > 0:
+	search_tree_start_idx = math.floor(len(list_of_rx_msgs)/2)
+	# Create static array
+	macro_name = "kCAN_" + net_name_str + node_name_str +"RxSearchStartIdx"
+	cog.outl("#define "+macro_name+"\t\t("+str(search_tree_start_idx)+"u)")
+ ]]] */
+// [[[end]]]
+
+/* Array of Rx messages dynamic data */
+/* [[[cog
+if len(list_of_rx_msgs) > 0:
+	sym_data_name = "CANrxMsgDynamicData can_" + net_name_str + node_name_str \
+		+ "rxMsgDynamicData"
+	sym_data_len = "kCAN_" + net_name_str + node_name_str + "nOfRxMsgs"
+
+	cog.outl("const "+sym_data_name+"["+sym_data_len+"];")
+]]] */
+// [[[end]]]
+
+/* Constant for clearing Rx dynamic data */
+/* [[[cog
+if len(list_of_rx_msgs) > 0:
+	sym_data_name = "CANrxMsgDynamicData can_" + net_name_str + node_name_str \
+		+ "rxMsgDynamicData_clear"
+
+	cog.outl("const "+sym_data_name+" = {0,0,{0,NULL,NULL}};")
+]]] */
+// [[[end]]]
+
+/* Array of Tx messages static data */
+/* [[[cog
+if len(list_of_tx_msgs) > 0:
+	sym_data_name = "CANtxMsgStaticData can_" + net_name_str + node_name_str + "txMsgStaticData"
+	sym_data_len = "kCAN_" + net_name_str + node_name_str + "nOfTxMsgs"
+
+	cog.outl("const "+sym_data_name+"["+sym_data_len+"] = [\\")
+
+	callback_prefix = "can_" + net_name_str + node_name_str
+	callback_tx_sufix = "_tx_callback"
+
+	array_data = []
+	for i, msg_name in enumerate(list_of_tx_msgs):
+		array_data.clear()
+		# Msg ID
+		array_data.append("kCAN_" + net_name_str + "msgId_" + msg_name)
+		# Msg Tx Period
+		array_data.append("kCAN_" + net_name_str + "msgTxPeriod_" + msg_name)
+		# Msg tx callback
+		array_data.append("&" + callback_prefix + msg_name + callback_tx_sufix)
+		# Msg Len
+		array_data.append(str(subnet.messages[msg_name].len) + "u")
+		# Msg extended id?
+		if subnet.messages[msg_name].extended_id is True:
+			array_data.append("kTrue")
+		else:
+			array_data.append("kFalse")
+		# Msg Tx Type
+		array_data.append("kCAN_" + net_name_str + "msgTxType_" + msg_name)
+
+		ALL_DATA_END = len(array_data)-1
+		SUB_STRUCT_BEGIN = 3
+		SUB_STRUCT_END = SUB_STRUCT_BEGIN + 2
+		code_string = "{"
+		for j, piece_str in enumerate(array_data):
+			if j == SUB_STRUCT_BEGIN:
+				code_string += "{"
+			code_string += piece_str
+			if j == SUB_STRUCT_END:
+				code_string += "}"
+			if (j < SUB_STRUCT_BEGIN and j < ALL_DATA_END) \
+			or (j >= SUB_STRUCT_BEGIN and j < SUB_STRUCT_END) \
+			or (j >= SUB_STRUCT_END and j < ALL_DATA_END):
+				code_string += ",\t"
+			if j == ALL_DATA_END:
+				code_string += "}"
+		if i < len(list_of_tx_msgs) - 1:
+			code_string += ", \\"
+		else:
+			code_string += "]"
+		cog.outl("\t\t"+code_string)
+ ]]] */
+// [[[end]]]
+
+/* Array of Tx messages dynamic data */
+/* [[[cog
+if len(list_of_tx_msgs) > 0:
+	sym_data_name = "CANtxMsgDynamicData can_" + net_name_str + node_name_str + "txMsgDynamicData"
+	sym_data_len = "kCAN_" + net_name_str + node_name_str + "nOfRxMsgs"
+
+	cog.outl("const "+sym_data_name+"["+sym_data_len+"];")
+]]] */
+// [[[end]]]
+
+/* Constant for clearing Tx dynamic data */
+/* TODO: Can't really clear all flags with a simple 0 */
+/* [[[cog
+if len(list_of_tx_msgs) > 0:
+	sym_data_name = "CANtxMsgDynamicData can_" + net_name_str + node_name_str + "rxMsgDynamicData_clear"
+	cog.outl("const "+sym_data_name+" = {0,0,0,{0,NULL,NULL}};")
+]]] */
+// [[[end]]]
+
+
+
+
+
+
+
 
 /* Private data */
 

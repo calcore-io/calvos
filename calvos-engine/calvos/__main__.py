@@ -131,7 +131,7 @@ USAGE
         log_level = args.log_level
         
         arguments_OK = True
-        
+
         # Add calvos python package
         if calvos is not None:
             calvos_path = string_to_path(calvos)
@@ -213,8 +213,8 @@ USAGE
             project_path_docs = project_path / "out/doc"
             project_path_templates = project_path / "out/doc/templates"
             
-            
             import calvos.common.codegen as cg
+ 
             # Set global variables for code generation
             cg.calvos_path = calvos_path
             cg.calvos_project_path = project_path
@@ -276,8 +276,9 @@ USAGE
 if __name__ == "__main__":
     if DEBUG:
         sys.argv.append("-p")
+        sys.argv.append('G:\\devproj\\github\\calvos\\calvos\\project_example\\project.xml')
         sys.argv.append("-c")
-        sys.argv.append("-l")
+        sys.argv.append('G:\\devproj\\github\\calvos\\calvos\\calvos-engine\\calvos')
     if TESTRUN:
         import doctest
         doctest.testmod()

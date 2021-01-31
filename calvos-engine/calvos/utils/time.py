@@ -379,7 +379,8 @@ class Timers():
         return return_str
 
     #===============================================================================================    
-    def add_cog_source(self, cog_id, cog_in_file, is_header = False, relations = None):
+    def add_cog_source(self, cog_id, cog_in_file, is_header = False, relations = None, \
+                       dparams = {}):
         """ Adds a cog source to this network object's cog files list. 
         
         Parameters
@@ -394,7 +395,7 @@ class Timers():
         ##### cog_out_file = self.get_cog_out_name(cog_in_file, self.id_string)
         cog_out_file = self.get_cog_out_name(cog_in_file)
         cog_sources.sources.update({cog_id: cg.CogSources.CogSrc(\
-                cog_id,cog_in_file, cog_out_file, is_header)})
+                cog_id,cog_in_file, cog_out_file, is_header, [], dparams)})
         
         if relations is not None:
             for relation in relations:
