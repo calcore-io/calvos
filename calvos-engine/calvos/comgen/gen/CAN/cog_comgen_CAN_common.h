@@ -113,7 +113,8 @@ typedef struct{
 	uint32_t timeout;
 	Callback rx_callback;
 	Callback timeout_callback;
-	CANrxMsgStaticFields data;
+	uint8_t * data
+	CANrxMsgStaticFields fields;
 	CANrxMsgStaticData * next;
 	CANrxMsgStaticData * prev;
 }CANrxMsgStaticData;
@@ -128,7 +129,8 @@ typedef struct{
 	uint32_t id;
 	uint32_t period;
 	Callback tx_callback;
-	CANtxMsgStaticFields data;
+	uint8_t * data
+	CANtxMsgStaticFields fields;
 }CANtxMsgStaticData;
 
 /* Types for CAN messages dynamic data */

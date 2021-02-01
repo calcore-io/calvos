@@ -120,6 +120,17 @@ sorted_rx_msgs = dict(sorted(sorted_rx_msgs.items(), key=lambda kv: kv[1]))
 
 /* Exported data */
 
+/* Rx message data buffer */
+/* [[[cog
+if len(list_of_rx_msgs) > 0:
+	sym_rx_data_len = "kCAN_" + net_name_str +  node_name_str + "RxMsgsTotalLen"
+	sym_rx_data_name = "can_" + net_name_str +  node_name_str + "RxDataBuffer"
+	code_str = cg.get_dtv(8) + " " + sym_rx_data_name + "[" + sym_rx_data_len + "];"
+
+	cog.outl(code_str)
+]]] */
+// [[[end]]]
+
 /* Array of Rx messages static data */
 /* [[[cog
 if len(list_of_rx_msgs) > 0:
@@ -142,6 +153,7 @@ if len(list_of_rx_msgs) > 0:
 	callback_tout_sufix = "_timeout_callback"
 
 	array_data = []
+	data_idx = 0
 	for i, msg_name in enumerate(sorted_rx_msgs.keys()):
 		array_data.clear()
 		# Msg ID
@@ -153,6 +165,9 @@ if len(list_of_rx_msgs) > 0:
 		array_data.append("&" + callback_prefix + msg_name + callback_rx_sufix)
 		# Msg timeout callback
 		array_data.append("&" + callback_prefix + msg_name + callback_tout_sufix)
+		# Data Buffer
+		array_data.append("&" + sym_rx_data_name + "["+ str(data_idx) +"]")
+		data_idx += subnet.messages[msg_name].len
 		# Msg Len
 		array_data.append(str(subnet.messages[msg_name].len) + "u")
 		# Msg extended id?
@@ -173,7 +188,7 @@ if len(list_of_rx_msgs) > 0:
 			array_data.append("NULL")
 
 		ALL_DATA_END = len(array_data)-1
-		SUB_STRUCT_BEGIN = 4
+		SUB_STRUCT_BEGIN = 5
 		SUB_STRUCT_END = SUB_STRUCT_BEGIN + 1
 		code_string = "{"
 		for j, piece_str in enumerate(array_data):
@@ -227,6 +242,17 @@ if len(list_of_rx_msgs) > 0:
 ]]] */
 // [[[end]]]
 
+/* Tx message data buffer */
+/* [[[cog
+if len(list_of_tx_msgs) > 0:
+	sym_tx_data_len = "kCAN_" + net_name_str +  node_name_str + "TxMsgsTotalLen"
+	sym_tx_data_name = "can_" + net_name_str +  node_name_str + "TxDataBuffer"
+	code_str = cg.get_dtv(8) + " " + sym_tx_data_name + "[" + sym_tx_data_len + "];"
+
+	cog.outl(code_str)
+]]] */
+// [[[end]]]
+
 /* Array of Tx messages static data */
 /* [[[cog
 if len(list_of_tx_msgs) > 0:
@@ -239,6 +265,7 @@ if len(list_of_tx_msgs) > 0:
 	callback_tx_sufix = "_tx_callback"
 
 	array_data = []
+	data_idx = 0
 	for i, msg_name in enumerate(list_of_tx_msgs):
 		array_data.clear()
 		# Msg ID
@@ -247,6 +274,9 @@ if len(list_of_tx_msgs) > 0:
 		array_data.append("kCAN_" + net_name_str + "msgTxPeriod_" + msg_name)
 		# Msg tx callback
 		array_data.append("&" + callback_prefix + msg_name + callback_tx_sufix)
+		# Data Buffer
+		array_data.append("&" + sym_tx_data_name + "["+ str(data_idx) +"]")
+		data_idx += subnet.messages[msg_name].len
 		# Msg Len
 		array_data.append(str(subnet.messages[msg_name].len) + "u")
 		# Msg extended id?
@@ -258,7 +288,7 @@ if len(list_of_tx_msgs) > 0:
 		array_data.append("kCAN_" + net_name_str + "msgTxType_" + msg_name)
 
 		ALL_DATA_END = len(array_data)-1
-		SUB_STRUCT_BEGIN = 3
+		SUB_STRUCT_BEGIN = 4
 		SUB_STRUCT_END = SUB_STRUCT_BEGIN + 2
 		code_string = "{"
 		for j, piece_str in enumerate(array_data):
@@ -299,7 +329,6 @@ if len(list_of_tx_msgs) > 0:
 	cog.outl("const "+sym_data_name+" = {0,0,0,{0,NULL,NULL}};")
 ]]] */
 // [[[end]]]
-
 
 
 
