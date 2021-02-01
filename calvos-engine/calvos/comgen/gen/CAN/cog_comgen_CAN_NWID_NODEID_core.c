@@ -60,21 +60,10 @@ cog.outl(C_gen_info(input_worksheet,network))
 ]]] */
 // [[[end]]]
 /* [[[cog
-# Print include guards
-guard_symbol = cog_output_file.replace(".","_")
-guard_symbol = guard_symbol.upper()
-
-cog.outl("#ifndef "+guard_symbol)
-cog.outl("#define "+guard_symbol)
-]]] */
-// [[[end]]]
-/* [[[cog
-
 # Definition of Functions
 
  ]]] */
 // [[[end]]]
-
 #include "calvos.h"
 /* [[[cog
 # Generate include statements if required
@@ -114,6 +103,26 @@ sorted_rx_msgs = dict(sorted(sorted_rx_msgs.items(), key=lambda kv: kv[1]))
  ]]] */
 // [[[end]]]
 
+/* Exported Function Prototypes */
+extern void CAN_coreInit();
+/* [[[cog
+if len(list_of_rx_msgs) > 0:
+	sym_rx_proc_func_name = "can_" + net_name_str + node_name_str + "processRxMessage"
+	sym_rx_proc_func_args = "(uint32_t msg_id, uint8_t * data_in)"
+	sym_rx_proc_func_return = "void"
+
+	code_str = "extern "+sym_rx_proc_func_return+" "+sym_rx_proc_func_name+sym_rx_proc_func_args+";"
+	cog.outl(code_str)
+ ]]] */
+// [[[end]]]
+
+/* Private Function Prototypes */
+void CAN_clearMsgDynamicData();
+CalvosError CAN_traverseRxSearchTree(uint32_t, RxSearchResult);
+CANmsgFound CAN_getMsgIdx(uint32_t, uint32_t *);
+void CAN_filterRxMsg(uint32_t);
+
+
 /* Private macro definitions */
 
 /* Private type definitions */
@@ -123,10 +132,22 @@ sorted_rx_msgs = dict(sorted(sorted_rx_msgs.items(), key=lambda kv: kv[1]))
 /* Rx message data buffer */
 /* [[[cog
 if len(list_of_rx_msgs) > 0:
+	sym_rx_msgs = "kCAN_" + net_name_str + node_name_str + "nOfRxMsgs"
+
 	sym_rx_data_len = "kCAN_" + net_name_str +  node_name_str + "RxMsgsTotalLen"
 	sym_rx_data_name = "can_" + net_name_str +  node_name_str + "RxDataBuffer"
 	code_str = cg.get_dtv(8) + " " + sym_rx_data_name + "[" + sym_rx_data_len + "];"
 
+	cog.outl(code_str)
+]]] */
+// [[[end]]]
+
+/* Array of Rx messages dynamic data */
+/* [[[cog
+if len(list_of_rx_msgs) > 0:
+	sym_dyn_data_type = "CANrxMsgDynamicData"
+	sym_dyn_data_name = "can_" + net_name_str + node_name_str + "rxMsgDynamicData"
+	code_str = sym_dyn_data_type+" "+sym_dyn_data_name+"["+sym_rx_msgs+"];"
 	cog.outl(code_str)
 ]]] */
 // [[[end]]]
@@ -141,12 +162,11 @@ if len(list_of_rx_msgs) > 0:
 	cg.inorderTree(root, search_tree)
 
 	# Create static array
-	sym_data_type = "CANrxMsgStaticData"
-	sym_data_name = "can_" + net_name_str + node_name_str \
+	sym_rx_stat_data_type = "CANrxMsgStaticData"
+	sym_rx_stat_data_name = "can_" + net_name_str + node_name_str \
 		+ "rxMsgStaticData"
-	sym_data_len = "kCAN_" + net_name_str + node_name_str + "nOfRxMsgs"
 
-	cog.outl("const "+sym_data_type+" "+sym_data_name+"["+sym_data_len+"] = [\\")
+	cog.outl("const "+sym_rx_stat_data_type+" "+sym_rx_stat_data_name+"["+sym_rx_msgs+"] = [\\")
 
 	callback_prefix = "can_" + net_name_str + node_name_str
 	callback_rx_sufix = "_rx_callback"
@@ -168,6 +188,8 @@ if len(list_of_rx_msgs) > 0:
 		# Data Buffer
 		array_data.append("&" + sym_rx_data_name + "["+ str(data_idx) +"]")
 		data_idx += subnet.messages[msg_name].len
+		# Pointer to dynamic data
+		array_data.append("&" + sym_dyn_data_name + "["+ str(i) +"]")
 		# Msg Len
 		array_data.append(str(subnet.messages[msg_name].len) + "u")
 		# Msg extended id?
@@ -178,17 +200,17 @@ if len(list_of_rx_msgs) > 0:
 
 		prev_idx = search_tree[i][1]
 		if prev_idx is not None:
-			array_data.append("&"+sym_data_name+"["+str(prev_idx)+"]")
+			array_data.append("&"+sym_rx_stat_data_name+"["+str(prev_idx)+"]")
 		else:
 			array_data.append("NULL")
 		next_idx = search_tree[i][2]
 		if next_idx is not None:
-			array_data.append("&"+sym_data_name+"["+str(next_idx)+"]")
+			array_data.append("&"+sym_rx_stat_data_name+"["+str(next_idx)+"]")
 		else:
 			array_data.append("NULL")
 
 		ALL_DATA_END = len(array_data)-1
-		SUB_STRUCT_BEGIN = 5
+		SUB_STRUCT_BEGIN = 6
 		SUB_STRUCT_END = SUB_STRUCT_BEGIN + 1
 		code_string = "{"
 		for j, piece_str in enumerate(array_data):
@@ -216,20 +238,9 @@ if len(list_of_rx_msgs) > 0:
 if len(list_of_rx_msgs) > 0:
 	search_tree_start_idx = math.floor(len(list_of_rx_msgs)/2)
 	# Create static array
-	macro_name = "kCAN_" + net_name_str + node_name_str +"RxSearchStartIdx"
-	cog.outl("#define "+macro_name+"\t\t("+str(search_tree_start_idx)+"u)")
+	sym_search_start_idx = "kCAN_" + net_name_str + node_name_str +"RxSearchStartIdx"
+	cog.outl("#define "+sym_search_start_idx+"\t\t("+str(search_tree_start_idx)+"u)")
  ]]] */
-// [[[end]]]
-
-/* Array of Rx messages dynamic data */
-/* [[[cog
-if len(list_of_rx_msgs) > 0:
-	sym_data_name = "CANrxMsgDynamicData can_" + net_name_str + node_name_str \
-		+ "rxMsgDynamicData"
-	sym_data_len = "kCAN_" + net_name_str + node_name_str + "nOfRxMsgs"
-
-	cog.outl("const "+sym_data_name+"["+sym_data_len+"];")
-]]] */
 // [[[end]]]
 
 /* Constant for clearing Rx dynamic data */
@@ -315,7 +326,7 @@ if len(list_of_tx_msgs) > 0:
 /* [[[cog
 if len(list_of_tx_msgs) > 0:
 	sym_data_name = "CANtxMsgDynamicData can_" + net_name_str + node_name_str + "txMsgDynamicData"
-	sym_data_len = "kCAN_" + net_name_str + node_name_str + "nOfRxMsgs"
+	sym_data_len = "kCAN_" + net_name_str + node_name_str + "nOfTxMsgs"
 
 	cog.outl("const "+sym_data_name+"["+sym_data_len+"];")
 ]]] */
@@ -330,38 +341,50 @@ if len(list_of_tx_msgs) > 0:
 ]]] */
 // [[[end]]]
 
-
-
-
-
-
-
-/* Private data */
-
-/* Rx messages navigation tree */
-/* Node at index is the top node of the tree */
-# define kCAN_N_OF_RX_NODES		6u
-const RxSearchTreeNode rx_search_nodes[kCAN_N_OF_RX_NODES] = [\
-	{{0x50,		&rx_search_nodes[1],	&rx_search_nodes[2]},	{7,		5,	9}},
-	{{0x40,		&rx_search_nodes[3],	&rx_search_nodes[4]},	{5,		4,	6}},
-	{{0x60,		&rx_search_nodes[5],	NULL				},	{9,		8,	10}},
-	{{0x35,		NULL			   ,	NULL				},	{7,		5,	9}},
-	{{0x45,		NULL			   ,	NULL				},	{7,		5,	9}},
-	{{0x55,		NULL			   ,	NULL				},	{7,		5,	9}}]
-
-/* Exported Function Prototypes */
-void CAN_coreInit();
-void CAN_processRxMessage();
-
-/* Private Function Prototypes */
-void CAN_clearMsgDynamicData();
-CalvosError CAN_traverseRxSearchTree(uint32_t, RxSearchResult);
-CANmsgFound CAN_getMsgIdx(uint32_t, uint32_t *);
-void CAN_filterRxMsg(uint32_t);
-
 /* =============================================================================
  * 	Function definitions
  * ===========================================================================*/
+
+/* ===========================================================================*/
+/** Function for processing a CAN RX msg.
+ *
+ * Checks if the received msg ID belongs to this node. If so invoke callbacks,
+ * and set corresponding flags and data.
+ *
+ * @param msg_id 	ID of the message tha was received.
+ * @param data_in	Pointer to the message's data that was received.
+ * ===========================================================================*/
+/* [[[cog
+if len(list_of_tx_msgs) > 0:
+	code_str = sym_rx_proc_func_return+" "+sym_rx_proc_func_name+sym_rx_proc_func_args+"{"
+	cog.outl(code_str)
+
+	invoke_search = "msg_static_data = can_traverseRxSearchTree(msg_id, \\\n\t\t\t&"\
+		+sym_rx_stat_data_name+"["+sym_search_start_idx+"],  \\\n\t\t\t"+sym_rx_msgs+");"
+
+	function_body = """
+	CANrxMsgStaticData* msg_static_data;
+	// Search for message to see if its suscribed by this node.
+	"""+invoke_search+"""
+	if(msg_static_data != NULL){
+		// Copy data to buffer
+		memcpy(msg_static_data->data, data_in, msg_static_data->fields.len)
+		// Set available flags
+		msg_static_data->dyn->available.all = kAllOnes32;
+		// clear timeout flag
+		msg_static_data->dyn->timedout = kFalse;
+		// Invoke rx callback
+		if(msg_static_data->rx_callback != NULL){
+			(msg_static_data->rx_callback)();
+		}
+	}
+}
+	"""
+	function_body = function_body[1:]
+	cog.outl(function_body)
+]]] */
+// [[[end]]]
+
 void CAN_clearMsgDynamicData(){
 	/* Initialize msg dynamic data */
 		CANmsgDynamicData clear_data;
@@ -378,127 +401,9 @@ void CAN_clearMsgDynamicData(){
 		}
 }
 
-/* ===========================================================================*/
-/** Function for traversing a CAN RX msg search tree.
- *
- * More detailed description of what this function does.
- *
- * @param msg_id 	ID of the message to look for.
- * @param result	Contains the indexes where to search for the id within the
- *  				message static data array.
- * @return	Returns @c kNoError if traversing the tree was Ok, returns @c kError
- *  				otherwise.
- * ===========================================================================*/
-CalvosError CAN_traverseRxSearchTree(uint32_t msg_id, RxSearchResult* result, \
-		RxSearchTreeNode* search_tree){
-	uint32_t guard = kCAN_N_OF_RX_NODES;
-	CalvosError return_value = kError;
-	/* Search will always starts at index 0 so that index should be
-	 * the top node. */
-	RxSearchTreeNode current_node = search_tree[0];
-
-	while(kTrue and guard > 0){
-		/* guard variable is to avoid an endless loop in case of a malformed
-		 * tree (missing some leave nodes). Tree traverse can't be of more
-		 * than kCAN_N_OF_RX_NODES nodes. */
-		guard -= 1;
-		/* Keep looking for msg_id until the msg_id is found or a leave node is
-		 * reached. In either case a break statement shall quit the loop. */
-		if(current_node.node.val == msg_id){
-			/* Message found! */
-			*result.vals.current_idx = current_node.vals.current_idx;
-			*result.use_current_idx = kTrue;
-			return_value = kNoError;
-			break;
-		}else if(msg_id < current_node.node.val){
-			/* See if a lower node exists */
-			if(current_node.node.prev != NULL){
-				/* Assign new node for the search. */
-				current_node = current_node.node.prev;
-			}else{
-				/* No previous node. Means this is a leave node. */
-				*result.vals.lower_idx = current_node.vals.lower_idx;
-				*result.vals.upper_idx = current_node.vals.upper_idx;
-				*result.use_current_idx = kFalse;
-				return_value = kNoError;
-				break;
-			}
-		}else( /* msg_id > current_node.node.val */
-			/* See if a upper node exists */
-			if(current_node.node.next != NULL){
-				/* Assign new node for the search. */
-				current_node = current_node.node.next;
-			}else{
-				/* No next node. Means this is a leave node. */
-				*result.vals.lower_idx = current_node.vals.lower_idx;
-				*result.vals.upper_idx = current_node.vals.upper_idx;
-				*result.use_current_idx = kFalse;
-				return_value = kNoError;
-				break;
-			}
-
-		}
-	}
-	return return_value;
-}
-
-
-CANmsgFound CAN_getRxMsgIdx(uint32_t msg_id, uint32_t* msg_idx){
-	CANmsgFound return_val;
-	RxSearchResult search_result;
-
-	return_val = kMsgNotFound;
-
-	if(CAN_traverseRxSearchTree(msg_id, &search_result, rx_search_nodes) \
-	!= kError){
-		if(search_result.use_current_idx){
-			*msg_idx = search_result.vals.current_idx;
-			return_val = kMsgFound;
-		}else{
-			/* Get indexes to search for msg id within the static data array */
-			for(uint32_t i=search_result.vals.lower_idx; \
-			i <= search_result.vals.upper_idx; i++){
-				if(can_CT_static_rx_msg_data[i].id == msg_id){
-					return_val = kMsgFound;
-					*msg_idx = i;
-					break;
-				}
-			}
-		}
-	}
-
-	return return_val;
-}
-
-void CAN_processRxMessage(msg_id){
-	CANmsgFound msg_found;
-	uint32_t msg_idx;
-
-	/* TODO: If multiple search trees (for example a search tree for < 20ms
-	 * messages, another for 20 to 100 ms, another for more than 100ms, etc.)
-	 * adjust following logic to search for all trees. */
-	msg_found = CAN_getRxMsgIdx(msg_id, &msg_idx);
-	if(msg_found == kMsgFound){
-		/* Set available flags */
-		can_CT_dynamic_rx_msg_data[msg_idx].available.all = kAllOnes32;
-		/* clear timeout flag */
-		can_CT_dynamic_rx_msg_data[msg_idx].timedout = kFalse;
-		/* Invoke rx callback */
-		if(CANrxMsgStaticData[msg_idx].timeout_callback != NULL){
-			(*CANrxMsgStaticData[msg_idx].timeout_callback)();
-		}
-	}
-}
-
-
 void CAN_coreInit(){
 	/* Initialize msg dynamic data */
 	CAN_clearMsgDynamicData();
 }
 
 
-/* [[[cog
-# Print include guards
-cog.outl("#endif /"+chr(42)+" "+ guard_symbol + " "+chr(42) + "/")
-]]] */
-// [[[end]]]

@@ -78,81 +78,60 @@ if 'include_var' in locals():
 		cog.outl("#include \"" + include + "\"")
  ]]] */
 // [[[end]]]
-
-/* TX Types definitions */
 /* [[[cog
-# Generate include statements if required
-cog.outl("#include kTxSpontan\t\t\t" + str(nw.SPONTAN) + "u")
-cog.outl("#include kTxCyclic\t\t\t" + str(nw.CYCLIC) + "u")
-cog.outl("#include kTxCyclicSpontan\t" + str(nw.CYCLIC_SPONTAN) + "u")
-cog.outl("#include kTxBAF\t\t\t\t" + str(nw.BAF) + "u")
+TAB_SPACE = 4
+network_name = network.id_string
+net_name_str = network_name + "_"
+node_name_str = node_name + "_"
+
+# Get subnetwork for this node
+subnet = network.get_subnetwork([node_name])
+
+list_of_tx_msgs = []
+list_of_rx_msgs = []
+for message in subnet.messages.values():
+	if subnet.get_message_direction(node_name,message.name) == nw.CAN_TX:
+		list_of_tx_msgs.append(message.name)
+	elif subnet.get_message_direction(node_name,message.name) == nw.CAN_RX:
+		list_of_rx_msgs.append(message.name)
+	else:
+		log_warn(("Message '%s' direction not determined for node '%s' " \
+			+ "in network '%s'.") % (message.name, node_name, network_name))
+
+callback_prefix = "can_" + net_name_str + node_name_str
+callback_rx_sufix = "_rx_callback"
+callback_tout_sufix = "_timeout_callback"
  ]]] */
 // [[[end]]]
 
-/* Message direction definitions */
+
+/* --------------------------- */
+/* Message reception callbacks */
+/* --------------------------- */
 /* [[[cog
-# Generate include statements if required
-cog.outl("#include kDirTX\t\t" + str(nw.CAN_TX) + "u")
-cog.outl("#include kDirRX\t\t" + str(nw.CAN_RX) + "u")
- ]]] */
+if len(list_of_rx_msgs) > 0:
+
+	for message_name in list_of_rx_msgs:
+		# Generate Rx callback
+		callback_name = callback_prefix + message_name + callback_rx_sufix
+		code_str = "extern void "+callback_name+"();"
+		cog.outl(code_str)
+]]] */
 // [[[end]]]
 
-/* Message direction definitions */
-typedef enum{
-	kMsgNotFound = 0,
-	kMsgFound
-}CANmsgFound;
+/* ------------------------- */
+/* Message timeout callbacks */
+/* ------------------------- */
+/* [[[cog
+if len(list_of_rx_msgs) > 0:
+	for message_name in list_of_rx_msgs:
+		# Generate timeout callback
+		callback_name = callback_prefix + message_name + callback_tout_sufix
+		code_str = "extern void "+callback_name+"();"
+		cog.outl(code_str)
+]]] */
+// [[[end]]]
 
-/* Types for CAN messages static data */
-typedef struct{
-	uint8_t len : 4;
-	uint8_t id_is_extended : 1;
-}CANrxMsgStaticFields;
-
-typedef struct{
-	uint32_t id;
-	uint32_t timeout;
-	Callback rx_callback;
-	Callback timeout_callback;
-	uint8_t * data
-	CANrxMsgDynamicData * dyn;
-	CANrxMsgStaticFields fields;
-	CANrxMsgStaticData * next;
-	CANrxMsgStaticData * prev;
-}CANrxMsgStaticData;
-
-typedef struct{
-	uint8_t len : 4;
-	uint8_t id_is_extended : 1;
-	uint8_t tx_type : 2;
-}CANtxMsgStaticFields;
-
-typedef struct{
-	uint32_t id;
-	uint32_t period;
-	Callback tx_callback;
-	uint8_t * data
-	CANtxMsgStaticFields fields;
-}CANtxMsgStaticData;
-
-/* Types for CAN messages dynamic data */
-typedef struct{
-	FlagsNative available;
-	intNative_t timedout;
-	NodeUint32 timeout_queue;
-}CANrxMsgDynamicData;
-
-typedef union{
-	FlagsNative transmitted;
-	intNative_t BAF_active;
-	NodeUint32 period_queue;
-}CANtxMsgDynamicFields;
-
-
-/* Exported Prototypes */
-extern CANrxMsgStaticData* can_traverseRxSearchTree(uint32_t msg_id, \
-											 CANrxMsgStaticData* root, \
-											 uint32_t guard);
 
 /* [[[cog
 # Print include guards

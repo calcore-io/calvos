@@ -731,7 +731,7 @@ def file_exists(file_name):
 
 def C_license():
     """ Returns a string with the license in C comment format. """
-    return_str = """/*  This file is part of calvOS project.
+    return_str = """/*  This file is part of calvOS project <https://github.com/calcore-io/calvos>.
  *
  *  calvOS is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by

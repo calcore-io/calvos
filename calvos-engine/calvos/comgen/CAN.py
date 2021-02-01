@@ -1912,6 +1912,9 @@ class Network_CAN:
         
         self.add_cog_source("common_h", "cog_comgen_CAN_common.h", True, \
                             None, {"category" : "common"})
+        self.add_cog_source("common_c", "cog_comgen_CAN_common.c", False, \
+                            [["comgen.CAN", "common_h"]], \
+                            {"category" : "common"})
         self.add_cog_source("network_h", "cog_comgen_CAN_NWID_network.h", True, \
                             None, {"category" : "network"})
         self.add_cog_source("node_net_h", "cog_comgen_CAN_NWID_NODEID_network.h", True, \
@@ -1923,8 +1926,15 @@ class Network_CAN:
                              ["comgen.CAN", "network_h"]], \
                             {"category" : "node"})
         self.add_cog_source("core", "cog_comgen_CAN_NWID_NODEID_core.c", False, \
-                            [["comgen.CAN", "network_h"],\
-                             ["comgen.CAN", "core_h"]], \
+                            [["comgen.CAN", "core_h"], \
+                             ["comgen.CAN", "callbacks_h"]], \
+                            {"category" : "node"})
+        self.add_cog_source("callbacks_h", "cog_comgen_CAN_NWID_NODEID_callbacks.h", True, \
+                            [["comgen.CAN", "common_h"], \
+                             ["comgen.CAN", "node_net_h"]], \
+                            {"category" : "node"})
+        self.add_cog_source("callbacks_c", "cog_comgen_CAN_NWID_NODEID_callbacks.c", False, \
+                            [["comgen.CAN", "callbacks_h"]], \
                             {"category" : "node"})
 
     #===============================================================================================    
