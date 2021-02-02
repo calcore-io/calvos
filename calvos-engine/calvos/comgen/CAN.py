@@ -1926,7 +1926,7 @@ class Network_CAN:
                              ["comgen.CAN", "can_node_hal_h"], \
                              ["comgen.CAN", "core_h"]], \
                             {"category" : "node"})
-        self.add_cog_source("node_net_h", "cog_comgen_CAN_NWID_NODEID_network.h", True, \
+        self.add_cog_source("node_net_h", "cog_comgen_CAN_NWID_NODEID_node_network.h", True, \
                             [["comgen.CAN", "common_h"], \
                              ["comgen.CAN", "network_h"]], \
                             {"category" : "node"})
@@ -2079,18 +2079,29 @@ class Network_CAN:
 
         global cog_sources
         
-        # Determine node list and full_names value    
-        full_names = True
+        # Determine node list and full_names value 
+        full_names = self.get_simple_param("CAN_gen_file_full_names")
+        
+        n_of_networks = 0
+        for component in self.project_obj.components:
+            if component.type == self.module:
+                n_of_networks += 1
+        if n_of_networks > 1 or full_names is True: 
+            NWID_wildcard = self.id_string
+        else:
+            NWID_wildcard = None
+    
+        multiple_nodes = False
         node_lst = self.get_simple_param("CAN_gen_nodes")
         if len(node_lst) == 0:
             # assume all network nodes will be generated
             for node in self.nodes:
                 node_lst.append(node)
-        elif len(node_lst) == 1:
-            # If network for only one node is to be generated check if full name (including node
-            # name) is required for the output C-code files or not
-            full_names = self.get_simple_param("CAN_gen_file_full_names")
-            
+            if len(node_lst) > 1:
+                multiple_nodes = True
+        elif len(node_lst) > 1:
+            multiple_nodes = True
+  
         # Get project pickle full file name  
         project_pickle = self.project_obj.get_work_file_path("common.project", \
                                                                          "project_pickle")
@@ -2100,7 +2111,7 @@ class Network_CAN:
         
         if subnetwork is not None and len(subnetwork.nodes) > 0 and len(subnetwork.messages) > 0:
             # Update cog output files names (replace network id wildcard)
-            wildcards = {"NWID" : subnetwork.id_string}
+            wildcards = {"NWID" : NWID_wildcard}
             self.update_cog_out_sources_names(cog_sources, wildcards)
             # Create temporal file with subnetwork object pickle.
             cog_pickle_file_name = "comgen_CAN_network_obj.pickle"
@@ -2143,6 +2154,9 @@ class Network_CAN:
                     if len(includes_lst) > 0:
                         include_var = json.dumps(includes_lst)
                         variables.update({"include_var" : include_var})
+                    
+                    # Add variable for NWID wildcard
+                    variables.update({"NWID_wildcard" : str(NWID_wildcard)})
                          
                     self.cog_generator(cog_source.cog_in_file, cog_source.cog_out_file, \
                                        project_pickle, cog_serialized_network_file, \
@@ -2153,7 +2167,11 @@ class Network_CAN:
             for node in subnetwork.nodes.values():
                 if len(self.get_messages_of_node(node.name)) > 0:
                     # Update cog output files names (replace node id wildcard)
-                    wildcards = {"NWID" : subnetwork.id_string, "NODEID" : node.name}
+                    if multiple_nodes is True or full_names is True: 
+                        NODEID_wildcard = node.name
+                    else:
+                        NODEID_wildcard = None
+                    wildcards = {"NWID" : NWID_wildcard, "NODEID" : NODEID_wildcard}
                     self.update_cog_out_sources_names(cog_sources, wildcards)
                     for cog_source in cog_sources.sources.values():
                         if "category" in cog_source.dparams \
@@ -2166,6 +2184,10 @@ class Network_CAN:
                             if len(includes_lst) > 0:
                                 include_var = json.dumps(includes_lst)
                                 variables.update({"include_var" : include_var})
+                            # Add variable for NWID wildcard
+                            variables.update({"NWID_wildcard" : str(NWID_wildcard)})
+                            # Add variable for NODEID wildcard
+                            variables.update({"NODEID_wildcard" : str(NODEID_wildcard)})
                             # Add variable containing current's node name
                             variables.update({"node_name" : str(node.name)})
                                  

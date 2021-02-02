@@ -76,8 +76,14 @@ if 'include_var' in locals():
 /* [[[cog
 TAB_SPACE = 4
 network_name = network.id_string
-net_name_str = network_name + "_"
-node_name_str = node_name + "_"
+if NWID_wildcard != "None":
+	net_name_str = network_name + "_"
+else:
+	net_name_str = ""
+if NODEID_wildcard != "None":
+	node_name_str = node_name + "_"
+else:
+	node_name_str = ""
 
 # Get subnetwork for this node
 subnet = network.get_subnetwork([node_name])

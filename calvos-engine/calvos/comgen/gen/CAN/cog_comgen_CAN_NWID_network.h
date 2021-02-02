@@ -71,7 +71,10 @@ cog.outl("#define "+guard_symbol)
 
 TAB_SPACE = 4
 network_name = network.id_string
-net_name_str = network_name + "_"
+if NWID_wildcard != "None":
+	net_name_str = network_name + "_"
+else:
+	net_name_str = ""
 
  ]]] */
 // [[[end]]]
