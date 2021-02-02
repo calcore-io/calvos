@@ -1913,8 +1913,7 @@ class Network_CAN:
         self.add_cog_source("common_h", "cog_comgen_CAN_common.h", True, \
                             None, {"category" : "common"})
         self.add_cog_source("common_c", "cog_comgen_CAN_common.c", False, \
-                            [["comgen.CAN", "common_h"], \
-                             ["comgen.CAN", "can_node_hal_h"]], \
+                            [["comgen.CAN", "common_h"]], \
                             {"category" : "common"})
         self.add_cog_source("network_h", "cog_comgen_CAN_NWID_network.h", True, \
                             None, {"category" : "network"})

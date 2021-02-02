@@ -262,7 +262,11 @@ CalvosError can_commonTransmitMsg(CANtxMsgStaticData* msg_struct, \
 					// Queue succeeded
 					msg_struct->dyn->state = kCANtxState_queued;
 					return_value = kNoError;
+				}else{
+					msg_struct->dyn->state = kCANtxState_requested;
 				}
+			}else{
+				msg_struct->dyn->state = kCANtxState_requested;
 			}
 		}
 	}
