@@ -107,12 +107,20 @@ sorted_rx_msgs = dict(sorted(sorted_rx_msgs.items(), key=lambda kv: kv[1]))
 extern void CAN_coreInit();
 /* [[[cog
 if len(list_of_rx_msgs) > 0:
+	# RX Processing Function
+	# ----------------------
 	sym_rx_proc_func_name = "can_" + net_name_str + node_name_str + "processRxMessage"
 	sym_rx_proc_func_args = "(uint32_t msg_id, uint8_t * data_in)"
 	sym_rx_proc_func_return = "void"
 
-	code_str = "extern "+sym_rx_proc_func_return+" "+sym_rx_proc_func_name+sym_rx_proc_func_args+";"
-	cog.outl(code_str)
+if len(list_of_tx_msgs) > 0:
+	# TX Processing Function
+	# ----------------------
+	sym_enum_name = "CAN_" + net_name_str + node_name_str + "txMsgs"
+
+	sym_transmit_func_name = "can_"+net_name_str+node_name_str+"transmitMsg"
+	sym_transmit_func_args = "("+sym_enum_name+" msg_idx)"
+	sym_transmit_func_return = "void"
  ]]] */
 // [[[end]]]
 
@@ -145,9 +153,9 @@ if len(list_of_rx_msgs) > 0:
 /* Array of Rx messages dynamic data */
 /* [[[cog
 if len(list_of_rx_msgs) > 0:
-	sym_dyn_data_type = "CANrxMsgDynamicData"
-	sym_dyn_data_name = "can_" + net_name_str + node_name_str + "rxMsgDynamicData"
-	code_str = sym_dyn_data_type+" "+sym_dyn_data_name+"["+sym_rx_msgs+"];"
+	sym_rx_dyn_data_type = "CANrxMsgDynamicData"
+	sym_rx_dyn_data_name = "can_" + net_name_str + node_name_str + "rxMsgDynamicData"
+	code_str = sym_rx_dyn_data_type+" "+sym_rx_dyn_data_name+"["+sym_rx_msgs+"];"
 	cog.outl(code_str)
 ]]] */
 // [[[end]]]
@@ -189,7 +197,7 @@ if len(list_of_rx_msgs) > 0:
 		array_data.append("&" + sym_rx_data_name + "["+ str(data_idx) +"]")
 		data_idx += subnet.messages[msg_name].len
 		# Pointer to dynamic data
-		array_data.append("&" + sym_dyn_data_name + "["+ str(i) +"]")
+		array_data.append("&" + sym_rx_dyn_data_name + "["+ str(i) +"]")
 		# Msg Len
 		array_data.append(str(subnet.messages[msg_name].len) + "u")
 		# Msg extended id?
@@ -243,16 +251,6 @@ if len(list_of_rx_msgs) > 0:
  ]]] */
 // [[[end]]]
 
-/* Constant for clearing Rx dynamic data */
-/* [[[cog
-if len(list_of_rx_msgs) > 0:
-	sym_data_name = "CANrxMsgDynamicData can_" + net_name_str + node_name_str \
-		+ "rxMsgDynamicData_clear"
-
-	cog.outl("const "+sym_data_name+" = {0,0,{0,NULL,NULL}};")
-]]] */
-// [[[end]]]
-
 /* Tx message data buffer */
 /* [[[cog
 if len(list_of_tx_msgs) > 0:
@@ -264,13 +262,35 @@ if len(list_of_tx_msgs) > 0:
 ]]] */
 // [[[end]]]
 
+/* Array of Tx messages dynamic data */
+/* [[[cog
+if len(list_of_tx_msgs) > 0:
+	sym_tx_dyn_data_name = "can_" + net_name_str + node_name_str + "txMsgDynamicData"
+	sym_tx_dyn_data_type = "CANtxMsgDynamicData"
+	sym_tx_dyn_data_len = "kCAN_" + net_name_str + node_name_str + "nOfTxMsgs"
+	source_str = sym_tx_dyn_data_type+" "+sym_tx_dyn_data_name+"["+sym_tx_dyn_data_len+"];"
+	cog.outl(source_str)
+]]] */
+// [[[end]]]
+
+/* Tx transmission queue */
+/* [[[cog
+if len(list_of_tx_msgs) > 0:
+	sym_tx_queue_name = "can_" + net_name_str +  node_name_str + "txQueue"
+	sym_tx_queue_type = "CANtxQueue"
+	code_str = sym_tx_queue_type+ " "+sym_tx_queue_name+";"
+	cog.outl(code_str)
+]]] */
+// [[[end]]]
+
 /* Array of Tx messages static data */
 /* [[[cog
 if len(list_of_tx_msgs) > 0:
-	sym_data_name = "CANtxMsgStaticData can_" + net_name_str + node_name_str + "txMsgStaticData"
-	sym_data_len = "kCAN_" + net_name_str + node_name_str + "nOfTxMsgs"
+	sym_tx_stat_data_name = "can_" + net_name_str + node_name_str + "txMsgStaticData"
+	sym_tx_stat_data_type = "CANtxMsgStaticData"
+	sym_tx_stat_data_len = "kCAN_" + net_name_str + node_name_str + "nOfTxMsgs"
 
-	cog.outl("const "+sym_data_name+"["+sym_data_len+"] = [\\")
+	cog.outl("const "+sym_tx_stat_data_type+" "+sym_tx_stat_data_name+"["+sym_tx_stat_data_len+"] = [\\")
 
 	callback_prefix = "can_" + net_name_str + node_name_str
 	callback_tx_sufix = "_tx_callback"
@@ -288,6 +308,8 @@ if len(list_of_tx_msgs) > 0:
 		# Data Buffer
 		array_data.append("&" + sym_tx_data_name + "["+ str(data_idx) +"]")
 		data_idx += subnet.messages[msg_name].len
+		# Pointer to dynamic data
+		array_data.append("&" + sym_tx_dyn_data_name + "["+ str(i) +"]")
 		# Msg Len
 		array_data.append(str(subnet.messages[msg_name].len) + "u")
 		# Msg extended id?
@@ -299,7 +321,7 @@ if len(list_of_tx_msgs) > 0:
 		array_data.append("kCAN_" + net_name_str + "msgTxType_" + msg_name)
 
 		ALL_DATA_END = len(array_data)-1
-		SUB_STRUCT_BEGIN = 4
+		SUB_STRUCT_BEGIN = 5
 		SUB_STRUCT_END = SUB_STRUCT_BEGIN + 2
 		code_string = "{"
 		for j, piece_str in enumerate(array_data):
@@ -322,37 +344,18 @@ if len(list_of_tx_msgs) > 0:
  ]]] */
 // [[[end]]]
 
-/* Array of Tx messages dynamic data */
-/* [[[cog
-if len(list_of_tx_msgs) > 0:
-	sym_data_name = "CANtxMsgDynamicData can_" + net_name_str + node_name_str + "txMsgDynamicData"
-	sym_data_len = "kCAN_" + net_name_str + node_name_str + "nOfTxMsgs"
-
-	cog.outl("const "+sym_data_name+"["+sym_data_len+"];")
-]]] */
-// [[[end]]]
-
-/* Constant for clearing Tx dynamic data */
-/* TODO: Can't really clear all flags with a simple 0 */
-/* [[[cog
-if len(list_of_tx_msgs) > 0:
-	sym_data_name = "CANtxMsgDynamicData can_" + net_name_str + node_name_str + "rxMsgDynamicData_clear"
-	cog.outl("const "+sym_data_name+" = {0,0,0,{0,NULL,NULL}};")
-]]] */
-// [[[end]]]
-
 /* =============================================================================
  * 	Function definitions
  * ===========================================================================*/
 
 /* ===========================================================================*/
-/** Function for processing a CAN RX msg.
+/** Function for processing reception of a CAN msg.
  *
- * Checks if the received msg ID belongs to this node. If so invoke callbacks,
- * and set corresponding flags and data.
+ * Verifies if received message belongs to this node and if so, signal its
+ * reception and invokes the corresponding callback.
  *
- * @param msg_id 	ID of the message tha was received.
- * @param data_in	Pointer to the message's data that was received.
+ * @param msg_id 	Id of the received message.
+ * @param data_in 	Pointer to the message's received data.
  * ===========================================================================*/
 /* [[[cog
 if len(list_of_tx_msgs) > 0:
@@ -385,21 +388,53 @@ if len(list_of_tx_msgs) > 0:
 ]]] */
 // [[[end]]]
 
-void CAN_clearMsgDynamicData(){
-	/* Initialize msg dynamic data */
-		CANmsgDynamicData clear_data;
+/* ===========================================================================*/
+/** Function for transmitting a CAN msg.
+ *
+ * Triggers the transmission of the specified CAN message.
+ *
+ * @param msg_idx 	index of the message to be transmitted.
+ * @Return 		Returns @c kNoError if message was triggered for transmission
+ * 				by HAL or if it was successfully queued for a transmission
+ * 				retry. Returns @c kError otherwise (HAL busy, queue full, wrong
+ * 				message index provided).
+ * ===========================================================================*/
+/* [[[cog
+if len(list_of_tx_msgs) > 0:
+	sym_enum_name = "CAN_" + net_name_str + node_name_str + "txMsgs"
+	sym_max_tx_msgs = "kCAN_" + net_name_str + node_name_str + "nOfTxMsgs"
+	sym_transmit_func_name = "can_"+net_name_str+node_name_str+"transmitMsg"
+	sym_transmit_func_args = "("+sym_enum_name+" msg_idx)"
 
-		clear_data.timeout_queue = 0;
-		clear_data.timeout_time = 0;
-		clear_data.period_queue = 0;
-		clear_data.period_time = 0;
-		clear_data.data.available = 0;
-		clear_data.data.timed_out = 0;
+	sym_hal_transmit_name = "can_"+net_name_str+"HALtransmitMsg"
 
-		for(uint32_t i=0; i<kCAN_CT_nOfMsgs; i++){
-			can_CT_dynamic_msg_data[i] = clear_data;
-		}
+	code_str = "CalvosError "+sym_transmit_func_name+sym_transmit_func_args+"{"
+	cog.outl(code_str)
+
+	function_body = """
+	CalvosError return_value = kError;
+
+	// Trigger CAN transmission to HAL
+	if(msg_idx < """+sym_max_tx_msgs+"""){
+		return_value = can_commonTransmitMsg(&"""+sym_tx_stat_data_name+"""[msg_idx], \\
+								  &"""+sym_tx_queue_name+""", \\
+								  &"""+sym_hal_transmit_name+""");
+	}
+
+	return return_value;
 }
+	"""
+	function_body = function_body[1:]
+	cog.outl(function_body)
+]]] */
+// [[[end]]]
+
+
+
+
+
+
+
 
 void CAN_coreInit(){
 	/* Initialize msg dynamic data */

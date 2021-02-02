@@ -18,6 +18,12 @@ try:
 		network = pic.load(f)
 except Exception as e:
         print('Failed to access pickle file %s. Reason: %s' % (cog_pickle_file, e))
+
+try:
+	with open(cog_proj_pickle_file, 'rb') as f:
+		project = pic.load(f)
+except Exception as e:
+        print('Failed to access pickle file %s. Reason: %s' % (cog_proj_pickle_file, e))
 ]]] */
 // [[[end]]]
 /*============================================================================*/
@@ -97,6 +103,24 @@ cog.outl("#include kDirRX\t\t" + str(nw.CAN_RX) + "u")
  ]]] */
 // [[[end]]]
 
+/* Length of CAN transmission queue */
+/* [[[cog
+# Generate include statements if required
+sym_tx_queue_len_name = "kCANtxQueueLen"
+sym_tx_queue_len_value = str(project.get_simple_param_val("comgen.CAN", "CAN_tx_queue_len"))
+code_str = "#define "+sym_tx_queue_len_name+"\t\t("+sym_tx_queue_len_value+"u)"
+cog.outl(code_str)
+ ]]] */
+// [[[end]]]
+
+/* TX states */
+typedef enum{
+	kCANtxState_idle = 0,
+	kCANtxState_queued,
+	kCANtxState_transmitting,
+	kCANtxState_transmited
+}CANtxState;
+
 /* Message direction definitions */
 typedef enum{
 	kMsgNotFound = 0,
@@ -111,14 +135,14 @@ typedef struct{
 
 typedef struct{
 	uint32_t id;
-	uint32_t timeout;
+	uint32_t timeout; /* Given in base time ticks */
 	Callback rx_callback;
 	Callback timeout_callback;
-	uint8_t * data
-	CANrxMsgDynamicData * dyn;
+	uint8_t* data
+	CANrxMsgDynamicData* dyn;
 	CANrxMsgStaticFields fields;
-	CANrxMsgStaticData * next;
-	CANrxMsgStaticData * prev;
+	CANrxMsgStaticData* searchNext;
+	CANrxMsgStaticData* searchPrev;
 }CANrxMsgStaticData;
 
 typedef struct{
@@ -129,9 +153,10 @@ typedef struct{
 
 typedef struct{
 	uint32_t id;
-	uint32_t period;
+	uint32_t period; /* Given in base time ticks */
 	Callback tx_callback;
-	uint8_t * data
+	uint8_t* data
+	CANtxMsgDynamicData* dyn;
 	CANtxMsgStaticFields fields;
 }CANtxMsgStaticData;
 
@@ -142,17 +167,31 @@ typedef struct{
 	NodeUint32 timeout_queue;
 }CANrxMsgDynamicData;
 
-typedef union{
-	FlagsNative transmitted;
+typedef struct{
+	CANtxState state;
 	intNative_t BAF_active;
 	NodeUint32 period_queue;
-}CANtxMsgDynamicFields;
+	CANtxMsgStaticData* txQueueNext;
+}CANtxMsgDynamicData;
 
+/* Declaration of TX transmission queue */
+typedef struct{
+	intNative_t length;
+	CANtxMsgStaticData* head;
+	CANtxMsgStaticData* tail;
+}CANtxQueue;
+
+/* HAL tx function typedef */
+typedef CalvosError (*CANhalTxFunction)(CANtxMsgStaticData* msg_info);
 
 /* Exported Prototypes */
 extern CANrxMsgStaticData* can_traverseRxSearchTree(uint32_t msg_id, \
 											 CANrxMsgStaticData* root, \
 											 uint32_t guard);
+
+extern CalvosError can_commonTransmitMsg(CANtxMsgStaticData* msg_struct, \
+		  CANtxQueue* queue, \
+		  CANhalTxFunction can_hal_tx_function);
 
 /* [[[cog
 # Print include guards

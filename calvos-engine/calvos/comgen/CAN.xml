@@ -75,16 +75,21 @@
 			<clv:Desc>If set to true timeout of rx CAN messages will start counting down from init. If set to false, user will need to start the timeout manually.</clv:Desc>
 			<clv:Default>True</clv:Default>
 		</clv:ParamDefinition>
-		<clv:ParamDefinition type="boolean" id="CAN_tx_task_period"
+		<clv:ParamDefinition type="int" id="CAN_tx_task_period"
 			category="catCAN_network" is_advanced="true">
 			<clv:Title>Period of TX task</clv:Title>
 			<clv:Desc>Period of TX task for transmission of spontaneous messages.</clv:Desc>
-			<clv:Default>20</clv:Default>
+			<clv:Default>10</clv:Default>
 		</clv:ParamDefinition>
-		<clv:ParamDefinition type="boolean" id="CAN_rx_task_period"
+		<clv:ParamDefinition type="int" id="CAN_rx_task_period"
 			category="catCAN_network" is_advanced="true">
 			<clv:Title>Period of RX task</clv:Title>
 			<clv:Desc>Period of task for polling spontaneous RX messages.</clv:Desc>
 			<clv:Default>10</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="int" id="CAN_tx_queue_len">
+			<clv:Title>Length of queue for TX messages.</clv:Title>
+			<clv:Desc>Length of queue of messages waiting for transmission.</clv:Desc>
+			<clv:Default>5</clv:Default>
 		</clv:ParamDefinition></clv:ParamsDefinitions>
 </clv:ComponentDefinition>

@@ -18,6 +18,12 @@ try:
 		network = pic.load(f)
 except Exception as e:
         print('Failed to access pickle file %s. Reason: %s' % (cog_pickle_file, e))
+
+try:
+	with open(cog_proj_pickle_file, 'rb') as f:
+		project = pic.load(f)
+except Exception as e:
+        print('Failed to access pickle file %s. Reason: %s' % (cog_proj_pickle_file, e))
 ]]] */
 // [[[end]]]
 /*============================================================================*/
@@ -67,6 +73,21 @@ if 'include_var' in locals():
 		cog.outl("#include \"" + include + "\"")
  ]]] */
 // [[[end]]]
+/* =============================================================================
+ * 	Macros and typedefs
+ * ===========================================================================*/
+
+/* =============================================================================
+ * 	Exported definitions
+ * ===========================================================================*/
+
+/* =============================================================================
+ * 	Private definitions
+ * ===========================================================================*/
+
+/* =============================================================================
+ * 	Function definitions
+ * ===========================================================================*/
 
 /* ===========================================================================*/
 /** Function for traversing a CAN RX msg search tree.
@@ -98,8 +119,8 @@ CANrxMsgStaticData* can_traverseRxSearchTree(uint32_t msg_id, \
 			break;
 		}else if(msg_id < current_node->id){
 			/* Search in previous tree node if not Null */
-			if(current_node->prev != NULL){
-				current_node = current_node->prev;
+			if(current_node->searchPrev != NULL){
+				current_node = current_node->searchPrev;
 			}else{
 				/* if a leave node is found (NULL) then end search since id
 				 * was not found. */
@@ -107,8 +128,8 @@ CANrxMsgStaticData* can_traverseRxSearchTree(uint32_t msg_id, \
 			}
 		}else{ /* msg_id > current_node->id */
 			/* Search in next tree node if not Null */
-			if(current_node->next != NULL){
-				current_node = current_node->next;
+			if(current_node->searchNext != NULL){
+				current_node = current_node->searchNext;
 			}else{
 				/* if a leave node is found (NULL) then end search since id
 				 * was not found. */
@@ -120,5 +141,103 @@ CANrxMsgStaticData* can_traverseRxSearchTree(uint32_t msg_id, \
 	return return_node;
 }
 
+/* ===========================================================================*/
+/** Function to enqueue a CAN tx message to the transmission queue.
+ *
+ * @param queue 	Pointer to the queue to operate with.
+ * @param root		Pointer to node to be enqueued.
+ * @return	Returns @c kNoError if node was enqueued successfully. Returns
+ * 			@c kError if queue was full and, hence, node was not enqueued.
+ * ===========================================================================*/
+CalvosError can_txQueueEnqueue(CANtxQueue* queue, CANtxMsgStaticData* node){
+	CalvosError return_value = kError;
 
+	/* Queue node at the tail if there is still empty space in the queue */
+	if(queue->length < kCANtxQueueLen){
+		queue->tail->dyn->txQueueNext = node;
+		queue->tail = node;
+		queue->length++;
+		return_value = kNoError
+	}
 
+	return return_value;
+}
+
+/* ===========================================================================*/
+/** Function to dequeue a CAN tx message from the transmission queue.
+ *
+ * @param queue 	Pointer to the queue to operate with.
+ * @param node		Pointer to the dequeued node if success.
+ * @return	Returns @c kNoError if node was dequeued successfully. Returns
+ * 			@c kError if queue was empty and, hence, no node was dequeued.
+ * ===========================================================================*/
+CalvosError can_txQueueDequeue(CANtxQueue* queue, CANtxMsgStaticData* node){
+	CalvosError return_value = kError;
+	node = NULL
+
+	/* Dequeue node at the head if queue is not empty. */
+	if(queue->head != NULL){
+		node = queue->head;
+		queue->head = queue->dyn->txQueueNext;
+		queue->length--;
+		return_value = kNoError
+	}
+
+	return return_value;
+}
+
+/* ===========================================================================*/
+/** Function to initialize a CAN transmisison queue.
+ *
+ * @param queue 	Pointer to the queue to operate with..
+ * @return	Returns @c kNoError if queue was initialized successfully. Returns
+ * 			@c kError if provided queue was NULL.
+ * ===========================================================================*/
+CalvosError can_txQueueInit(CANtxQueue* queue){
+	CalvosError return_value = kError;
+
+	/* Initialize given queue if not NULL */
+	if(queue != NULL){
+		queue->head = NULL;
+		queue->tail = NULL;
+		queue->length = 0;
+		return_value = kNoError
+	}
+
+	return return_value;
+}
+
+/* ===========================================================================*/
+/** Function for transmitting a CAN msg given its data structure.
+ *
+ * Triggers the transmission of the specified CAN message.
+ *
+ * @param msg_struct 	Pointer to the transmitting message's static data.
+ * @param queue 		Pointer to the transmitting queue.
+ * @Return 		Returns @c kNoError if message was triggered for transmission
+ * 				by HAL or if it was successfully queued for a transmission
+ * 				retry. Returns @c kError otherwise (HAL busy, queue full).
+ * ===========================================================================*/
+CalvosError can_commonTransmitMsg(CANtxMsgStaticData* msg_struct, \
+								  CANtxQueue* queue, \
+								  CANhalTxFunction can_hal_tx_function){
+	CalvosError return_value = kError;
+	CalvosError local_return_value;
+
+	// Trigger CAN transmission to HAL
+	local_return_value = (*can_hal_tx_function)(msg_struct);
+	if(local_return_value == kNoError){
+		// Message successfully triggered for transmission from HAL
+		msg_struct->dyn->state = kCANtxState_transmitting;
+		return_value = kNoError;
+	}else{
+		// Queue message for a later transmission (retry)
+		local_return_value = can_txQueueEnqueue(queue, msg_struct);
+		if(local_return_value = kNoError){
+			// Queue succeeded
+			msg_struct->dyn->state = kCANtxState_queued;
+			return_value = kNoError;
+		}
+	}
+	return return_value;
+}
