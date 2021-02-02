@@ -64,6 +64,7 @@ cog.outl(C_gen_info(input_worksheet,network))
 
  ]]] */
 // [[[end]]]
+#include <string.h>
 #include "calvos.h"
 /* [[[cog
 # Generate include statements if required
@@ -110,7 +111,6 @@ sorted_rx_msgs = dict(sorted(sorted_rx_msgs.items(), key=lambda kv: kv[1]))
 // [[[end]]]
 
 /* Exported Function Prototypes */
-extern void CAN_coreInit();
 /* [[[cog
 if len(list_of_rx_msgs) > 0:
 	# RX Processing Function
@@ -131,11 +131,6 @@ if len(list_of_tx_msgs) > 0:
 // [[[end]]]
 
 /* Private Function Prototypes */
-void CAN_clearMsgDynamicData();
-CalvosError CAN_traverseRxSearchTree(uint32_t, RxSearchResult);
-CANmsgFound CAN_getMsgIdx(uint32_t, uint32_t *);
-void CAN_filterRxMsg(uint32_t);
-
 
 /* Private macro definitions */
 
@@ -180,7 +175,7 @@ if len(list_of_rx_msgs) > 0:
 	sym_rx_stat_data_name = "can_" + net_name_str + node_name_str \
 		+ "rxMsgStaticData"
 
-	cog.outl("const "+sym_rx_stat_data_type+" "+sym_rx_stat_data_name+"["+sym_rx_msgs+"] = [\\")
+	cog.outl("const "+sym_rx_stat_data_type+" "+sym_rx_stat_data_name+"["+sym_rx_msgs+"] = {\\")
 
 	callback_prefix = "can_" + net_name_str + node_name_str
 	callback_rx_sufix = "_rx_callback"
@@ -242,7 +237,7 @@ if len(list_of_rx_msgs) > 0:
 		if i < len(sorted_rx_msgs.keys()) - 1:
 			code_string += ", \\"
 		else:
-			code_string += "]"
+			code_string += "};"
 		cog.outl("\t\t"+code_string)
  ]]] */
 // [[[end]]]
@@ -293,7 +288,7 @@ if len(list_of_tx_msgs) > 0:
 /* [[[cog
 if len(list_of_tx_msgs) > 0:
 	sym_txing_msg_name = "can_" + net_name_str +  node_name_str + "transmittingMsg"
-	sym_txing_msg_type = "CANtxMsgStaticData*"
+	sym_txing_msg_type = "const CANtxMsgStaticData*"
 	code_str = sym_txing_msg_type+ " "+sym_txing_msg_name+";"
 	cog.outl(code_str)
 ]]] */
@@ -303,10 +298,10 @@ if len(list_of_tx_msgs) > 0:
 /* [[[cog
 if len(list_of_tx_msgs) > 0:
 	sym_tx_stat_data_name = "can_" + net_name_str + node_name_str + "txMsgStaticData"
-	sym_tx_stat_data_type = "CANtxMsgStaticData"
+	sym_tx_stat_data_type = "const CANtxMsgStaticData"
 	sym_tx_stat_data_len = "kCAN_" + net_name_str + node_name_str + "nOfTxMsgs"
 
-	cog.outl("const "+sym_tx_stat_data_type+" "+sym_tx_stat_data_name+"["+sym_tx_stat_data_len+"] = [\\")
+	cog.outl("const "+sym_tx_stat_data_type+" "+sym_tx_stat_data_name+"["+sym_tx_stat_data_len+"] = {\\")
 
 	callback_prefix = "can_" + net_name_str + node_name_str
 	callback_tx_sufix = "_tx_callback"
@@ -355,7 +350,7 @@ if len(list_of_tx_msgs) > 0:
 		if i < len(list_of_tx_msgs) - 1:
 			code_string += ", \\"
 		else:
-			code_string += "]"
+			code_string += "};"
 		cog.outl("\t\t"+code_string)
  ]]] */
 // [[[end]]]
@@ -382,7 +377,7 @@ if len(list_of_tx_msgs) > 0:
 		+sym_rx_stat_data_name+"["+sym_search_start_idx+"],  \\\n\t\t\t"+sym_rx_msgs+");"
 
 	function_body = """
-	CANrxMsgStaticData* msg_static_data;
+	const CANrxMsgStaticData* msg_static_data;
 	// Search for message to see if its suscribed by this node.
 	"""+invoke_search+"""
 	if(msg_static_data != NULL){
@@ -390,7 +385,7 @@ if len(list_of_tx_msgs) > 0:
 		if((data_len != 0u && data_len == msg_static_data->fields.len) \\
 		|| (data_len == 0u)){
 			// Copy data to buffer
-			memcpy(msg_static_data->data, data_in, msg_static_data->fields.len)
+			memcpy(msg_static_data->data, data_in, msg_static_data->fields.len);
 			// Set available flags
 			msg_static_data->dyn->available.all = kAllOnes32;
 			// clear timeout flag
@@ -451,7 +446,7 @@ if len(list_of_tx_msgs) > 0:
 // [[[end]]]
 
 /* ===========================================================================*/
-/** Function for processing ciclyc CAN TX messages.
+/** Function for processing cyclic CAN TX messages.
  *
  * Triggers the transmission of CAN messages set as cyclic or cyclic+spontan.
  * ===========================================================================*/
@@ -483,7 +478,6 @@ if len(list_of_tx_msgs) > 0:
 
 
 	function_body = """
-	CalvosError local_return;
 
 	// TODO: Implement this as a timer wheel for efficiency
 
@@ -508,7 +502,7 @@ if len(list_of_tx_msgs) > 0:
 	cog.outl(code_str)
 
 	function_body = """
-	CANtxMsgStaticData* msg_to_retry;
+	const CANtxMsgStaticData* msg_to_retry;
 	CalvosError return_value;
 
 	// TODO: Implement max retries per message, etc.?
@@ -521,7 +515,8 @@ if len(list_of_tx_msgs) > 0:
 		// Attempt the re-transmission
 		return_value = can_commonTransmitMsg(msg_to_retry, \\
 								  NULL, \\
-								  &"""+sym_hal_transmit_name+""");
+								  &"""+sym_hal_transmit_name+""", \\
+								  """+sym_txing_msg_name+""");
 		if(return_value == kNoError){
 			// Transmission succeeded. Dequeue the message.
 			can_txQueueDequeue(&"""+sym_tx_queue_name+""", NULL);
@@ -533,15 +528,37 @@ if len(list_of_tx_msgs) > 0:
 ]]] */
 // [[[end]]]
 
-
 /* ===========================================================================*/
 /** Function for initialization of CAN core.
  *
  * Initializes data for CAN core functionality of current node.
  * ===========================================================================*/
-void CAN_coreInit(){
-	/* Initialize msg dynamic data */
-	CAN_clearMsgDynamicData();
-}
+/* [[[cog
+if len(list_of_tx_msgs) > 0:
+	sym_core_init_name = "can_"+net_name_str+node_name_str+"coreInit"
+	code_str = "void "+sym_core_init_name+"(){"
+	cog.outl(code_str)
+
+	function_body = """
+	// Clear RX data buffer
+	memset(&"""+sym_rx_data_name+",0u,"+sym_rx_data_len+""");
+	// Clear TX data buffer
+	memset(&"""+sym_tx_data_name+",0u,"+sym_tx_data_len+""");
+
+	// Clear RX dynamic data
+	memset(&"""+sym_rx_dyn_data_name+",0u,sizeof("+sym_rx_dyn_data_type+")*("+sym_rx_msgs+"""));
+	// Clear TX dynamic data
+	memset(&"""+sym_tx_dyn_data_name+",0u,sizeof("+sym_tx_dyn_data_type+")*("+sym_tx_dyn_data_len+"""));
+
+	// Init TX queue
+	can_txQueueInit(&"""+sym_tx_queue_name+""");
+
+	// Init transmitting message
+	"""+sym_txing_msg_name+""" = NULL;
+"""
+	function_body = function_body[1:]
+	cog.outl(function_body+"}")
+]]] */
+// [[[end]]]
 
 

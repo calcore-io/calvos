@@ -82,6 +82,16 @@ def get_timeout_callback_header(message_name, node_name, net_name):
  """+chr(42)+""" ==========================================================================="""+chr(42)+"""/"""
 	return return_str[1:]
 
+def get_tx_callback_header(message_name, node_name, net_name):
+	return_str = """
+/"""+chr(42)+""" ==========================================================================="""+chr(42)+"""/
+/"""+chr(42)+chr(42)+""" Callback for """+message_name+""" transmission notification.
+ """+chr(42)+"""
+ """+chr(42)+""" Invoked when """+message_name+""" is transmitted as per publisher node """+node_name+"""
+ """+chr(42)+""" of network """+net_name+""".
+ """+chr(42)+""" ==========================================================================="""+chr(42)+"""/"""
+	return return_str[1:]
+
  ]]] */
 // [[[end]]]
 #include "calvos.h"
@@ -123,6 +133,7 @@ for message in subnet.messages.values():
 callback_prefix = "can_" + net_name_str + node_name_str
 callback_rx_sufix = "_rx_callback"
 callback_tout_sufix = "_timeout_callback"
+callback_tx_sufix = "_tx_callback"
  ]]] */
 // [[[end]]]
 
@@ -161,4 +172,16 @@ if len(list_of_rx_msgs) > 0:
 ]]] */
 // [[[end]]]
 
-
+/* ------------------------------ */
+/* Message transmission callbacks */
+/* ------------------------------ */
+/* [[[cog
+if len(list_of_tx_msgs) > 0:
+	for message_name in list_of_tx_msgs:
+		# Generate timeout callback
+		cog.outl(get_tx_callback_header(message_name,node_name,network_name))
+		callback_name = callback_prefix + message_name + callback_tx_sufix
+		code_str = "void "+callback_name+"(){\n\t/"+chr(42)+" User code goes here... "+chr(42)+"/\n}"
+		cog.outl(code_str)
+]]] */
+// [[[end]]]

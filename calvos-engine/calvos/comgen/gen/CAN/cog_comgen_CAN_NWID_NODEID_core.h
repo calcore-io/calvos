@@ -118,7 +118,7 @@ if len(list_of_tx_msgs) > 0:
 	# Tx transmitting message
 	# -----------------------
 	sym_txing_msg_name = "can_" + net_name_str +  node_name_str + "transmittingMsg"
-	sym_txing_msg_type = "CANtxMsgStaticData*"
+	sym_txing_msg_type = "const CANtxMsgStaticData*"
 	code_str = "extern "+sym_txing_msg_type+" "+sym_txing_msg_name+";"
 	cog.outl(code_str)
 
@@ -133,7 +133,6 @@ if len(list_of_rx_msgs) > 0:
 	code_str = "extern "+sym_rx_proc_func_return+" "+sym_rx_proc_func_name+sym_rx_proc_func_args+";"
 	cog.outl(code_str)
 
-cog.outl("")
 if len(list_of_tx_msgs) > 0:
 	# TX transmit Function
 	# ----------------------
@@ -141,10 +140,12 @@ if len(list_of_tx_msgs) > 0:
 
 	sym_transmit_func_name = "can_"+net_name_str+node_name_str+"transmitMsg"
 	sym_transmit_func_args = "("+sym_enum_name+" msg_idx)"
-	sym_transmit_func_return = "void"
+	sym_transmit_func_return = "CalvosError"
 
 	code_str = "extern "+sym_transmit_func_return+" "+sym_transmit_func_name+sym_transmit_func_args+";"
 	cog.outl(code_str)
+
+	cog.outl("")
 
 	# TX Processing Function
 	# ----------------------
@@ -163,6 +164,10 @@ if len(list_of_tx_msgs) > 0:
 
 	code_str = "extern void "+sym_tx_retry_func_name+"();"
 	cog.outl(code_str)
+
+sym_core_init_name = "can_"+net_name_str+node_name_str+"coreInit"
+code_str = "extern void "+sym_core_init_name+"();"
+cog.outl(code_str)
  ]]] */
 // [[[end]]]
 

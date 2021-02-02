@@ -88,18 +88,18 @@ if 'include_var' in locals():
 /* TX Types definitions */
 /* [[[cog
 # Generate include statements if required
-cog.outl("#include kTxSpontan\t\t\t" + str(nw.SPONTAN) + "u")
-cog.outl("#include kTxCyclic\t\t\t" + str(nw.CYCLIC) + "u")
-cog.outl("#include kTxCyclicSpontan\t" + str(nw.CYCLIC_SPONTAN) + "u")
-cog.outl("#include kTxBAF\t\t\t\t" + str(nw.BAF) + "u")
+cog.outl("#define kTxSpontan\t\t\t" + str(nw.SPONTAN) + "u")
+cog.outl("#define kTxCyclic\t\t\t" + str(nw.CYCLIC) + "u")
+cog.outl("#define kTxCyclicSpontan\t" + str(nw.CYCLIC_SPONTAN) + "u")
+cog.outl("#define kTxBAF\t\t\t\t" + str(nw.BAF) + "u")
  ]]] */
 // [[[end]]]
 
 /* Message direction definitions */
 /* [[[cog
 # Generate include statements if required
-cog.outl("#include kDirTX\t\t" + str(nw.CAN_TX) + "u")
-cog.outl("#include kDirRX\t\t" + str(nw.CAN_RX) + "u")
+cog.outl("#define kDirTX\t\t" + str(nw.CAN_TX) + "u")
+cog.outl("#define kDirRX\t\t" + str(nw.CAN_RX) + "u")
  ]]] */
 // [[[end]]]
 
@@ -128,39 +128,6 @@ typedef enum{
 	kMsgFound
 }CANmsgFound;
 
-/* Types for CAN messages static data */
-typedef struct{
-	uint8_t len : 4;
-	uint8_t id_is_extended : 1;
-}CANrxMsgStaticFields;
-
-typedef struct{
-	uint32_t id;
-	uint32_t timeout; /* Given in base time ticks */
-	Callback rx_callback;
-	Callback timeout_callback;
-	uint8_t* data
-	CANrxMsgDynamicData* dyn;
-	CANrxMsgStaticFields fields;
-	CANrxMsgStaticData* searchNext;
-	CANrxMsgStaticData* searchPrev;
-}CANrxMsgStaticData;
-
-typedef struct{
-	uint8_t len : 4;
-	uint8_t id_is_extended : 1;
-	uint8_t tx_type : 2;
-}CANtxMsgStaticFields;
-
-typedef struct{
-	uint32_t id;
-	uint32_t period; /* Given in base time ticks */
-	Callback tx_callback;
-	uint8_t* data
-	CANtxMsgDynamicData* dyn;
-	CANtxMsgStaticFields fields;
-}CANtxMsgStaticData;
-
 /* Types for CAN messages dynamic data */
 typedef struct{
 	FlagsNative available;
@@ -171,30 +138,70 @@ typedef struct{
 typedef struct{
 	CANtxState state;
 	intNative_t BAF_active;
-	uint32_t periot_timer;	/* In ticks */
-	CANtxMsgStaticData* txQueueNext;
+	uint32_t period_timer;	/* In ticks */
+	const struct CANtxMsgStaticData* txQueueNext;
 }CANtxMsgDynamicData;
+
+/* Types for CAN messages static data */
+typedef struct{
+	uint8_t len : 4;
+	uint8_t id_is_extended : 1;
+}CANrxMsgStaticFields;
+
+typedef struct CANrxMsgStaticData{
+	uint32_t id;
+	uint32_t timeout; /* Given in base time ticks */
+	Callback rx_callback;
+	Callback timeout_callback;
+	uint8_t* data;
+	CANrxMsgDynamicData* dyn;
+	CANrxMsgStaticFields fields;
+	const struct CANrxMsgStaticData* searchNext;
+	const struct CANrxMsgStaticData* searchPrev;
+}CANrxMsgStaticData;
+
+typedef struct{
+	uint8_t len : 4;
+	uint8_t id_is_extended : 1;
+	uint8_t tx_type : 2;
+}CANtxMsgStaticFields;
+
+typedef struct CANtxMsgStaticData{
+	uint32_t id;
+	uint32_t period; /* Given in base time ticks */
+	Callback tx_callback;
+	uint8_t* data;
+	CANtxMsgDynamicData* dyn;
+	CANtxMsgStaticFields fields;
+}CANtxMsgStaticData;
 
 /* Declaration of TX transmission queue */
 typedef struct{
 	intNative_t length;
-	CANtxMsgStaticData* head;
-	CANtxMsgStaticData* tail;
+	const CANtxMsgStaticData* head;
+	const CANtxMsgStaticData* tail;
 }CANtxQueue;
 
 /* HAL tx function typedef */
-typedef CalvosError (*CANhalTxFunction)(CANtxMsgStaticData* msg_info);
+typedef CalvosError (*CANhalTxFunction)(const CANtxMsgStaticData* msg_info);
+
+/* Queueing Functions */
+CalvosError can_txQueueEnqueue(CANtxQueue* queue, const CANtxMsgStaticData* node);
+const CANtxMsgStaticData* can_txQueueGetHead(CANtxQueue* queue);
+CalvosError can_txQueueDequeue(CANtxQueue* queue, const CANtxMsgStaticData* node);
+CalvosError can_txQueueInit(CANtxQueue* queue);
 
 /* Exported Prototypes */
-extern CANrxMsgStaticData* can_traverseRxSearchTree(uint32_t msg_id, \
-											 CANrxMsgStaticData* root, \
-											 uint32_t guard);
+extern const CANrxMsgStaticData* can_traverseRxSearchTree(uint32_t msg_id, \
+		const CANrxMsgStaticData* root, \
+		uint32_t guard);
 
-extern CalvosError can_commonTransmitMsg(CANtxMsgStaticData* msg_struct, \
+extern CalvosError can_commonTransmitMsg(const CANtxMsgStaticData* msg_struct, \
 		  CANtxQueue* queue, \
-		  CANhalTxFunction can_hal_tx_function);
+		  CANhalTxFunction can_hal_tx_function, \
+		  const CANtxMsgStaticData* transmitting_msg);
 
-extern void can_commonConfirmTxMsg(CANtxMsgStaticData* transmitting_msg);
+extern void can_commonConfirmTxMsg(const CANtxMsgStaticData* transmitting_msg);
 
 /* [[[cog
 # Print include guards

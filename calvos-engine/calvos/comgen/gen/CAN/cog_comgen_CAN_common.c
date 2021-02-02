@@ -102,11 +102,11 @@ if 'include_var' in locals():
  * @return	Returns a pointer to the message's static data if message was found
  * 			while traversing the tree. Returns @c NULL if message was not found.
  * ===========================================================================*/
-CANrxMsgStaticData* can_traverseRxSearchTree(uint32_t msg_id, \
-											 CANrxMsgStaticData* root, \
+const CANrxMsgStaticData* can_traverseRxSearchTree(uint32_t msg_id, \
+											 const CANrxMsgStaticData* root, \
 											 uint32_t guard){
-	CANrxMsgStaticData* return_node = NULL;
-	CANrxMsgStaticData* current_node = root;
+	const CANrxMsgStaticData* return_node = NULL;
+	const CANrxMsgStaticData* current_node = root;
 
 	while(guard > 0){
 		/* guard variable is to avoid an endless loop in case of a malformed
@@ -149,7 +149,7 @@ CANrxMsgStaticData* can_traverseRxSearchTree(uint32_t msg_id, \
  * @return	Returns @c kNoError if node was enqueued successfully. Returns
  * 			@c kError if queue was full and, hence, node was not enqueued.
  * ===========================================================================*/
-CalvosError can_txQueueEnqueue(CANtxQueue* queue, CANtxMsgStaticData* node){
+CalvosError can_txQueueEnqueue(CANtxQueue* queue, const CANtxMsgStaticData* node){
 	CalvosError return_value = kError;
 
 	/* Queue node at the tail if there is still empty space in the queue */
@@ -157,7 +157,7 @@ CalvosError can_txQueueEnqueue(CANtxQueue* queue, CANtxMsgStaticData* node){
 		queue->tail->dyn->txQueueNext = node;
 		queue->tail = node;
 		queue->length++;
-		return_value = kNoError
+		return_value = kNoError;
 	}
 
 	return return_value;
@@ -170,8 +170,8 @@ CalvosError can_txQueueEnqueue(CANtxQueue* queue, CANtxMsgStaticData* node){
  * @return	Returns a pointer to the CAN message statuc data structure at the
  * 			head of the queue.
  * ===========================================================================*/
-CalvosError can_txQueueGetHead(CANtxQueue* queue){
-	CANtxMsgStaticData* return_value = NULL;
+const CANtxMsgStaticData* can_txQueueGetHead(CANtxQueue* queue){
+	const CANtxMsgStaticData* return_value = NULL;
 
 	/* Queue node at the tail if there is still empty space in the queue */
 	if(queue->length > 0){
@@ -189,7 +189,7 @@ CalvosError can_txQueueGetHead(CANtxQueue* queue){
  * @return	Returns @c kNoError if node was dequeued successfully. Returns
  * 			@c kError if queue was empty and, hence, no node was dequeued.
  * ===========================================================================*/
-CalvosError can_txQueueDequeue(CANtxQueue* queue, CANtxMsgStaticData* node){
+CalvosError can_txQueueDequeue(CANtxQueue* queue, const CANtxMsgStaticData* node){
 	CalvosError return_value = kError;
 
 	/* Dequeue node at the head if queue is not empty. */
@@ -197,9 +197,9 @@ CalvosError can_txQueueDequeue(CANtxQueue* queue, CANtxMsgStaticData* node){
 		if(node != NULL){
 			node = queue->head;
 		}
-		queue->head = queue->dyn->txQueueNext;
+		queue->head = queue->head->dyn->txQueueNext;
 		queue->length--;
-		return_value = kNoError
+		return_value = kNoError;
 	}
 
 	return return_value;
@@ -220,7 +220,7 @@ CalvosError can_txQueueInit(CANtxQueue* queue){
 		queue->head = NULL;
 		queue->tail = NULL;
 		queue->length = 0;
-		return_value = kNoError
+		return_value = kNoError;
 	}
 
 	return return_value;
@@ -237,10 +237,10 @@ CalvosError can_txQueueInit(CANtxQueue* queue){
  * 				by HAL or if it was successfully queued for a transmission
  * 				retry. Returns @c kError otherwise (HAL busy, queue full).
  * ===========================================================================*/
-CalvosError can_commonTransmitMsg(CANtxMsgStaticData* msg_struct, \
+CalvosError can_commonTransmitMsg(const CANtxMsgStaticData* msg_struct, \
 								  CANtxQueue* queue, \
 								  CANhalTxFunction can_hal_tx_function, \
-								  CANtxMsgStaticData* transmitting_msg){
+								  const CANtxMsgStaticData* transmitting_msg){
 	CalvosError return_value = kError;
 	CalvosError local_return_value;
 
@@ -258,7 +258,7 @@ CalvosError can_commonTransmitMsg(CANtxMsgStaticData* msg_struct, \
 			// If queue is not NULL, queue message for a later transmission (retry)
 			if(queue != NULL){
 				local_return_value = can_txQueueEnqueue(queue, msg_struct);
-				if(local_return_value = kNoError){
+				if(local_return_value == kNoError){
 					// Queue succeeded
 					msg_struct->dyn->state = kCANtxState_queued;
 					return_value = kNoError;
@@ -280,11 +280,11 @@ CalvosError can_commonTransmitMsg(CANtxMsgStaticData* msg_struct, \
  * @Return 		Returns @c kNoError if provided @c transmitting_msg is not NULL.
  * 				Returns @c kError otherwise.
  * ===========================================================================*/
-void can_commonConfirmTxMsg(CANtxMsgStaticData* transmitting_msg){
+void can_commonConfirmTxMsg(const CANtxMsgStaticData* transmitting_msg){
 
 	if(transmitting_msg != NULL){
 		transmitting_msg->dyn->state = kCANtxState_transmited;
 		// Clears transmitting message pointer
-		transmitting_msg == NULL;
+		transmitting_msg = NULL;
 	}
 }

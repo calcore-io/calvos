@@ -118,7 +118,7 @@ for message in subnet.messages.values():
 # ---------------------
 sym_hal_transmit_return = "CalvosError"
 sym_hal_transmit_name = "can_"+net_name_str+node_name_str+"HALtransmitMsg"
-sym_hal_transmit_args = "(CANtxMsgStaticData* msg_info)"
+sym_hal_transmit_args = "(const CANtxMsgStaticData* msg_info)"
 
 code_str = "extern "+sym_hal_transmit_return+" "+sym_hal_transmit_name+sym_hal_transmit_args+";"
 cog.outl(code_str)

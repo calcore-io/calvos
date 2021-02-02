@@ -107,6 +107,7 @@ for message in subnet.messages.values():
 callback_prefix = "can_" + net_name_str + node_name_str
 callback_rx_sufix = "_rx_callback"
 callback_tout_sufix = "_timeout_callback"
+callback_tx_sufix = "_tx_callback"
  ]]] */
 // [[[end]]]
 
@@ -133,6 +134,19 @@ if len(list_of_rx_msgs) > 0:
 	for message_name in list_of_rx_msgs:
 		# Generate timeout callback
 		callback_name = callback_prefix + message_name + callback_tout_sufix
+		code_str = "extern void "+callback_name+"();"
+		cog.outl(code_str)
+]]] */
+// [[[end]]]
+
+/* ------------------------------ */
+/* Message transmission callbacks */
+/* ------------------------------ */
+/* [[[cog
+if len(list_of_tx_msgs) > 0:
+	for message_name in list_of_tx_msgs:
+		# Generate timeout callback
+		callback_name = callback_prefix + message_name + callback_tx_sufix
 		code_str = "extern void "+callback_name+"();"
 		cog.outl(code_str)
 ]]] */

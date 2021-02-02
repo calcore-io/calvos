@@ -119,7 +119,7 @@ for message in subnet.messages.values():
 /* [[[cog
 sym_hal_transmit_return = "CalvosError"
 sym_hal_transmit_name = "can_"+net_name_str+node_name_str+"HALtransmitMsg"
-sym_hal_transmit_args = "(CANtxMsgStaticData* msg_info)"
+sym_hal_transmit_args = "(const CANtxMsgStaticData* msg_info)"
 
 code_str = sym_hal_transmit_return+" "+sym_hal_transmit_name+sym_hal_transmit_args+"{\n"
 cog.outl(code_str)
@@ -127,6 +127,8 @@ sym_can_transmit_body="""
 	CalvosError return_value = kError;
 	// Write HAL code to transmit a CAN message. Information about the message
 	// can be extracted from the provided msg_info structure.
+
+	return return_value;
 """
 sym_can_transmit_body = sym_can_transmit_body[1:]+"}"
 cog.outl(sym_can_transmit_body)

@@ -45,6 +45,9 @@ cog.outl(C_gen_info("File Name"))
 // [[[end]]]
 #ifndef CALVOS_TYPES_H
 #define CALVOS_TYPES_H
+/* TODO: Remove include for S32 Studio (uint32_t and int32_t) to make this generic*/
+#include <stddef.h>
+#include "S32K144.h"
 
 #define kTrue 	1u
 #define kFalse 	0u
@@ -57,7 +60,12 @@ for key, data_type in cg.dt_compiler.items():
 	typedef_str = None
 	if key in cg.dt:
 		if data_type != cg.dt[key] and data_type is not None:
-			typedef_str = "typedef " + data_type + " " + cg.dt[key] + ";"
+			# TODO: In S32 Studio, uint32_t and int32_t are already defined
+			if cg.dt[key] == "uint32_t" or cg.dt[key] == "int32_t":
+				comment_out = "// "
+			else:
+				comment_out = ""
+			typedef_str = comment_out+"typedef " + data_type + " " + cg.dt[key] + ";"
 	else:
 		typedef_str = "#error Data type string not found for '%s'" % data_type
 		log_warn("Data type string not found for '%s'" % data_type)
@@ -79,105 +87,105 @@ typedef void (*Callback)(void);
 
 typedef struct{
 	uint32_t value;
-	NodeUint32 * prev;
-	NodeUint32 * next;
+	struct NodeUint32 * prev;
+	struct NodeUint32 * next;
 }NodeUint32;
 
 typedef struct{
 	uint8_t value;
-	NodeUint8 * prev;
-	NodeUint8 * next;
+	struct NodeUint8 * prev;
+	struct NodeUint8 * next;
 }NodeUint8;
 
 typedef struct{
 	uint16_t value;
-	NodeUint16 * prev;
-	NodeUint16 * next;
+	struct NodeUint16 * prev;
+	struct NodeUint16 * next;
 }NodeUint16;
 
 typedef struct{
 	uint64_t value;
-	NodeUint64 * prev;
-	NodeUint64 * next;
+	struct NodeUint64 * prev;
+	struct NodeUint64 * next;
 }NodeUint64;
 
 typedef struct{
 	void * value;
-	NodeVoidPtr * prev;
-	NodeVoidPtr * next;
+	struct NodeVoidPtr * prev;
+	struct NodeVoidPtr * next;
 }NodeVoidPtr;
 
 /* Number of bits depend on target machine/compiler */
 typedef union{
 	struct{
-		flag0 : 1;
-		flag1 : 1;
-		flag2 : 1;
-		flag3 : 1;
-		flag4 : 1;
-		flag5 : 1;
-		flag6 : 1;
-		flag7 : 1;
-		flag8 : 1;
-		flag9 : 1;
-		flag10 : 1;
-		flag11 : 1;
-		flag12 : 1;
-		flag13 : 1;
-		flag14 : 1;
-		flag15 : 1;
-		flag16 : 1;
-		flag17 : 1;
-		flag18 : 1;
-		flag19 : 1;
-		flag20 : 1;
-		flag21 : 1;
-		flag22 : 1;
-		flag23 : 1;
-		flag24 : 1;
-		flag25 : 1;
-		flag26 : 1;
-		flag27 : 1;
-		flag28 : 1;
-		flag29 : 1;
-		flag30 : 1;
-		flag31 : 1;
+		uint32_t flag0 : 1;
+		uint32_t flag1 : 1;
+		uint32_t flag2 : 1;
+		uint32_t flag3 : 1;
+		uint32_t flag4 : 1;
+		uint32_t flag5 : 1;
+		uint32_t flag6 : 1;
+		uint32_t flag7 : 1;
+		uint32_t flag8 : 1;
+		uint32_t flag9 : 1;
+		uint32_t flag10 : 1;
+		uint32_t flag11 : 1;
+		uint32_t flag12 : 1;
+		uint32_t flag13 : 1;
+		uint32_t flag14 : 1;
+		uint32_t flag15 : 1;
+		uint32_t flag16 : 1;
+		uint32_t flag17 : 1;
+		uint32_t flag18 : 1;
+		uint32_t flag19 : 1;
+		uint32_t flag20 : 1;
+		uint32_t flag21 : 1;
+		uint32_t flag22 : 1;
+		uint32_t flag23 : 1;
+		uint32_t flag24 : 1;
+		uint32_t flag25 : 1;
+		uint32_t flag26 : 1;
+		uint32_t flag27 : 1;
+		uint32_t flag28 : 1;
+		uint32_t flag29 : 1;
+		uint32_t flag30 : 1;
+		uint32_t flag31 : 1;
 	}flags;
 	uint32_t all;
 }FlagsNative;
 
 typedef union{
 	struct{
-		flag0 : 1;
-		flag1 : 1;
-		flag2 : 1;
-		flag3 : 1;
-		flag4 : 1;
-		flag5 : 1;
-		flag6 : 1;
-		flag7 : 1;
+		uint8_t flag0 : 1;
+		uint8_t flag1 : 1;
+		uint8_t flag2 : 1;
+		uint8_t flag3 : 1;
+		uint8_t flag4 : 1;
+		uint8_t flag5 : 1;
+		uint8_t flag6 : 1;
+		uint8_t flag7 : 1;
 	}flags;
 	uint8_t all;
 }Flags8;
 
 typedef union{
 	struct{
-		flag0 : 1;
-		flag1 : 1;
-		flag2 : 1;
-		flag3 : 1;
-		flag4 : 1;
-		flag5 : 1;
-		flag6 : 1;
-		flag7 : 1;
-		flag8 : 1;
-		flag9 : 1;
-		flag10 : 1;
-		flag11 : 1;
-		flag12 : 1;
-		flag13 : 1;
-		flag14 : 1;
-		flag15 : 1;
+		uint16_t flag0 : 1;
+		uint16_t flag1 : 1;
+		uint16_t flag2 : 1;
+		uint16_t flag3 : 1;
+		uint16_t flag4 : 1;
+		uint16_t flag5 : 1;
+		uint16_t flag6 : 1;
+		uint16_t flag7 : 1;
+		uint16_t flag8 : 1;
+		uint16_t flag9 : 1;
+		uint16_t flag10 : 1;
+		uint16_t flag11 : 1;
+		uint16_t flag12 : 1;
+		uint16_t flag13 : 1;
+		uint16_t flag14 : 1;
+		uint16_t flag15 : 1;
 	}flags;
 	uint16_t all;
 }Flags16;
