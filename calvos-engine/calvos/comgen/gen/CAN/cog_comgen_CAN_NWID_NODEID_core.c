@@ -495,6 +495,9 @@ if len(list_of_tx_msgs) > 0:
 	CalvosError return_value;
 
 	// TODO: Implement max retries per message, etc.?
+	// TODO: Implement an option to also "freeze" the data to the message that
+	// was queued. Right now, the data will be taken from common buffer when the
+	// message finally is accepted for transmission.
 
 	msg_to_retry = can_txQueueGetHead(&"""+sym_tx_queue_name+""");
 	if(msg_to_retry != NULL){

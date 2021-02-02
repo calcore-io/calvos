@@ -243,20 +243,24 @@ CalvosError can_commonTransmitMsg(CANtxMsgStaticData* msg_struct, \
 	CalvosError return_value = kError;
 	CalvosError local_return_value;
 
-	// Trigger CAN transmission to HAL
-	local_return_value = (*can_hal_tx_function)(msg_struct);
-	if(local_return_value == kNoError){
-		// Message successfully triggered for transmission from HAL
-		msg_struct->dyn->state = kCANtxState_transmitting;
-		return_value = kNoError;
-	}else{
-		// If queue is not NULL, queue message for a later transmission (retry)
-		if(queue != NULL){
-			local_return_value = can_txQueueEnqueue(queue, msg_struct);
-			if(local_return_value = kNoError){
-				// Queue succeeded
-				msg_struct->dyn->state = kCANtxState_queued;
-				return_value = kNoError;
+	// Trigger CAN transmission to HAL if it is not being transmitted or
+	// pending for transmission
+	if((msg_struct->dyn->state != kCANtxState_transmitting) \
+	&& (msg_struct->dyn->state != kCANtxState_queued)){
+		local_return_value = (*can_hal_tx_function)(msg_struct);
+		if(local_return_value == kNoError){
+			// Message successfully triggered for transmission from HAL
+			msg_struct->dyn->state = kCANtxState_transmitting;
+			return_value = kNoError;
+		}else{
+			// If queue is not NULL, queue message for a later transmission (retry)
+			if(queue != NULL){
+				local_return_value = can_txQueueEnqueue(queue, msg_struct);
+				if(local_return_value = kNoError){
+					// Queue succeeded
+					msg_struct->dyn->state = kCANtxState_queued;
+					return_value = kNoError;
+				}
 			}
 		}
 	}
