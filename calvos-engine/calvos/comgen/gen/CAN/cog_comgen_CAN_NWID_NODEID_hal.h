@@ -18,6 +18,12 @@ try:
 		network = pic.load(f)
 except Exception as e:
         print('Failed to access pickle file %s. Reason: %s' % (cog_pickle_file, e))
+
+try:
+	with open(cog_proj_pickle_file, 'rb') as f:
+		project_obj = pic.load(f)
+except Exception as e:
+        print('Failed to access pickle file %s. Reason: %s' % (cog_pickle_file, e))
 ]]] */
 // [[[end]]]
 /*============================================================================*/
@@ -82,16 +88,42 @@ if 'include_var' in locals():
 TAB_SPACE = 4
 network_name = network.id_string
 net_name_str = network_name + "_"
+node_name_str = node_name + "_"
+
+# Get subnetwork for this node
+subnet = network.get_subnetwork([node_name])
+
+list_of_tx_msgs = []
+list_of_rx_msgs = []
+for message in subnet.messages.values():
+	if subnet.get_message_direction(node_name,message.name) == nw.CAN_TX:
+		list_of_tx_msgs.append(message.name)
+	elif subnet.get_message_direction(node_name,message.name) == nw.CAN_RX:
+		list_of_rx_msgs.append(message.name)
+	else:
+		log_warn(("Message '%s' direction not determined for node '%s' " \
+			+ "in network '%s'.") % (message.name, node_name, network_name))
  ]]] */
 // [[[end]]]
 
 /* CAN HAL functions */
 /* [[[cog
+# HAL Transmit Function
+# ---------------------
 sym_hal_transmit_return = "CalvosError"
-sym_hal_transmit_name = "can_"+net_name_str+"HALtransmitMsg"
+sym_hal_transmit_name = "can_"+net_name_str+node_name_str+"HALtransmitMsg"
 sym_hal_transmit_args = "(CANtxMsgStaticData* msg_info)"
 
-code_str = sym_hal_transmit_return+" "+sym_hal_transmit_name+sym_hal_transmit_args+";"
+code_str = "extern "+sym_hal_transmit_return+" "+sym_hal_transmit_name+sym_hal_transmit_args+";"
+cog.outl(code_str)
+
+# HAL Receive Function
+# --------------------
+sym_hal_rx_return = "void"
+sym_hal_rx_name = "can_"+net_name_str+node_name_str+"HALreceiveMsg"
+sym_hal_rx_args = "(uint32_t msg_id, uint8_t* data_in, uint8_t data_len)"
+
+code_str = "extern "+sym_hal_rx_return+" "+sym_hal_rx_name+sym_hal_rx_args+";"
 cog.outl(code_str)
 ]]] */
 // [[[end]]]

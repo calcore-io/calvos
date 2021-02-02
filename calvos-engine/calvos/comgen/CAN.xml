@@ -87,9 +87,20 @@
 			<clv:Desc>Period of task for polling spontaneous RX messages.</clv:Desc>
 			<clv:Default>10</clv:Default>
 		</clv:ParamDefinition>
-		<clv:ParamDefinition type="int" id="CAN_tx_queue_len">
-			<clv:Title>Length of queue for TX messages.</clv:Title>
-			<clv:Desc>Length of queue of messages waiting for transmission.</clv:Desc>
+		<clv:ParamDefinition type="int" id="CAN_tx_queue_len"
+			category="catCAN_network" is_advanced="true">
+			<clv:Title>Length of queue for TX messages</clv:Title>
+			<clv:Desc>
+				Length of queue of messages waiting for transmission.
+			</clv:Desc>
 			<clv:Default>5</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="int" id="CAN_tx_queue_task_ms"
+			category="catCAN_network" is_advanced="true">
+			<clv:Title>Time in ms of TX queue task</clv:Title>
+			<clv:Desc>
+				Time in ms of TX queue task.
+			</clv:Desc>
+			<clv:Default>10</clv:Default>
 		</clv:ParamDefinition></clv:ParamsDefinitions>
 </clv:ComponentDefinition>

@@ -21,7 +21,7 @@ except Exception as e:
 
 try:
 	with open(cog_proj_pickle_file, 'rb') as f:
-		project_obj = pic.load(f)
+		project = pic.load(f)
 except Exception as e:
         print('Failed to access pickle file %s. Reason: %s' % (cog_pickle_file, e))
 ]]] */
@@ -110,7 +110,7 @@ if len(list_of_rx_msgs) > 0:
 	# RX Processing Function
 	# ----------------------
 	sym_rx_proc_func_name = "can_" + net_name_str + node_name_str + "processRxMessage"
-	sym_rx_proc_func_args = "(uint32_t msg_id, uint8_t * data_in)"
+	sym_rx_proc_func_args = "(uint32_t msg_id, uint8_t * data_in, uint8_t data_len)"
 	sym_rx_proc_func_return = "void"
 
 if len(list_of_tx_msgs) > 0:
@@ -370,15 +370,19 @@ if len(list_of_tx_msgs) > 0:
 	// Search for message to see if its suscribed by this node.
 	"""+invoke_search+"""
 	if(msg_static_data != NULL){
-		// Copy data to buffer
-		memcpy(msg_static_data->data, data_in, msg_static_data->fields.len)
-		// Set available flags
-		msg_static_data->dyn->available.all = kAllOnes32;
-		// clear timeout flag
-		msg_static_data->dyn->timedout = kFalse;
-		// Invoke rx callback
-		if(msg_static_data->rx_callback != NULL){
-			(msg_static_data->rx_callback)();
+		// Consider message as valid if it matches the expected length
+		if((data_len != 0u && data_len == msg_static_data->fields.len) \\
+		|| (data_len == 0u)){
+			// Copy data to buffer
+			memcpy(msg_static_data->data, data_in, msg_static_data->fields.len)
+			// Set available flags
+			msg_static_data->dyn->available.all = kAllOnes32;
+			// clear timeout flag
+			msg_static_data->dyn->timedout = kFalse;
+			// Invoke rx callback
+			if(msg_static_data->rx_callback != NULL){
+				(msg_static_data->rx_callback)();
+			}
 		}
 	}
 }
@@ -406,7 +410,7 @@ if len(list_of_tx_msgs) > 0:
 	sym_transmit_func_name = "can_"+net_name_str+node_name_str+"transmitMsg"
 	sym_transmit_func_args = "("+sym_enum_name+" msg_idx)"
 
-	sym_hal_transmit_name = "can_"+net_name_str+"HALtransmitMsg"
+	sym_hal_transmit_name = "can_"+net_name_str+node_name_str+"HALtransmitMsg"
 
 	code_str = "CalvosError "+sym_transmit_func_name+sym_transmit_func_args+"{"
 	cog.outl(code_str)
@@ -429,13 +433,92 @@ if len(list_of_tx_msgs) > 0:
 ]]] */
 // [[[end]]]
 
+/* ===========================================================================*/
+/** Function for processing ciclyc CAN TX messages.
+ *
+ * Triggers the transmission of CAN messages set as cyclic or cyclic+spontan.
+ * ===========================================================================*/
+/* [[[cog
+if len(list_of_tx_msgs) > 0:
+	sym_tx_msg_idx_prefix = "kCAN_" + net_name_str + node_name_str + "txMsgIdx_"
+	tx_proc_task = project.get_simple_param_val("comgen.CAN","CAN_tx_task_period")
+
+	sym_tx_proc_func_name = "can_task_"+str(tx_proc_task)+"ms_"+net_name_str+node_name_str+"txProcess"
+	code_str = "void "+sym_tx_proc_func_name+"(){"
+	cog.outl(code_str)
+
+	code_strs = ""
+	for message_name in list_of_tx_msgs:
+		if subnet.messages[message_name].tx_period != 0 \
+		and  (subnet.messages[message_name].tx_type == nw.tx_type_list[nw.CYCLIC] \
+		or subnet.messages[message_name].tx_type == nw.tx_type_list[nw.CYCLIC_SPONTAN]):
+			sym_tx_msg_idx_name = sym_tx_msg_idx_prefix + message_name
+			# Reduce timer
+			code_strs += """	// Increment timer (up-counter since they are initialized with zero)
+	"""+sym_tx_stat_data_name+"["+sym_tx_msg_idx_name+"""].dyn->period_timer++;
+	if("""+sym_tx_stat_data_name+"["+sym_tx_msg_idx_name+"""].dyn->period_timer \\
+	>= """+sym_tx_stat_data_name+"["+sym_tx_msg_idx_name+"""].period){
+		// Timer expired, trigger message transmission
+		"""+sym_transmit_func_name+"("+sym_tx_msg_idx_name+""");
+		// Reset timer
+		"""+sym_tx_stat_data_name+"["+sym_tx_msg_idx_name+"""].dyn->period_timer = 0u;
+	}\n"""
 
 
+	function_body = """
+	CalvosError local_return;
+
+	// TODO: Implement this as a timer wheel for efficiency
+
+"""+code_strs+"\n"
+
+	function_body = function_body[1:]
+	cog.outl(function_body+"}")
+]]] */
+// [[[end]]]
+
+/* ===========================================================================*/
+/** Function for processing CAN TX retry mechanism.
+ *
+ * Triggers transmission of queued CAN messages (retry mechanism).
+ * ===========================================================================*/
+/* [[[cog
+if len(list_of_tx_msgs) > 0:
+	tx_proc_task = project.get_simple_param_val("comgen.CAN","CAN_tx_queue_task_ms")
+
+	sym_tx_retry_func_name = "can_task_"+str(tx_proc_task)+"ms_"+net_name_str+node_name_str+"txRetry"
+	code_str = "void "+sym_tx_retry_func_name+"(){"
+	cog.outl(code_str)
+
+	function_body = """
+	CANtxMsgStaticData* msg_to_retry;
+	CalvosError return_value;
+
+	// TODO: Implement max retries per message, etc.?
+
+	msg_to_retry = can_txQueueGetHead(&"""+sym_tx_queue_name+""");
+	if(msg_to_retry != NULL){
+		// Attempt the re-transmission
+		return_value = can_commonTransmitMsg(msg_to_retry, \\
+								  NULL, \\
+								  &"""+sym_hal_transmit_name+""");
+		if(return_value == kNoError){
+			// Transmission succeeded. Dequeue the message.
+			can_txQueueDequeue(&"""+sym_tx_queue_name+""", NULL);
+		}
+	}
+"""
+	function_body = function_body[1:]
+	cog.outl(function_body+"}")
+]]] */
+// [[[end]]]
 
 
-
-
-
+/* ===========================================================================*/
+/** Function for initialization of CAN core.
+ *
+ * Initializes data for CAN core functionality of current node.
+ * ===========================================================================*/
 void CAN_coreInit(){
 	/* Initialize msg dynamic data */
 	CAN_clearMsgDynamicData();

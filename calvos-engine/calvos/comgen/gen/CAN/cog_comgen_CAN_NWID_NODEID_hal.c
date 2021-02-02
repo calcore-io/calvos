@@ -77,6 +77,21 @@ if 'include_var' in locals():
 TAB_SPACE = 4
 network_name = network.id_string
 net_name_str = network_name + "_"
+node_name_str = node_name + "_"
+
+# Get subnetwork for this node
+subnet = network.get_subnetwork([node_name])
+
+list_of_tx_msgs = []
+list_of_rx_msgs = []
+for message in subnet.messages.values():
+	if subnet.get_message_direction(node_name,message.name) == nw.CAN_TX:
+		list_of_tx_msgs.append(message.name)
+	elif subnet.get_message_direction(node_name,message.name) == nw.CAN_RX:
+		list_of_rx_msgs.append(message.name)
+	else:
+		log_warn(("Message '%s' direction not determined for node '%s' " \
+			+ "in network '%s'.") % (message.name, node_name, network_name))
  ]]] */
 // [[[end]]]
 
@@ -97,7 +112,7 @@ net_name_str = network_name + "_"
  * ===========================================================================*/
 /* [[[cog
 sym_hal_transmit_return = "CalvosError"
-sym_hal_transmit_name = "can_"+net_name_str+"HALtransmitMsg"
+sym_hal_transmit_name = "can_"+net_name_str+node_name_str+"HALtransmitMsg"
 sym_hal_transmit_args = "(CANtxMsgStaticData* msg_info)"
 
 code_str = sym_hal_transmit_return+" "+sym_hal_transmit_name+sym_hal_transmit_args+"{\n"
@@ -111,3 +126,34 @@ sym_can_transmit_body = sym_can_transmit_body[1:]+"}"
 cog.outl(sym_can_transmit_body)
 ]]] */
 // [[[end]]]
+
+/* ===========================================================================*/
+/** Function for processing a received CAN msg from HAL.
+ *
+ * This hardware-abstraction-layer function shall be called when a CAN message
+ * is received in the target MCU.
+ *
+ * @param msg_id 	ID of the received message.
+ * @param data_in	Pointer to the received data.
+ * @param data_len	Length of the received data. If it will depend on message
+ * 					definition pass this parameter as zero.
+ * ===========================================================================*/
+/* [[[cog
+sym_rx_proc_func_name = "can_" + net_name_str + node_name_str + "processRxMessage"
+
+sym_hal_rx_return = "void"
+sym_hal_rx_name = "can_"+net_name_str+node_name_str+"HALreceiveMsg"
+sym_hal_rx_args = "(uint32_t msg_id, uint8_t* data_in, uint8_t data_len)"
+
+code_str = sym_hal_rx_return+" "+sym_hal_rx_name+sym_hal_rx_args+"{\n"
+cog.outl(code_str)
+
+sym_can_transmit_body="""
+	// Call RX processor function
+	"""+sym_rx_proc_func_name+"""(msg_id, data_in, data_len);
+"""
+sym_can_transmit_body = sym_can_transmit_body[1:]+"}"
+cog.outl(sym_can_transmit_body)
+]]] */
+// [[[end]]]
+

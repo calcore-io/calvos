@@ -170,7 +170,7 @@ typedef struct{
 typedef struct{
 	CANtxState state;
 	intNative_t BAF_active;
-	NodeUint32 period_queue;
+	uint32_t periot_timer;	/* In ticks */
 	CANtxMsgStaticData* txQueueNext;
 }CANtxMsgDynamicData;
 

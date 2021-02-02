@@ -164,6 +164,24 @@ CalvosError can_txQueueEnqueue(CANtxQueue* queue, CANtxMsgStaticData* node){
 }
 
 /* ===========================================================================*/
+/** Function to get the head node of a CAN tx queue.
+ *
+ * @param queue 	Pointer to the queue to operate with.
+ * @return	Returns a pointer to the CAN message statuc data structure at the
+ * 			head of the queue.
+ * ===========================================================================*/
+CalvosError can_txQueueGetHead(CANtxQueue* queue){
+	CANtxMsgStaticData* return_value = NULL;
+
+	/* Queue node at the tail if there is still empty space in the queue */
+	if(queue->length > 0){
+		return_value = queue->head;
+	}
+
+	return return_value;
+}
+
+/* ===========================================================================*/
 /** Function to dequeue a CAN tx message from the transmission queue.
  *
  * @param queue 	Pointer to the queue to operate with.
@@ -173,11 +191,12 @@ CalvosError can_txQueueEnqueue(CANtxQueue* queue, CANtxMsgStaticData* node){
  * ===========================================================================*/
 CalvosError can_txQueueDequeue(CANtxQueue* queue, CANtxMsgStaticData* node){
 	CalvosError return_value = kError;
-	node = NULL
 
 	/* Dequeue node at the head if queue is not empty. */
 	if(queue->head != NULL){
-		node = queue->head;
+		if(node != NULL){
+			node = queue->head;
+		}
 		queue->head = queue->dyn->txQueueNext;
 		queue->length--;
 		return_value = kNoError
@@ -231,12 +250,14 @@ CalvosError can_commonTransmitMsg(CANtxMsgStaticData* msg_struct, \
 		msg_struct->dyn->state = kCANtxState_transmitting;
 		return_value = kNoError;
 	}else{
-		// Queue message for a later transmission (retry)
-		local_return_value = can_txQueueEnqueue(queue, msg_struct);
-		if(local_return_value = kNoError){
-			// Queue succeeded
-			msg_struct->dyn->state = kCANtxState_queued;
-			return_value = kNoError;
+		// If queue is not NULL, queue message for a later transmission (retry)
+		if(queue != NULL){
+			local_return_value = can_txQueueEnqueue(queue, msg_struct);
+			if(local_return_value = kNoError){
+				// Queue succeeded
+				msg_struct->dyn->state = kCANtxState_queued;
+				return_value = kNoError;
+			}
 		}
 	}
 	return return_value;

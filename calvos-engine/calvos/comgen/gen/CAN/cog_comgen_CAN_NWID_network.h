@@ -17,6 +17,12 @@ try:
 		network = pic.load(f)
 except Exception as e:
         print('Failed to access pickle file %s. Reason: %s' % (cog_pickle_file, e))
+
+try:
+	with open(cog_proj_pickle_file, 'rb') as f:
+		project = pic.load(f)
+except Exception as e:
+        print('Failed to access pickle file %s. Reason: %s' % (cog_pickle_file, e))
 ]]] */
 // [[[end]]]
 /*============================================================================*/
@@ -158,10 +164,11 @@ for i, macro_name in enumerate(macro_names):
 ]]] */
 // [[[end]]]
 
-/* Message(s) Transmission Period */
+/* Message(s) Transmission Period (in ticks of task) */
 /* [[[cog
 
 # Calculate padding spaces
+tx_proc_task = project.get_simple_param_val("comgen.CAN","CAN_tx_task_period")
 macro_prefix = "kCAN_" + net_name_str + "msgTxPeriod_"
 macro_names = []
 macro_values = []
@@ -171,7 +178,7 @@ for message in network.messages.values():
 	if macro_value is None or macro_value == "":
 		macro_value = "(0u)"
 	else:
-		macro_value = "(" + str(macro_value) + "u)"
+		macro_value = "(" + str(round(int(message.tx_period)/tx_proc_task)) + "u)"
 	macro_names.append(macro_name)
 	macro_values.append(macro_value)
 

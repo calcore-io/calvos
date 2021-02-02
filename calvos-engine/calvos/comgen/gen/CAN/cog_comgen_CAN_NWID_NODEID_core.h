@@ -18,6 +18,12 @@ try:
 		network = pic.load(f)
 except Exception as e:
         print('Failed to access pickle file %s. Reason: %s' % (cog_pickle_file, e))
+
+try:
+	with open(cog_proj_pickle_file, 'rb') as f:
+		project = pic.load(f)
+except Exception as e:
+        print('Failed to access pickle file %s. Reason: %s' % (cog_proj_pickle_file, e))
 ]]] */
 // [[[end]]]
 /*============================================================================*/
@@ -106,14 +112,14 @@ if len(list_of_rx_msgs) > 0:
 	# RX Processing Function
 	# ----------------------
 	sym_rx_proc_func_name = "can_" + net_name_str + node_name_str + "processRxMessage"
-	sym_rx_proc_func_args = "(uint32_t msg_id, uint8_t * data_in)"
+	sym_rx_proc_func_args = "(uint32_t msg_id, uint8_t * data_in, uint8_t data_len)"
 	sym_rx_proc_func_return = "void"
 
 	code_str = "extern "+sym_rx_proc_func_return+" "+sym_rx_proc_func_name+sym_rx_proc_func_args+";"
 	cog.outl(code_str)
 
 if len(list_of_tx_msgs) > 0:
-	# TX Processing Function
+	# TX transmit Function
 	# ----------------------
 	sym_enum_name = "CAN_" + net_name_str + node_name_str + "txMsgs"
 
@@ -122,6 +128,24 @@ if len(list_of_tx_msgs) > 0:
 	sym_transmit_func_return = "void"
 
 	code_str = "extern "+sym_transmit_func_return+" "+sym_transmit_func_name+sym_transmit_func_args+";"
+	cog.outl(code_str)
+
+	# TX Processing Function
+	# ----------------------
+	tx_proc_task = project.get_simple_param_val("comgen.CAN","CAN_tx_task_period")
+
+	sym_tx_proc_func_name = "can_task_"+str(tx_proc_task)+"ms_"+net_name_str+node_name_str+"txProcess"
+
+	code_str = "extern void "+sym_tx_proc_func_name+"();"
+	cog.outl(code_str)
+
+	# TX Retry Function
+	# ----------------------
+	tx_proc_task = project.get_simple_param_val("comgen.CAN","CAN_tx_queue_task_ms")
+
+	sym_tx_retry_func_name = "can_task_"+str(tx_proc_task)+"ms_"+net_name_str+node_name_str+"txRetry"
+
+	code_str = "extern void "+sym_tx_retry_func_name+"();"
 	cog.outl(code_str)
  ]]] */
 // [[[end]]]
