@@ -117,6 +117,15 @@ sym_hal_transmit_args = "(CANtxMsgStaticData* msg_info)"
 code_str = "extern "+sym_hal_transmit_return+" "+sym_hal_transmit_name+sym_hal_transmit_args+";"
 cog.outl(code_str)
 
+# HAL Confirm Transmit Function
+# -----------------------------
+sym_hal_confirm_tx_return = "void"
+sym_hal_confirm_tx_name = "can_"+net_name_str+node_name_str+"HALconfirmTxMsg"
+sym_hal_confirm_tx_args = "()"
+
+code_str = "extern "+sym_hal_confirm_tx_return+" "+sym_hal_confirm_tx_name+sym_hal_confirm_tx_args+";"
+cog.outl(code_str)
+
 # HAL Receive Function
 # --------------------
 sym_hal_rx_return = "void"

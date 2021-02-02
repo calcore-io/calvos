@@ -128,6 +128,30 @@ cog.outl(sym_can_transmit_body)
 // [[[end]]]
 
 /* ===========================================================================*/
+/** Function for confirming transmission of CAN message for given node.
+ *
+ * This function shall be called when the target MCU confirms the transmission
+ * of the lastly requested tx message.
+ * ===========================================================================*/
+/* [[[cog
+sym_txing_msg_name = "can_" + net_name_str +  node_name_str + "transmittingMsg"
+
+sym_hal_confirm_tx_return = "void"
+sym_hal_confirm_tx_name = "can_"+net_name_str+node_name_str+"HALconfirmTxMsg"
+sym_hal_confirm_tx_args = "()"
+
+code_str = sym_hal_confirm_tx_return+" "+sym_hal_confirm_tx_name+sym_hal_confirm_tx_args+"{\n"
+cog.outl(code_str)
+
+sym_can_transmit_body="""
+	can_commonConfirmTxMsg("""+sym_txing_msg_name+""");
+"""
+sym_can_transmit_body = sym_can_transmit_body[1:]+"}"
+cog.outl(sym_can_transmit_body)
+]]] */
+// [[[end]]]
+
+/* ===========================================================================*/
 /** Function for processing a received CAN msg from HAL.
  *
  * This hardware-abstraction-layer function shall be called when a CAN message

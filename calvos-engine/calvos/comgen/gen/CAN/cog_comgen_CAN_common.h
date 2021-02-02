@@ -116,6 +116,7 @@ cog.outl(code_str)
 /* TX states */
 typedef enum{
 	kCANtxState_idle = 0,
+	kCANtxState_requested,
 	kCANtxState_queued,
 	kCANtxState_transmitting,
 	kCANtxState_transmited
@@ -192,6 +193,8 @@ extern CANrxMsgStaticData* can_traverseRxSearchTree(uint32_t msg_id, \
 extern CalvosError can_commonTransmitMsg(CANtxMsgStaticData* msg_struct, \
 		  CANtxQueue* queue, \
 		  CANhalTxFunction can_hal_tx_function);
+
+extern void can_commonConfirmTxMsg(CANtxMsgStaticData* transmitting_msg);
 
 /* [[[cog
 # Print include guards

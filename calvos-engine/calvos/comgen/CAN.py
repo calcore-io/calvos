@@ -1923,7 +1923,8 @@ class Network_CAN:
                              ["comgen.CAN", "network_h"]], \
                             {"category" : "node"})
         self.add_cog_source("can_node_hal_c", "cog_comgen_CAN_NWID_NODEID_hal.c", False, \
-                            [["comgen.CAN", "can_node_hal_h"], \
+                            [["comgen.CAN", "common_h"], \
+                             ["comgen.CAN", "can_node_hal_h"], \
                              ["comgen.CAN", "core_h"]], \
                             {"category" : "node"})
         self.add_cog_source("node_net_h", "cog_comgen_CAN_NWID_NODEID_network.h", True, \

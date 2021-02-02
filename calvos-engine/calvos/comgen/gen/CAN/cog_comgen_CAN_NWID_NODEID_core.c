@@ -283,6 +283,16 @@ if len(list_of_tx_msgs) > 0:
 ]]] */
 // [[[end]]]
 
+/* Message being transmitted */
+/* [[[cog
+if len(list_of_tx_msgs) > 0:
+	sym_txing_msg_name = "can_" + net_name_str +  node_name_str + "transmittingMsg"
+	sym_txing_msg_type = "CANtxMsgStaticData*"
+	code_str = sym_txing_msg_type+ " "+sym_txing_msg_name+";"
+	cog.outl(code_str)
+]]] */
+// [[[end]]]
+
 /* Array of Tx messages static data */
 /* [[[cog
 if len(list_of_tx_msgs) > 0:
@@ -422,7 +432,8 @@ if len(list_of_tx_msgs) > 0:
 	if(msg_idx < """+sym_max_tx_msgs+"""){
 		return_value = can_commonTransmitMsg(&"""+sym_tx_stat_data_name+"""[msg_idx], \\
 								  &"""+sym_tx_queue_name+""", \\
-								  &"""+sym_hal_transmit_name+""");
+								  &"""+sym_hal_transmit_name+""", \\
+								  """+sym_txing_msg_name+""");
 	}
 
 	return return_value;
