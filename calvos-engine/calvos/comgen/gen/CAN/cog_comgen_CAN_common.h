@@ -156,8 +156,8 @@ typedef struct CANrxMsgStaticData{
 	uint8_t* data;
 	CANrxMsgDynamicData* dyn;
 	CANrxMsgStaticFields fields;
-	const struct CANrxMsgStaticData* searchNext;
 	const struct CANrxMsgStaticData* searchPrev;
+	const struct CANrxMsgStaticData* searchNext;
 }CANrxMsgStaticData;
 
 typedef struct{

@@ -171,11 +171,11 @@ if len(list_of_rx_msgs) > 0:
 	cg.inorderTree(root, search_tree)
 
 	# Create static array
-	sym_rx_stat_data_type = "CANrxMsgStaticData"
+	sym_rx_stat_data_type = "const CANrxMsgStaticData"
 	sym_rx_stat_data_name = "can_" + net_name_str + node_name_str \
 		+ "rxMsgStaticData"
 
-	cog.outl("const "+sym_rx_stat_data_type+" "+sym_rx_stat_data_name+"["+sym_rx_msgs+"] = {\\")
+	cog.outl(sym_rx_stat_data_type+" "+sym_rx_stat_data_name+"["+sym_rx_msgs+"] = {\\")
 
 	callback_prefix = "can_" + net_name_str + node_name_str
 	callback_rx_sufix = "_rx_callback"

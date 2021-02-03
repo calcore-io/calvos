@@ -225,13 +225,13 @@ if len(list_of_rx_msgs) > 0:
 	enum_name = "CAN_" + net_name_str + node_name_str + "rxMsgs"
 	cog.outl("typedef enum{")
 
-	symbol_prefix = "kCAN_" + net_name_str + node_name_str + "rxMsgIdx_"
+	sym_rx_idx_pfx = "kCAN_" + net_name_str + node_name_str + "rxMsgIdx_"
 	symbol_names = []
 	for i, message_name in enumerate(sorted_rx_msgs.keys()):
 		if i == 0:
-			symbol_name = "\t" + symbol_prefix + message_name + "=0,"
+			symbol_name = "\t" + sym_rx_idx_pfx + message_name + "=0,"
 		else:
-			symbol_name = "\t" + symbol_prefix + message_name + ","
+			symbol_name = "\t" + sym_rx_idx_pfx + message_name + ","
 		cog.outl(symbol_name)
 	cog.outl("\tkCAN_" + net_name_str + node_name_str + "nOfRxMsgs")
 	cog.outl("}"+enum_name+";")
@@ -244,16 +244,143 @@ if len(list_of_rx_msgs) > 0:
 if len(list_of_tx_msgs) > 0:
 	cog.outl("typedef enum{")
 	enum_name = "CAN_" + net_name_str + node_name_str + "txMsgs"
-	symbol_prefix = "kCAN_" + net_name_str + node_name_str + "txMsgIdx_"
+	sym_tx_idx_pfx = "kCAN_" + net_name_str + node_name_str + "txMsgIdx_"
 	for i, message_name in enumerate(list_of_tx_msgs):
 		if i == 0:
-			symbol_name = "\t" + symbol_prefix + message_name + "=0,"
+			symbol_name = "\t" + sym_tx_idx_pfx + message_name + "=0,"
 		else:
-			symbol_name = "\t" + symbol_prefix + message_name + ","
+			symbol_name = "\t" + sym_tx_idx_pfx + message_name + ","
 		cog.outl(symbol_name)
 	cog.outl("\tkCAN_" + net_name_str + node_name_str + "nOfTxMsgs")
 	cog.outl("}"+enum_name+";")
 
+]]] */
+// [[[end]]]
+
+/* TX messages/signals direct access macros */
+
+/* [[[cog
+sym_rx_data_name = "can_" + net_name_str +  node_name_str + "RxDataBuffer"
+sym_rx_stat_data_name = "can_" + net_name_str + node_name_str \
+	+ "rxMsgStaticData"
+sym_tx_data_name = "can_" + net_name_str +  node_name_str + "TxDataBuffer"
+sym_tx_stat_data_name = "can_" + net_name_str + node_name_str + "txMsgStaticData"
+
+line_sep_str = " \\\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t"
+
+if len(subnet.messages) > 0:
+	for message in subnet.messages.values():
+		message_name = message.name
+		message_signals = subnet.get_signals_of_message(message_name)
+
+		if subnet.get_message_direction(node_name,message.name) == nw.CAN_TX:
+			msg_is_tx = True
+
+			sym_idx_pfx = sym_tx_idx_pfx+message_name
+			msg_stat_data = sym_tx_stat_data_name+"["+sym_idx_pfx+"]"
+
+			dir_str = "Tx"
+		elif subnet.get_message_direction(node_name,message.name) == nw.CAN_RX:
+			msg_is_tx = False
+
+			sym_idx_pfx = sym_rx_idx_pfx+message_name
+			msg_stat_data = sym_rx_stat_data_name+"["+sym_idx_pfx+"]"
+
+			dir_str = "Rx"
+		else:
+			msg_is_tx = None
+			msg_stat_data = "#error"
+			log_warn("Wrong direction for message '%s'.", message_name)
+
+		# Print read macro comment
+		cog.outl("/"+chr(42)+" ----------- Macros for "+dir_str+" message \"" + message.name \
+				+ "\" ----------- " + chr(42) + "/")
+
+		# Message get macro.
+		macro_name = "CAN_" + net_name_str + node_name_str+"get_msg_"+message_name
+		macro_args = "(data_struct)"
+		macro_vals = "CALVOS_CRITICAL_ENTER();"+line_sep_str+"memcpy(data_struct.all,"+line_sep_str \
+			+msg_stat_data+".data,"+line_sep_str \
+			+msg_stat_data +".fields.len);"+line_sep_str \
+			+"CALVOS_CRITICAL_EXIT();"
+
+		code_str = "#define "+macro_name+macro_args+"\t\t"+macro_vals
+		cog.outl(code_str+"\n")
+
+		if msg_is_tx is True:
+			# Message update macro is only for TX messages.
+
+			macro_name = "CAN_" + net_name_str + node_name_str+"update_msg_"+message_name
+			macro_args = "(data_struct)"
+			macro_vals = "CALVOS_CRITICAL_ENTER();"+line_sep_str+"memcpy(" \
+				+msg_stat_data+".data,"+line_sep_str+"data_struct.all,"+line_sep_str \
+				+msg_stat_data +".fields.len);"+line_sep_str+"CALVOS_CRITICAL_EXIT();"
+
+			code_str = "#define "+macro_name+macro_args+"\t\t"+macro_vals
+			cog.outl(code_str)
+
+		array_str = "msg_buffer"
+		data_in_str = "data_in"
+
+		for signal in message_signals:
+			# Referenced names
+			def_read = "CAN_"+net_name_str+"extract_" \
+						+ signal.name + "(" + array_str + ")"
+			def_write = "CAN_"+net_name_str+"write_" \
+						+ signal.name + "(" + array_str + "," + data_in_str + ")"
+
+			# New macro names
+			def_read_array = "CAN_" + net_name_str + "get_ptr_direct_" \
+							+ signal.name + "(" + array_str + ")"
+			def_get_direct = "CAN_"+net_name_str+"get_direct_" \
+							+ signal.name + "()"
+
+			def_write_array = "CAN_" + net_name_str + "update_ptr_direct_" \
+							+ signal.name + "("+ data_in_str + ")"
+			def_update_direct = "CAN_"+net_name_str+"update_direct_" \
+							+ signal.name + "(" + data_in_str + ")"
+
+			max_len = cg.get_str_max_len([def_read_array, def_get_direct, \
+										def_write_array, def_update_direct])
+			# From longest string add TAB_SPACE spaces for padding
+			max_len += TAB_SPACE
+
+			# Calculate padding
+			pad_read_array = cg.gen_padding(max_len, len(def_read_array))
+			pad_get_direct = cg.gen_padding(max_len, len(def_get_direct))
+
+			pad_write_array = cg.gen_padding(max_len, len(def_write_array))
+			pad_update_direct = cg.gen_padding(max_len, len(def_update_direct))
+
+			# Print read macro comment
+			cog.outl("/"+chr(42)+" Macros for direct reading of signal \"" \
+				+ signal.name + "\". " + chr(42) + "/")
+
+			# Signal read direct macros
+			# -------------------------
+			if signal.is_array():
+				cog.outl("#define "+ def_read_array \
+						+ pad_read_array \
+						+ "(&"+msg_stat_data+".data[" + str(signal.start_byte) + "])")
+			else:
+				cog.outl("#define "+def_get_direct + pad_get_direct \
+					+ "(" + def_read.replace("("+array_str+")","("+msg_stat_data+".data)") + ")" )
+
+			# Signal write direct macros
+			# --------------------------
+			# Direct writting of signals is only for TX messages.
+			if msg_is_tx is True:
+				cog.outl("/"+chr(42)+" Macros for direct writing of signal \"" \
+					+ signal.name + "\". " + chr(42) + "/")
+				if signal.is_array():
+					cog.outl("#define " + def_write_array + pad_write_array \
+							+"( memcpy(const &"+msg_stat_data+".data["+str(signal.start_byte) \
+							+ "],"+data_in_str+", "+msg_stat_data+".len)" )
+				else:
+					cog.outl("#define " + def_update_direct + pad_update_direct \
+						+ def_write.replace("("+array_str,"("+msg_stat_data+".data"))
+
+			cog.outl("")
 ]]] */
 // [[[end]]]
 

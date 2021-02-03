@@ -339,8 +339,6 @@ for message in messages_layouts:
 						+ signal.name + "(" + array_str + ")"
 		def_get = "CAN_"+net_name_str+"get_" \
 						+ signal.name + "(" + array_str + ")"
-		def_get_direct = "CAN_"+net_name_str+"get_direct_" \
-						+ signal.name + "()"
 
 		def_write_array = "CAN_" + net_name_str + "update_" \
 						+ signal.name + "(" + array_str + "," + data_in_str + ")"
@@ -348,13 +346,10 @@ for message in messages_layouts:
 						+ signal.name + "(" + array_str + "," + data_in_str + ")"
 		def_update = "CAN_"+net_name_str+"update_" \
 						+ signal.name + "(" + array_str + "," + data_in_str + ")"
-		def_update_direct = "CAN_"+net_name_str+"update_direct_" \
-						+ signal.name + "(" + data_in_str + ")"
 
 		max_len = cg.get_str_max_len([def_read_array, def_read, \
-									def_get, def_get_direct, \
-									def_write_array, def_write, def_update, \
-									def_update_direct])
+									def_get, \
+									def_write_array, def_write, def_update])
 		# From longest string add TAB_SPACE spaces for padding
 		max_len += TAB_SPACE
 
@@ -362,12 +357,10 @@ for message in messages_layouts:
 		pad_read_array = cg.gen_padding(max_len, len(def_read_array))
 		pad_read = cg.gen_padding(max_len, len(def_read))
 		pad_get = cg.gen_padding(max_len, len(def_get))
-		pad_get_direct = cg.gen_padding(max_len, len(def_get_direct))
 
 		pad_write_array = cg.gen_padding(max_len, len(def_write_array))
 		pad_write = cg.gen_padding(max_len, len(def_write))
 		pad_update = cg.gen_padding(max_len, len(def_update))
-		pad_update_direct = cg.gen_padding(max_len, len(def_update_direct))
 
 		# Print read macro comment
 		cog.outl("/"+chr(42)+" Macros for reading signal \"" \
@@ -378,7 +371,7 @@ for message in messages_layouts:
 		if signal.is_array():
 			cog.outl("#define "+ def_read_array \
 					+ pad_read_array \
-					+ "( &"+array_str+"[" + str(signal.start_byte) + "] )" )
+					+ "( &"+array_str+".all[" + str(signal.start_byte) + "] )" )
 		else:
 			signal_access = network.get_signal_abstract_read(signal.name)
 
@@ -435,9 +428,6 @@ for message in messages_layouts:
 
 			cog.outl("#define " + def_get + pad_get \
 				+ "(" + def_read.replace("("+array_str+")","("+array_str+".all)") + ")" )
-
-			cog.outl("#define "+def_get_direct + pad_get_direct \
-				+ "(" + def_read.replace("("+array_str+")","(unified_buffer)") + ")" )
 	
 		# Signal write macros
 		# -------------------
@@ -447,7 +437,7 @@ for message in messages_layouts:
 		if signal.is_array():
 			cog.outl("#define " + def_write_array + pad_write_array \
 					+"( memcpy(&"+array_str+"["+str(signal.start_byte) \
-					+ "],&values, kCAN_" + net_name_str \
+					+ "],&"+data_in_str+", kCAN_" + net_name_str \
 					+ "msgLen_" + message.name + ")" )
 		else:
 			pass
@@ -527,8 +517,6 @@ for message in messages_layouts:
 			cog.outl("#define " + def_write + pad_write + macro_str)
 			cog.outl("#define " + def_update + pad_update \
 				+ def_write.replace("("+array_str+",","("+array_str+".all,"))
-			cog.outl("#define " + def_update_direct + pad_update_direct \
-				+ def_write.replace("("+array_str+",","(unified_buffer"))
 		
 		cog.outl("")
 ]]] */

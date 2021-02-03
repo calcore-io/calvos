@@ -114,7 +114,40 @@ for message in subnet.messages.values():
 // [[[end]]]
 
 /* [[[cog
+if len(list_of_rx_msgs) > 0:
+	# Rx data buffer
+	# --------------
+	sym_rx_data_name = "can_" + net_name_str +  node_name_str + "RxDataBuffer"
+	sym_rx_data_len = "kCAN_" + net_name_str +  node_name_str + "RxMsgsTotalLen"
+	code_str = "extern "+cg.get_dtv(8)+" "+sym_rx_data_name+"["+sym_rx_data_len+"];"
+	cog.outl(code_str)
+
+	# Rx static data
+	# --------------
+	sym_rx_stat_data_type = "const CANrxMsgStaticData"
+	sym_rx_msgs = "kCAN_" + net_name_str + node_name_str + "nOfRxMsgs"
+	sym_rx_stat_data_name = "can_" + net_name_str + node_name_str \
+			+ "rxMsgStaticData"
+	code_str = "extern "+sym_rx_stat_data_type+" "+sym_rx_stat_data_name+"["+sym_rx_msgs+"];"
+	cog.outl(code_str)
+
 if len(list_of_tx_msgs) > 0:
+	# Tx data buffer
+	# --------------
+	sym_tx_data_name = "can_" + net_name_str +  node_name_str + "TxDataBuffer"
+	sym_tx_data_len = "kCAN_" + net_name_str +  node_name_str + "TxMsgsTotalLen"
+	code_str = "extern "+cg.get_dtv(8)+" "+sym_tx_data_name+"["+sym_tx_data_len+"];"
+	cog.outl(code_str)
+
+	# Tx static data
+	# --------------
+	sym_tx_stat_data_type = "const CANtxMsgStaticData"
+	sym_tx_stat_data_name = "can_" + net_name_str + node_name_str + "txMsgStaticData"
+	sym_tx_stat_data_len = "kCAN_" + net_name_str + node_name_str + "nOfTxMsgs"
+	code_str = "extern "+sym_tx_stat_data_type+" "+sym_tx_stat_data_name+"["+sym_tx_stat_data_len+"];"
+	cog.outl(code_str)
+
+
 	# Tx transmitting message
 	# -----------------------
 	sym_txing_msg_name = "can_" + net_name_str +  node_name_str + "transmittingMsg"
