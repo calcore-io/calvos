@@ -251,8 +251,6 @@ class Project:
         # Load parameters of found components
         # -----------------------------------
         for comp_name, comp_xml in calvos_components.items():
-            if success == False:
-                success = True
             # Create component definition object
             self.components_definitions.update({comp_name : self.CompDefinition(comp_name)})
             # Parse XML with component definitions
