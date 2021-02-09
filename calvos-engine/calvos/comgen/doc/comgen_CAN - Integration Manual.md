@@ -1036,6 +1036,56 @@ void some_app_function()
 ```
 
 ### "Update Pointer" macros for array-signals (write)
+For array-signals, "get pointer" macros are generated. These macros have the following naming convention:
+
+`#define CAN_NWID_get_ptr_SIGNALNAME(msg_buffer)` 
+
+The macro argument `msg_buffer` is a pointer to the conveyor's message union `S_MESSAGENAME`. These macros simply return the pointer to the corresponding starting byte of the signal in the `all` array of the union (taking into consideration the signal's defined start byte).
+
+The user can then operate over the signal as if it was a normal byte-array.
+
+Example:
+
+- Message:
+  
+  - Name: MESSAGE8
+  
+  - Length: 5 bytes
+
+- MESSAGE8 signals: 
+  
+  - Signal_81: (start bit = 0, start byte = 0, length = 16, type = scalar)
+  
+  - Signal_82: (start bit = 0, start byte = 2, length = 24, **type = array**)
+
+Following get pointer macro will be generated for the array-signal Signal_82:
+
+`#define CAN_NWID_get_ptr_Signal_81(msg_buffer)`
+
+A message's `S_MESSAGENAME` `union` is expected to be defined in this case. The raw received data needs to get updated into the `union` and then the get pointer macro can be used over it.
+
+```c
+void some_app_function()
+{
+  S_MESSAGE8 MESSAGE8_union; /* Local union for the data of MESSAGE8 */
+  uint8_t my_Signal_81; /* Local variable for signal Signal_81 */
+  uint8_t * my_Signal_82; /* Local pointer variable for signal Signal_82 */
+
+  /* Code for updating MESSAGE8_union with the received data from CAN. */
+  /* Refer to further sections for information about this operation. */
+  /* ... */
+
+  /* Getting signal pointer for Signal_82 from MESSAGE8_union */
+  my_Signal_82 = CAN_NWID_get_Signal_82(MESSAGE8_union);
+
+  /* Application code doing something with signal goes here */
+  if(my_Signal_82[1] == 0xFF)
+  {
+      /* Do something if the second byte of the array Signal_81 is 0xFF */
+    /* ... */
+  }
+}
+```
 
 ## Accesing signals within a message
 
