@@ -950,7 +950,7 @@ void some_app_function()
   CAN_NWID_write_Signal_92(MESSAGE9_data, 0x03);
   
   /* Setting a temporal value for Signal_93 */
-  my_Signal_93 = 0x000000FFFFFFF123;
+  my_Signal_93 = 0x000000FFFFFFF123ull;
   /* Writting Signal_93 in the local message data */
   CAN_NWID_write_Signal_93(MESSAGE9_data, my_Signal_93);
   /* Bits 41 to 64 will be ignored since Signal_93 is of 40-bits length */
@@ -962,6 +962,8 @@ void some_app_function()
 ```
 
 #### "Update" signal macros (write to a message's `union`)
+
+#### "Update Pointer" macros for array-signals (write)
 
 ## Accesing signals within a message
 
