@@ -359,11 +359,27 @@ When referring to a file in this category or symbols within those files, the wil
 
 For example, if the defined network has an ID equal to 'C', then a flie referred as `comgen_CAN_NWID_network.h` corresponds to a generated file with name`comgen_CAN_C_network.h`.
 
+| File                            | File contents                                                                                                                                                                            |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cog_comgen_CAN_NWID_network.h` | Defines network-wide symbols and data structures for messages information (lengths, ids, data structures, etc), signals (APIs to access signals) and user-defined enumerated data types. |
+|                                 |                                                                                                                                                                                          |
+|                                 |                                                                                                                                                                                          |
+
 ## Node-specific Code
 
 Code that needs to be generated per each defined node within a network that has been selected for code generation (selected in parameter `CAN_gen_nodes`). A set of these files will be generated for each selected node in each defined network. These source code files will contain the corresponding node's name in the file names and symbols within them.
 
 When referring to a file in this category, the wildcard NODEID (node name) will be used in this documentation to represent the corresponding node. For example, if the generated node name is 'NODE_1', then a flie referred as `comgen_CAN_NWID_NODEID_node_network.h` corresponds to a generated file with name`comgen_CAN_C_NODE_1_node_network.h`.
+
+| File                                    | File contents                                                                                                                                                               |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `comgen_CAN_NWID_NODEID_node_network.h` | Defines symbols for node specific message information (message directions, timeouts, etc.), direct signal access macros (directly accessing from node's data buffers), etc. |
+| `comgen_CAN_NWID_NODEID_hal.h`          | Header for node's interfaces with CAN hardware abstraction layer in the target MCU.                                                                                         |
+| `comgen_CAN_NWID_NODEID_hal.c`          | Implemmentation of node's interfaces with CAN hardware abstraction layer in the target MCU.                                                                                 |
+| `cog_comgen_CAN_NWID_NODEID_core.h`     | Header for the node's CAN core functionality.                                                                                                                               |
+| `cog_comgen_CAN_NWID_NODEID_core.c`     | Implementation of the node's CAN core functionality.                                                                                                                        |
+| `comgen_CAN_NWID_NODEID_callbacks.h`    | Header for the node's callbacks                                                                                                                                             |
+| `comgen_CAN_NWID_NODEID_callbacks.c`    | Implementation of the node's callbacks                                                                                                                                      |
 
 ## Source Code Names Optimization
 
@@ -442,7 +458,260 @@ Following tasks are required in order to integrate the transmission of CAN messa
 
 ### Message's data structures
 
-### Accesing signals within a message
+A data structure is generated for each message within file `cog_comgen_CAN_NWID_network.h`. The purpose of this structure is to faciliate the access of the signals defined in such message.
+
+**IMPORTANT:** For all examples here following assumptions are made:
+
+- Target MCU is little endian
+- Compiler is set in a way that the structures are "packed", this means no memory alignment is performed between fields but rather the compiler reduces the structure size as much as possible. For example, this is achieved in gcc by using the compiler directive `__attribute__((packed))` after the `struct` keyword.
+
+The data structure generated for each message is an `union` having on the one hand an `struct` (called `s`) defining the message's signals as fields of it according to their layout information and on the other hand a byte-array (named `all`) of lenght equal to the message's length in order to provide raw access to the message's data.
+
+```c
+typedef union{
+    struct __attribute__((packed)){
+        /* signal(s) fields following layout */
+    } s;
+    uint8_t all[kCAN_CT_msgLen_<MESSAGE_NAME>];
+}S_<MESSAGE_NAME>;
+```
+
+The generated structure `s` can be either a bitfield or a regular structure depending on the layout of the message's signals.
+
+If all the signals of the message are *cannonical* then a regular structure is generated (not a bitfield).
+
+If at least one signal is *non-cannonical* then a bitfield is generated within structure `s` to model the different signals.
+
+A signal is defined as *cannonical* if its starting bit is a multiple of 8 (meaning that the signal starts at an exact byte position) and if its length is also multiple of 8 (the signal length occupies full byte(s)). If this is not met, then the signal is considered *non-cannonical*.
+
+A *message* is cannonical if all of its signals are cannonical and is non-cannonical if at least one of its signals is non-cannonical.
+
+Example of cannonical message:
+
+- Message:
+  
+  - Name: MESSAGE1
+  
+  - Length: 8 bytes
+
+- MESSAGE1 signals: 
+  
+  - Signal_11: (start bit = 0, start byte = 0, length = 8)
+  
+  - Signal_12: (start bit = 0, start byte = 1, length = 16)
+  
+  - Signal_13: (start bit = 0, start byte = 3, length = 8)
+  
+  - Signal_14: (start bit = 0, start byte = 4, length = 8)
+
+The generated structure `s` for MESSAGE1 will look as follows:
+
+```c
+    struct {
+        uint8_t Signal_11;
+        uint16_t Signal_12;
+        uint8_t Signal_13;
+        uint8_t Signal_14;
+    } s;
+```
+
+Example of non-cannonical message:
+
+- Message:
+  
+  - Name: MESSAGE2
+  
+  - Length: 8 bytes
+
+- MESSAGE2 signals: 
+  
+  - Signal_21: (start bit = 0, start byte = 0, length = 8)
+  
+  - Signal_22: (start bit = 0, start byte = 1, **length = 7**)
+  
+  - Signal_23: (start bit = 0, start byte = 3, length = 8)
+  
+  - Signal_24: (start bit = 0, start byte = 4, length = 8)
+
+Since signal Signal_22 is non-cannonical, a bitfield will be generated. The resulting structure `s` for MESSAGE2 will look then as follows:
+
+```c
+    struct {
+        uint8_t Signal_21 : 8;
+        uint8_t Signal_22 : 7;
+        uint8_t reserved_0 : 1;
+        uint8_t reserved_1 : 8;
+        uint8_t Signal_23 : 8;
+        uint8_t Signal_24 : 8;
+        uint8_t reserved_2 : 8;
+        uint8_t reserved_3 : 8;
+        uint8_t reserved_4 : 8;
+    } s;
+```
+
+Notice the inserted reserved fields which correspond to empty space in the message.
+
+If a signal:
+
+- Is non-cannonical
+
+- Is cannonical but its length is greater than 8 bits **and** doesn't exactly match the size of the compiler's basic data types (8, 16, 32 or 64 bits for gcc compiler) then the signal will need to be **fragmented** within the structure *s*. 
+
+If a signal gets fragmented it can no longer be accessed by a single field within the structure `s` but the access will need to be performed individually per each generated fragment (or can be accessed via access *macros* explained in further sections).
+
+Examples of non-cannonical signals fragmentations:
+
+- Message:
+  
+  - Name: MESSAGE3
+  
+  - Length: 8 bytes
+
+- MESSAGE2 signals: 
+  
+  - Signal_31: (**start bit = 1**, start byte = 0, length = 8)
+  
+  - Signal_32: (start bit = 0, start byte = 2, **length = 15**)
+
+Signals Signal_31 and Signal_32 are non-cannonical so they need to get fragmented. The resulting structure `s` for MESSAGE3 will look as follows:
+
+```c
+    struct {
+        uint8_t reserved_0 : 1;
+        uint8_t Signal_31_0 : 7;
+        uint8_t Signal_31_1 : 1;
+        uint8_t reserved_1 : 7;
+        uint8_t Signal_32_0 : 8;
+        uint8_t Signal_32_1 : 7;
+        uint8_t reserved_2 : 1;
+        uint8_t reserved_3 : 8;
+        uint8_t reserved_4 : 8;
+        uint8_t reserved_5 : 8;
+        uint8_t reserved_6 : 8;
+    } s;
+```
+
+Notice that each signal fragment gets a suffix `_x` where x indicates the fragment number.
+
+Example of cannonical signals fragmentation:
+
+- Message:
+  
+  - Name: MESSAGE4
+  
+  - Length: 8 bytes
+
+- MESSAGE4 signals: 
+  
+  - Signal_41: (start bit = 0, start byte = 0, **length = 24**)
+  
+  - Signal_42: (start bit = 0, start byte = 3, **length = 40**)
+
+Signals Signal_41 and Signal_42 are cannonical, however, their sizes do not match the size of a basic data type so they need to get fragmented. The resulting structure `s` for MESSAGE4 will look as follows:
+
+```c
+    struct {
+        uint16_t Signal_41_0;
+        uint8_t Signal_41_1;
+        uint32_t Signal_42_0;
+        uint8_t Signal_42_1;
+    } s;
+```
+
+Notice that each signal fragment gets a suffix `_x` where x indicates the fragment number and that no bit-field is generated since MESSAGE4 is a cannonical message.
+**Note:** the generator tries to reduce the number of fragments as possible trying to then chose the bigger possible fragment sizes.
+
+If a signal is defined as an **array** (currently only byte-arrays are supported) and if its conveyor message is also cannonical, then a regular array will be generated in structure `s`. Otherwise the array signal will get exploded into fragments corresponding to a byte each one.
+
+**Note:** A signal of array type shall always be cannonical, it is not allowed to define an array signal starting at a bit position not multiple of a byte or for it to have a length not multiple of 8.
+
+Example of an array signal in a cannonical message:
+
+- Message:
+  
+  - Name: MESSAGE5
+  
+  - Length: 7 bytes
+
+- MESSAGE5 signals: 
+  
+  - Signal_51: (start bit = 0, start byte = 0, **length = 32**, **type = array**)
+  
+  - Signal_52: (start bit = 0, start byte = 4, length = 24, type = scalar)
+
+Signals Signal_51 and Signal_52 are cannonical, hence message is cannonical. Signal Signal_52 needs to get fragmented. The resulting structure `s` for MESSAGE5 will look as follows:
+
+```c
+    struct {
+        uint8_t Signal_51[4];
+        uint16_t Signal_52_0;
+        uint8_t Signal_52_1;
+    } s;
+```
+
+Example of an array signal in a non-cannonical message:
+
+- Message:
+  
+  - Name: MESSAGE6
+  
+  - Length: 7 bytes
+
+- MESSAGE6 signals: 
+  
+  - Signal_61: (start bit = 0, start byte = 0, **length = 32**, **type = array**)
+  
+  - Signal_62: (start bit = 0, start byte = 4, **length = 23**, type = scalar)
+
+Signal_62 is non-cannonical, hence message is non-cannonical. A bitfield will be generated and therefore, array signal Signal_61 gets exploded into fragments. The resulting structure `s` for MESSAGE6 will look as follows:
+
+```c
+    struct {
+        uint8_t Signal_61_0 : 8;
+        uint8_t Signal_61_1 : 8;
+        uint8_t Signal_61_2 : 8;
+        uint8_t Signal_61_3 : 8;
+        uint8_t Signal_52_0 : 8;
+        uint8_t Signal_52_1 : 8;
+        uint8_t Signal_52_2 : 8;
+    } s;
+```
+
+The other element of the message's `union` is just a simple array of bytes  named `all`. This is generated so that the user can modify the signals in a raw manner if desired.
+
+### Signals Access Macros
+
+A set of access macros are generated for each signal in the network within file `cog_comgen_CAN_NWID_network.h`. These macros provide an alternative mean of accessing the signals of the messages directly from their raw data instead of using the `s` structures defined in previous section.
+
+If for some reason, the generated `s` structure fields don't get properly packed then the macros can be used as alternatives since they do not depend on compiler's struct logic. 
+
+At the end is use decission which means of accessing the signals fits better its needs.
+
+The generated macros in `cog_comgen_CAN_NWID_network.h` operate anywais over the message `union`'s but they do over the `all` array rather than over the `s` structure. 
+
+#### Extract signal macros (read from any provided array)
+
+These macros have the following naming convention:
+
+`#define CAN_CT_extract_MNUsignal(msg_buffer)`
+
+The macro argument `msg_buffer` is a pointer to an arbitrary array of bytes. The intention, however, is that this array has the same length as the signal's conveyor message and that msg_buffer is points always to the byte 'zero' of the message.
+
+Example:
+
+Message 
+
+#### Get signal macros (read from message's `union`)
+
+#### Write signal macros (write to any provided array)
+
+#### Update signal macros (write to a message's `union`)
+
+## Accesing signals within a message
+
+### Accesing signals as local data
+
+### Acessing signals directly from buffers
 
 ## Receiving Messages
 
