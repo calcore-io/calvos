@@ -478,6 +478,8 @@ typedef union{
 
 Wildcard MESSAGENAME corresponds to the defined message name.
 
+#### Cannonical and Non-Cannonical Signals/Messages
+
 The generated structure `s` can be either a bitfield or a regular structure depending on the layout of the message's signals.
 
 If all the signals of the message are *cannonical* then a regular structure is generated (not a bitfield).
@@ -552,6 +554,8 @@ Since signal Signal_22 is non-cannonical, a bitfield will be generated. The resu
 ```
 
 Notice the inserted reserved fields which correspond to empty space in the message.
+
+#### Signal Fragmentation
 
 If a signal:
 
@@ -867,6 +871,8 @@ void some_app_function()
 ```
 
 #### "Write" signal macros (write to any provided array)
+
+
 
 #### "Update" signal macros (write to a message's `union`)
 
