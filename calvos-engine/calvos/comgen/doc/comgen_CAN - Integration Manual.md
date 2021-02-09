@@ -207,13 +207,13 @@ For the instructions here we will start with an empty project and include our CA
        </Params>
        <Metadata>
            <TemplateName>calvOS Project</TemplateName>
-           <TemplateVersion>1.0.0</TemplateVersion>
+           <TemplateVersion>0.1.0</TemplateVersion>
            <TemplateDesc/>
        </Metadata>
    </CalvosProject>
 ```
 
-3. Create a sub-foler named "*usr_in*" in the project's *root* folder:
+3. Create a sub-folder named "*usr_in*" in the project's *root* folder:
    
    *C:\my_calvos_project\usr_in*
 
@@ -285,7 +285,7 @@ Calvos-engine needs to be invoked from a console accepting following command-lin
 | -V, --version                 | show program's version number and exit                                                                              |
 | -v, --ver                     | show program's version number and exit                                                                              |
 
-Currently, `calvos` is not yet properly packaged so it needs to be set-up before use it.
+Currently, `calvos` is not yet properly packaged so it needs to be set-up before its usage.
 
 ## Setting-up calvos-engine
 
@@ -452,7 +452,25 @@ Following tasks are required in order to integrate the transmission of CAN messa
 
 2. Invoke callback for message transmission confirmation from HAL. Function `can_CT_NODE_1_HALconfirmTxMsg()` needs to be called within the HAL function that signals the confirmation of the latest CAN message transmission. This function does't require any argument.
 
+## Transmission Task integration
+
 # Application Usage
+
+## Receiving Messages
+
+### Using the reception callbacks
+
+### Using the available flags (polling for received messages)
+
+### Using the received data
+
+## Transmitting Messages
+
+### Setting data to be transmitted
+
+### Transmission of periodic messages
+
+### Transmission of spontaneous messages
 
 ## Data Structures
 
@@ -687,7 +705,7 @@ The other element of the message's `union` is just a simple array of bytes  name
 
 ### Signals Access Macros
 
-A set of access macros are generated for each signal in the network within file `cog_comgen_CAN_NWID_network.h`. These macros provide alternative means of accessing the signals of the messages directly from their raw data instead of using the `s` structures defined in previous section.
+A set of access macros are generated for each signal in the network within file `cog_comgen_CAN_NWID_network.h`. These macros provide alternative means of accessing the signals (reading and writing) of the messages directly from their raw data instead of using the `s` structures defined in previous section.
 
 If for some reason, the generated `s` structure fields don't get properly packed then the macros can be used as alternatives since they do not depend on compiler's struct logic. Instead, the macros use type casting, masking and shiftings in order to access the signals.
 
@@ -741,7 +759,8 @@ void some_app_function()
   uint8_t my_Signal_72; /* Local variable for signal Signal_72 */
   uint8_t my_Signal_73; /* Local variable for signal Signal_73 */
 
-  /* Code for updating MESSAGE7_data with the received data from CAN. Refer to further sections for information about this operation. */
+  /* Code for updating MESSAGE7_data with the received data from CAN. */
+  /* Refer to further sections for information about this operation. */
   /* ... */
 
   /* Extracting signals from MESSAGE7_data array */
@@ -801,7 +820,8 @@ void some_app_function()
   uint8_t my_Signal_72; /* Local variable for signal Signal_72 */
   uint8_t my_Signal_73; /* Local variable for signal Signal_73 */
 
-  /* Code for updating MESSAGE7_union with the received data from CAN. Refer to further sections for information about this operation. */
+  /* Code for updating MESSAGE7_union with the received data from CAN. */
+  /* Refer to further sections for information about this operation. */
   /* ... */
 
   /* Getting signals from MESSAGE7_union array */
@@ -818,13 +838,13 @@ Regardless of the signal type, a single macro is generated which will provide al
 
 Gcc compiler provides basic data up-to 64-bits (`long long int`) so then any CAN signal (which can't never exceed 64-bits) can be accessed with a single macro statement.
 
-#### "Get" macros for array-signals (read from any provided array)
+#### "Get Pointer" macros for array-signals (read)
 
 For array-signals extract "pointer" macros are generated. These macros have the following naming convention:
 
 `#define CAN_NWID_get_ptr_SIGNALNAME(msg_buffer)` 
 
-The macro argument `msg_buffer` is a pointer to the conveyor's message union `S_MESSAGENAME`. These macros simply return the pointer to the corresponding starting byte of the signal in the `all` array of the union.
+The macro argument `msg_buffer` is a pointer to the conveyor's message union `S_MESSAGENAME`. These macros simply return the pointer to the corresponding starting byte of the signal in the `all` array of the union (taking into consideration the signal's defined start byte).
 
 The user can then operate over the signal as if it was a normal byte-array.
 
@@ -834,15 +854,15 @@ Example:
   
   - Name: MESSAGE8
   
-  - Length: 4 bytes
+  - Length: 5 bytes
 
 - MESSAGE8 signals: 
   
-  - Signal_81: (start bit = 0, start byte = 0, length = 24, **type = array**)
+  - Signal_81: (start bit = 0, start byte = 0, length = 16, type = scalar)
   
-  - Signal_82: (start bit = 0, start byte = 3, length = 8, type = scalar)
+  - Signal_82: (start bit = 0, start byte = 2, length = 24, **type = array**)
 
-Following get macro will be generated for the array-signal Signal_81:
+Following get macro will be generated for the array-signal Signal_82:
 
 `#define CAN_NWID_get_ptr_Signal_81(msg_buffer)`
 
@@ -852,19 +872,20 @@ A message's `S_MESSAGENAME` `union` is expected to be defined in this case. The 
 void some_app_function()
 {
   S_MESSAGE8 MESSAGE8_union; /* Local union for the data of MESSAGE8 */
-  uint8_t * my_Signal_81; /* Local pointer variable for signal Signal_81 */
-  uint8_t my_Signal_82; /* Local variable for signal Signal_82 */
+  uint8_t my_Signal_81; /* Local variable for signal Signal_81 */
+  uint8_t * my_Signal_82; /* Local pointer variable for signal Signal_82 */
 
-  /* Code for updating MESSAGE8_union with the received data from CAN. Refer to further sections for information about this operation. */
+  /* Code for updating MESSAGE8_union with the received data from CAN. */
+  /* Refer to further sections for information about this operation. */
   /* ... */
 
-  /* Getting signal pointer for Signal_81 from MESSAGE8_union */
-  my_Signal_81 = CAN_NWID_get_Signal_81(MESSAGE8_union);
+  /* Getting signal pointer for Signal_82 from MESSAGE8_union */
+  my_Signal_82 = CAN_NWID_get_Signal_82(MESSAGE8_union);
 
   /* Application code doing something with signal goes here */
-  if(my_Signal_81[1] == 0xFF)
+  if(my_Signal_82[1] == 0xFF)
   {
-      /* Do something if the second byte of the Signal_81 array is 0xFF */
+      /* Do something if the second byte of the array Signal_81 is 0xFF */
     /* ... */
   }
 }
@@ -872,7 +893,73 @@ void some_app_function()
 
 #### "Write" signal macros (write to any provided array)
 
+Write macros are generated for all non-array signals. These macros have the following naming convention:
 
+`#define CAN_NWID_write_SIGNALNAME(msg_buffer,data)`
+
+The macro argument `msg_buffer` is a pointer to an arbitrary array of bytes. The intention, however, is that this array corresponds to the message data containg the signal to be written. Hence, the array is expected to have the same length as the conveyor message and the provided macro argument `msg_buffer` shall always point to the byte 'zero' of such array regardless of the signal's starting byte (the macro will accomodate for this).
+
+The macro argument `data` shall be the value of the signal to be written. The variable or constant provided in the `data` argument shall be long enough to contain all the desired value to be written.
+
+Usage Example:
+
+- Message:
+  
+  - Name: MESSAGE9
+  
+  - Length: 8 bytes
+
+- MESSAGE9 signals:
+  
+  - Signal_91: (start bit = 0, start byte = 0, length = 1)
+  
+  - Signal_92: (start bit = 1, start byte = 0, length = 4)
+  
+  - Signal_93: (start bit = 0, start byte = 1, length = 40)
+
+Three write macros will be generated:
+
+`#define CAN_NWID_write_Signal_91(msg_buffer, data)`
+
+`#define CAN_NWID_write_Signal_92(msg_buffer, data)`
+
+`#define CAN_NWID_write_Signal_93(msg_buffer, data)`
+
+A typical usage will imply defining a byte array representing the MESSAGE9 raw data to be written (and transmitted since writting signals is only allowed for transmitted data):
+
+`uint8_t MESSAGE9_data[8];`
+
+This array `MESSAGE9_data[9]` is expected to be updated with the user's desired signal values and then this data needs to be synchronized to the transmission buffer so that it can be transmitted in a CAN message.
+
+```c
+void some_app_function()
+{
+  uint8_t MESSAGE9_data; /* Local array for the data of MESSAGE9 */
+  uint8_t my_Signal_91; /* Local variable for signal Signal_91 */
+  /* Signal Signal_92 will be updated with a constant. */
+  uint64_t * my_Signal_93; /* Local variable for signal Signal_93 */
+  /* Variable my_signal_94 is of 64-bit so that it can contain the 40-bits
+   * required for writting signal Signal_94. */
+
+  /* Setting a temporal value for Signal_91 */
+  my_Signal_91 = 1u;
+  /* Writting Signal_91 in the local message data */
+  CAN_NWID_write_Signal_91(MESSAGE9_data, Signal_91);
+  
+  /* Writting Signal_92 directly with constant value 0x03 */
+  CAN_NWID_write_Signal_92(MESSAGE9_data, 0x03);
+  
+  /* Setting a temporal value for Signal_93 */
+  my_Signal_93 = 0x000000FFFFFFF123;
+  /* Writting Signal_93 in the local message data */
+  CAN_NWID_write_Signal_93(MESSAGE9_data, my_Signal_93);
+  /* Bits 41 to 64 will be ignored since Signal_93 is of 40-bits length */
+  
+  /* Code for updating transmission buffer for MESSAGE9 based on MESSAGE9_data. */
+  /* Refer to further sections for information about this operation. */
+  /* ... */
+}
+```
 
 #### "Update" signal macros (write to a message's `union`)
 
@@ -882,20 +969,6 @@ void some_app_function()
 
 ### Acessing signals directly from buffers
 
-## Receiving Messages
-
-### Using the reception callbacks
-
-### Using the available flags (polling for received messages)
-
-### Using the received data
-
-## Transmitting Messages
-
-### Setting data to be transmitted
-
-### Transmission of periodic messages
-
-### Transmission of spontaneous messages
+## 
 
 # Functions References
