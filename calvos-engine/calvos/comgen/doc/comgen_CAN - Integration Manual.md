@@ -472,9 +472,7 @@ Following tasks are required in order to integrate the transmission of CAN messa
 
 ### Transmission of spontaneous messages
 
-## Data Structures
-
-### Message's data structures
+## CAN Data Structures
 
 A data structure is generated for each message within file `cog_comgen_CAN_NWID_network.h`. The purpose of this structure is to faciliate the access of the signals defined in such message.
 
@@ -496,7 +494,7 @@ typedef union{
 
 Wildcard MESSAGENAME corresponds to the defined message name.
 
-#### Cannonical and Non-Cannonical Signals/Messages
+### Cannonical and Non-Cannonical Signals/Messages
 
 The generated structure `s` can be either a bitfield or a regular structure depending on the layout of the message's signals.
 
@@ -573,7 +571,7 @@ Since signal Signal_22 is non-cannonical, a bitfield will be generated. The resu
 
 Notice the inserted reserved fields which correspond to empty space in the message.
 
-#### Signal Fragmentation
+### Signal Fragmentation
 
 If a signal:
 
@@ -703,7 +701,7 @@ Signal_62 is non-cannonical, hence message is non-cannonical. A bitfield will be
 
 The other element of the message's `union` is just a simple array of bytes  named `all`. This is generated so that the user can modify the signals in a raw manner if desired.
 
-### Signals Access Macros
+## Signals Access Macros
 
 A set of access macros are generated for each signal in the network within file `cog_comgen_CAN_NWID_network.h`. These macros provide alternative means of accessing the signals (reading and writing) of the messages directly from their raw data instead of using the `s` structures defined in previous section.
 
@@ -713,7 +711,7 @@ Another advantage of using these macros is that they do not face signal fragment
 
 At the end is users decission to choose which means of accessing the signals fits better its needs either by using the `s` structure, the `all` array or the access macros.
 
-#### "Extract" signal macros (read from any provided array)
+### "Extract" signal macros (read from any provided array)
 
 Extract macros are generated for all non-array signals. These macros have the following naming convention:
 
@@ -774,7 +772,7 @@ void some_app_function()
 }
 ```
 
-#### "Get" signal macros (read from message's `union`)
+### "Get" signal macros (read from message's `union`)
 
 Get macros are generated for all non-array signals. These "get" macros are similar to the "extract" macros but instead of providing an arbitrary array, they expect the message's union as argument and they operate over the `all` array.
 
@@ -838,7 +836,7 @@ Regardless of the signal type, a single macro is generated which will provide al
 
 Gcc compiler provides basic data up-to 64-bits (`long long int`) so then any CAN signal (which can't never exceed 64-bits) can be accessed with a single macro statement.
 
-#### "Get Pointer" macros for array-signals (read)
+### "Get Pointer" macros for array-signals (read)
 
 For array-signals, "get pointer" macros are generated. These macros have the following naming convention:
 
@@ -891,7 +889,7 @@ void some_app_function()
 }
 ```
 
-#### "Write" signal macros (write to any provided array)
+### "Write" signal macros (write to any provided array)
 
 Write macros are generated for all non-array signals. These macros have the following naming convention:
 
@@ -945,32 +943,104 @@ void some_app_function()
   my_Signal_91 = 1u;
   /* Writting Signal_91 in the local message data */
   CAN_NWID_write_Signal_91(MESSAGE9_data, Signal_91);
-  
+
   /* Writting Signal_92 directly with constant value 0x03 */
   CAN_NWID_write_Signal_92(MESSAGE9_data, 0x03);
-  
+
   /* Setting a temporal value for Signal_93 */
   my_Signal_93 = 0x000000FFFFFFF123ull;
   /* Writting Signal_93 in the local message data */
   CAN_NWID_write_Signal_93(MESSAGE9_data, my_Signal_93);
   /* Bits 41 to 64 will be ignored since Signal_93 is of 40-bits length */
-  
+
   /* Code for updating transmission buffer for MESSAGE9 based on MESSAGE9_data. */
   /* Refer to further sections for information about this operation. */
   /* ... */
 }
 ```
 
-#### "Update" signal macros (write to a message's `union`)
+### "Update" signal macros (write to a message's `union`)
 
-#### "Update Pointer" macros for array-signals (write)
+Update macros are generated for all non-array signals. These "update" macros are similar to the "write" macros but instead of writting to an arbitrary array, they will write into a message's union `all` array.
+
+These macros have the following naming convention:
+
+`#define CAN_NWID_update_SIGNALNAME(msg_buffer, data)`
+
+The macro argument `msg_buffer` is a pointer to the conveyor's message union `S_MESSAGENAME`.
+
+The macro argument `data` shall be the value of the signal to be written.
+
+These macros indeed use the write macros but they pass the `msg_buffer.all` pointer to them (and the `data` macro argument):
+
+`#define CAN_NWID_update_SIGNALNAME(msg_buffer, data)` `CAN_NWID_write_SIGNALNAME(msg_buffer.all, data)`
+
+Usage Example:
+
+- Message:
+  
+  - Name: MESSAGE9
+  
+  - Length: 8 bytes
+
+- MESSAGE9 signals:
+  
+  - Signal_91: (start bit = 0, start byte = 0, length = 1)
+  
+  - Signal_92: (start bit = 1, start byte = 0, length = 4)
+  
+  - Signal_93: (start bit = 0, start byte = 1, length = 40)
+
+Three update macros will be generated:
+
+`#define CAN_NWID_update_Signal_91(msg_buffer, data)`
+
+`#define CAN_NWID_update_Signal_92(msg_buffer, data)`
+
+`#define CAN_NWID_update_Signal_93(msg_buffer, data)`
+
+A typical usage will imply defining a local S_MESSAGE9 union for containing the temporal raw data to be written:
+
+`S_MESSAGE9 MESSAGE9_union;`
+
+This union `MESSAGE9_union` is expected to be updated with the user's desired signal values and then this data needs to be synchronized to the transmission buffer so that it can be transmitted in a CAN message.
+
+```c
+void some_app_function()
+{
+  S_MESSAGE9 MESSAGE9_union; /* Local array for the data of MESSAGE9 */
+  uint8_t my_Signal_91; /* Local variable for signal Signal_91 */
+  /* Signal Signal_92 will be updated with a constant. */
+  uint64_t my_Signal_93; /* Local variable for signal Signal_93 */
+  /* Variable my_signal_94 is of 64-bit so that it can contain the 40-bits
+   * required for writting signal Signal_94. */
+
+  /* Setting a temporal value for Signal_91 */
+  my_Signal_91 = 1u;
+  /* Writting Signal_91 in the local message data */
+  CAN_NWID_update_Signal_91(MESSAGE9_union, Signal_91);
+
+  /* Writting Signal_92 directly with constant value 0x03 */
+  CAN_NWID_update_Signal_92(MESSAGE9_union, 0x03);
+
+  /* Setting a temporal value for Signal_93 */
+  my_Signal_93 = 0x000000FFFFFFF123ull;
+  /* Writting Signal_93 in the local message data */
+  CAN_NWID_update_Signal_93(MESSAGE9_union, my_Signal_93);
+  /* Bits 41 to 64 will be ignored since Signal_93 is of 40-bits length */
+
+  /* Code for updating transmission buffer for MESSAGE9 based on MESSAGE9_union. */
+  /* Refer to further sections for information about this operation. */
+  /* ... */
+}
+```
+
+### "Update Pointer" macros for array-signals (write)
 
 ## Accesing signals within a message
 
 ### Accesing signals as local data
 
 ### Acessing signals directly from buffers
-
-## 
 
 # Functions References

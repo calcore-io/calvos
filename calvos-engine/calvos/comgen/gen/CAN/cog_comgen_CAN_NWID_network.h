@@ -241,71 +241,85 @@ for message in messages_layouts:
 	# If message is cannonical, don't use bitfields
 	if message.is_cannonical:
 		for signal in message.signals:
-			signal_container_len = cg.calculate_base_type_len(signal.fragments[1])
-			remaining_bits = signal.fragments[1]
-
-
-			if signal_container_len > remaining_bits:
-				prefix_number = 0
-				prefix = cg.gen_part_prefixes[cg.PRFX_DEFAULT]
-
-				msg_signals_temp = network.get_signals_of_message(message.name)
-				msg_signals = []
-				for msg_signal in msg_signals_temp:
-					msg_signals.append(msg_signal.name)
-
-				# Signal needs to be partitioned
-				# TODO: This fragmentation logic of cannonican messages with
-				# length of bytes not fitting exactly a data type can be moved
-				# to function get_messages_structures.
-				while signal_container_len > 8 \
-				and signal_container_len > remaining_bits:
-					signal_container_len = int(signal_container_len / 2)
-					remaining_bits -= signal_container_len
-
-					# Set fragment name
-					fragment_name = str(signal.fragments[0]) + "_" \
-						+ prefix + str(prefix_number)
-					# Check if fragment name doesn't duplicate a signal
-					# name, if so, try different part prefixes.
-					prefix_idx = 0
-					while fragment_name in msg_signals:
-						# Fragment name duplicates an existing signal name
-						# try different part prefix
-						prefix_idx += 1
-						if prefix_idx > (len(cg.gen_part_prefixes) - 1):
-							# All prefixes exhausted. Use a disruptive
-							# one so that it is evident and user can
-							# manually name the signal parts in the C code.
-							log_warn(("Can't generate unique name" \
-							   + " for part "+ fragment_name \
-							   + "\" of signal \"" + signal_name \
-							   + "\" since it duplicates with existing" \
-							   + "signal in same message."))
-
-							prefix = "#"
-							fragment_name = str(signal.fragments[0]) + "_" \
-								+ prefix + str(prefix_number)
-							break;
-						else:
-							log_warn(("Signal part \"" + fragment_name \
-							   + "\" of signal \"" + signal_name \
-							   + "\" duplicates with name of existing " \
-							   + "signal in same message." \
-							   + " Attempting with prefix \"" \
-							   + cg.gen_part_prefixes[prefix_idx] + "\""))
-
-							# Try new prefix
-							prefix = cg.gen_part_prefixes[prefix_idx]
-							fragment_name = str(signal.fragments[0]) + "_" \
-								+ prefix + str(prefix_number)
-
-					prefix_number += 1
-					cog.outl("\t\t" + cg.get_dtv(signal_container_len) \
-						+ " " + str(fragment_name) + ";")
+			# Check if signal is not a reserved one and if it is an array
+			last_array_signal = None
+			if signal.fragments[2] is False \
+			and network.signals[signal.name].is_array() is True:
+				# Only print signal array the first time a fragment of it appears
+				if last_array_signal != signal.name:
+					last_array_signal = signal.name
+					cog.outl("\t\t" + cg.get_dtv(8) + " " + str(signal.name) \
+						+ "[" + str(math.floor(network.signals[signal.name].len/8)) + "];")
 			else:
-				cog.outl("\t\t" + cg.get_dtv(signal.fragments[1]) \
-						+ " " + str(signal.fragments[0]) + ";")
+				signal_container_len = cg.calculate_base_type_len(signal.fragments[1])
+				remaining_bits = signal.fragments[1]
+
+				if signal_container_len > remaining_bits:
+					prefix_number = 0
+					prefix = cg.gen_part_prefixes[cg.PRFX_DEFAULT]
+
+					msg_signals_temp = network.get_signals_of_message(message.name)
+					msg_signals = []
+					for msg_signal in msg_signals_temp:
+						msg_signals.append(msg_signal.name)
+
+					# Signal needs to be partitioned
+					# TODO: This fragmentation logic of cannonical messages with
+					# length of bytes not fitting exactly a data type can be moved
+					# to function get_messages_structures.
+					while signal_container_len >= 8 and remaining_bits > 0:
+						if signal_container_len > remaining_bits:
+							signal_container_len = int(signal_container_len / 2)
+							remaining_bits -= signal_container_len
+						else:
+							remaining_bits -= signal_container_len
+
+						# Set fragment name
+						fragment_name = str(signal.fragments[0]) + "_" \
+							+ prefix + str(prefix_number)
+						# Check if fragment name doesn't duplicate a signal
+						# name, if so, try different part prefixes.
+						prefix_idx = 0
+						while fragment_name in msg_signals:
+							# Fragment name duplicates an existing signal name
+							# try different part prefix
+							prefix_idx += 1
+							if prefix_idx > (len(cg.gen_part_prefixes) - 1):
+								# All prefixes exhausted. Use a disruptive
+								# one so that it is evident and user can
+								# manually name the signal parts in the C code.
+								log_warn(("Can't generate unique name" \
+								   + " for part "+ fragment_name \
+								   + "\" of signal \"" + signal_name \
+								   + "\" since it duplicates with existing" \
+								   + "signal in same message."))
+
+								prefix = "#"
+								fragment_name = str(signal.fragments[0]) + "_" \
+									+ prefix + str(prefix_number)
+								break;
+							else:
+								log_warn(("Signal part \"" + fragment_name \
+								   + "\" of signal \"" + signal_name \
+								   + "\" duplicates with name of existing " \
+								   + "signal in same message." \
+								   + " Attempting with prefix \"" \
+								   + cg.gen_part_prefixes[prefix_idx] + "\""))
+
+								# Try new prefix
+								prefix = cg.gen_part_prefixes[prefix_idx]
+								fragment_name = str(signal.fragments[0]) + "_" \
+									+ prefix + str(prefix_number)
+
+						prefix_number += 1
+						cog.outl("\t\t" + cg.get_dtv(signal_container_len) \
+							+ " " + str(fragment_name) + ";")
+
+						if remaining_bits > 0 and signal_container_len > remaining_bits:
+							signal_container_len = cg.calculate_base_type_len(remaining_bits)
+				else:
+					cog.outl("\t\t" + cg.get_dtv(signal.fragments[1]) \
+							+ " " + str(signal.fragments[0]) + ";")
 	else:
 		# Bitfield is required for non-cannonical messages
 		for signal in message.signals:
@@ -340,7 +354,7 @@ for message in messages_layouts:
 		def_get = "CAN_"+net_name_str+"get_" \
 						+ signal.name + "(" + array_str + ")"
 
-		def_write_array = "CAN_" + net_name_str + "update_" \
+		def_write_array = "CAN_" + net_name_str + "update_ptr_" \
 						+ signal.name + "(" + array_str + "," + data_in_str + ")"
 		def_write = "CAN_"+net_name_str+"write_" \
 						+ signal.name + "(" + array_str + "," + data_in_str + ")"
