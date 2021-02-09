@@ -480,7 +480,7 @@ A data structure is generated for each message within file `cog_comgen_CAN_NWID_
 
 **IMPORTANT:** For all examples here following assumptions are made:
 
-- Target MCU is little endian
+- Target MCU is little endian (big endian is currently not supported).
 - Compiler is set in a way that the structures are "packed", this means no memory alignment is performed between fields but rather the compiler reduces the structure size as much as possible. For example, this is achieved in gcc by using the compiler directive `__attribute__((packed))` after the `struct` keyword.
 
 The data structure generated for each message is an `union` having on the one hand an `struct` (called `s`) defining the message's signals as fields of it according to their layout information and on the other hand a byte-array (named `all`) of lenght equal to the message's length in order to provide raw access to the message's data.
@@ -490,7 +490,7 @@ typedef union{
     struct __attribute__((packed)){
         /* signal(s) fields following layout */
     } s;
-    uint8_t all[kCAN_CT_msgLen_MESSAGENAME];
+    uint8_t all[kCAN_NWID_msgLen_MESSAGENAME];
 }S_MESSAGENAME;
 ```
 
@@ -577,11 +577,11 @@ Notice the inserted reserved fields which correspond to empty space in the messa
 
 If a signal:
 
-- Is non-cannonical
+- Is non-cannonical or,
 
 - Is cannonical but its length is greater than 8 bits **and** doesn't exactly match the size of the compiler's basic data types (8, 16, 32 or 64 bits for gcc compiler) then the signal will need to be **fragmented** within the structure *s*. 
 
-If a signal gets fragmented it can no longer be accessed by a single field within the structure `s` but the access will need to be performed individually per each generated fragment (or can be accessed via access *macros* explained in further sections).
+If a signal gets fragmented it can no longer be accessed by a single field within the structure `s` but the access will need to be performed individually per each generated fragment (or can be accessed as a whole via access *macros* explained in further sections).
 
 Examples of non-cannonical signals fragmentations:
 
@@ -645,7 +645,7 @@ Signals Signal_41 and Signal_42 are cannonical, however, their sizes do not matc
 Notice that each signal fragment gets a suffix `_x` where x indicates the fragment number and that no bit-field is generated since MESSAGE4 is a cannonical message.
 **Note:** the generator tries to reduce the number of fragments as possible trying to then chose the bigger possible fragment sizes.
 
-If a signal is defined as an **array** (currently only byte-arrays are supported) and if its conveyor message is also cannonical, then a regular array will be generated in structure `s`. Otherwise the array signal will get exploded into fragments corresponding to a byte each one.
+If a signal is defined as an **array** (currently only byte-arrays are supported) and if its conveyor message is also cannonical, then a regular array will be generated in structure `s` for such signal. Otherwise the array signal will get exploded into fragments corresponding to a byte each one.
 
 **Note:** A signal of array type shall always be cannonical, it is not allowed to define an array signal starting at a bit position not multiple of a byte or for it to have a length not multiple of 8.
 
@@ -695,9 +695,9 @@ Signal_62 is non-cannonical, hence message is non-cannonical. A bitfield will be
         uint8_t Signal_61_1 : 8;
         uint8_t Signal_61_2 : 8;
         uint8_t Signal_61_3 : 8;
-        uint8_t Signal_52_0 : 8;
-        uint8_t Signal_52_1 : 8;
-        uint8_t Signal_52_2 : 8;
+        uint8_t Signal_62_0 : 8;
+        uint8_t Signal_62_1 : 8;
+        uint8_t Signal_62_2 : 8;
     } s;
 ```
 
@@ -711,7 +711,7 @@ If for some reason, the generated `s` structure fields don't get properly packed
 
 Another advantage of using these macros is that they do not face signal fragmentation situation. Meaning that regardless of the type of signal (except for array signals) a single macro can fully access it.
 
-At the end is users decission which means of accessing the signals fits better its needs either by using the `s` structure, the `all` array or the access macros.
+At the end is users decission to choose which means of accessing the signals fits better its needs either by using the `s` structure, the `all` array or the access macros.
 
 #### "Extract" signal macros (read from any provided array)
 
@@ -840,7 +840,7 @@ Gcc compiler provides basic data up-to 64-bits (`long long int`) so then any CAN
 
 #### "Get Pointer" macros for array-signals (read)
 
-For array-signals extract "pointer" macros are generated. These macros have the following naming convention:
+For array-signals, "get pointer" macros are generated. These macros have the following naming convention:
 
 `#define CAN_NWID_get_ptr_SIGNALNAME(msg_buffer)` 
 
@@ -862,7 +862,7 @@ Example:
   
   - Signal_82: (start bit = 0, start byte = 2, length = 24, **type = array**)
 
-Following get macro will be generated for the array-signal Signal_82:
+Following get pointer macro will be generated for the array-signal Signal_82:
 
 `#define CAN_NWID_get_ptr_Signal_81(msg_buffer)`
 
@@ -929,7 +929,7 @@ A typical usage will imply defining a byte array representing the MESSAGE9 raw d
 
 `uint8_t MESSAGE9_data[8];`
 
-This array `MESSAGE9_data[9]` is expected to be updated with the user's desired signal values and then this data needs to be synchronized to the transmission buffer so that it can be transmitted in a CAN message.
+This array `MESSAGE9_data[8]` is expected to be updated with the user's desired signal values and then this data needs to be synchronized to the transmission buffer so that it can be transmitted in a CAN message.
 
 ```c
 void some_app_function()
@@ -937,7 +937,7 @@ void some_app_function()
   uint8_t MESSAGE9_data; /* Local array for the data of MESSAGE9 */
   uint8_t my_Signal_91; /* Local variable for signal Signal_91 */
   /* Signal Signal_92 will be updated with a constant. */
-  uint64_t * my_Signal_93; /* Local variable for signal Signal_93 */
+  uint64_t my_Signal_93; /* Local variable for signal Signal_93 */
   /* Variable my_signal_94 is of 64-bit so that it can contain the 40-bits
    * required for writting signal Signal_94. */
 
