@@ -8,7 +8,7 @@ The CAN network to generate needs to be defined first using the "CAN Network Def
 
 ## Network definitions
 
-General network definitions need to be speciifed in tab "Network_and_Nodes".
+General network definitions need to be specified in tab "Network_and_Nodes".
 
 - **Network Name:** a name for the  given network. This is to be used for documentation purposes only (the name is not used for code generation). For example: "CAN Test Network".
 
@@ -20,7 +20,7 @@ General network definitions need to be speciifed in tab "Network_and_Nodes".
 
 ## Nodes definitions
 
-Node definitions need to be speciifed in tab "Network_and_Nodes".
+Node definitions need to be specified in tab "Network_and_Nodes".
 
 A row per each node is expected in tab "Network_and_Nodes" starting below the corresponding titles row.
 
@@ -30,7 +30,7 @@ A row per each node is expected in tab "Network_and_Nodes" starting below the co
 
 ## Messages definitions
 
-Message definitions need to be speciifed in tab "Messages".
+Message definitions need to be specified in tab "Messages".
 
 - **Message Name:** Name of the message. Needs to comply with C-identifier syntax and needs to be unique per message.
 
@@ -67,7 +67,7 @@ Message definitions need to be speciifed in tab "Messages".
 
 ## Signal definitions
 
-Signal definitions need to be speciifed in tab "Signals".
+Signal definitions need to be specified in tab "Signals".
 
 - **Signal Name:** Name of the signal. Needs to comply with C-identifier syntax and needs to be unique per network.
 
@@ -293,7 +293,7 @@ Currently, `calvos` is not yet properly packaged so it needs to be set-up before
    
    Note: for simplicity we will assume that we are in a MS Windows environment and that the installed python 3.7 or newer can be invoked directly from the console, i.e., the python executable path is defined in the PATH system variable.
 
-2. Get following dependencies (for example using`pip -m install`):
+2. Get following dependencies (for example using`python -m pip install <module_name>`):
    
    - cogapp
    
@@ -302,6 +302,10 @@ Currently, `calvos` is not yet properly packaged so it needs to be set-up before
    - pyexcel
    
    - pyexcel-ods
+   
+   - pyexcel-xls
+   
+   - pyexcel-xlsx
 
 3. Get the `calvos` python source code from github [GitHub - calcore-io/calvos: Open Source SW Utilities for Embedded Systems](https://github.com/calcore-io/calvos) and put in *C:\calvos* Open a command line and navigate into folder *C:\calvos\calvos-engine*
 
@@ -1036,6 +1040,7 @@ void some_app_function()
 ```
 
 ### "Update Pointer" macros for array-signals (write)
+
 For array-signals, "get pointer" macros are generated. These macros have the following naming convention:
 
 `#define CAN_NWID_get_ptr_SIGNALNAME(msg_buffer)` 

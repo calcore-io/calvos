@@ -2374,7 +2374,7 @@ class Network_CAN:
         # Parse Enum Types
         # -----------------------
         log_debug("Parsing enums type data.")
-        working_sheet = book["Data Types"]
+        working_sheet = book["Data_Types"]
         working_sheet.name_columns_by_row(0)
         
         for row in working_sheet:
