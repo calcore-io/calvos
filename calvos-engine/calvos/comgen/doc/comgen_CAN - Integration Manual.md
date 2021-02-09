@@ -472,9 +472,11 @@ typedef union{
     struct __attribute__((packed)){
         /* signal(s) fields following layout */
     } s;
-    uint8_t all[kCAN_CT_msgLen_<MESSAGE_NAME>];
-}S_<MESSAGE_NAME>;
+    uint8_t all[kCAN_CT_msgLen_MESSAGENAME];
+}S_MESSAGENAME;
 ```
+
+Wildcard MESSAGENAME corresponds to the defined message name.
 
 The generated structure `s` can be either a bitfield or a regular structure depending on the layout of the message's signals.
 
@@ -681,31 +683,192 @@ The other element of the message's `union` is just a simple array of bytes  name
 
 ### Signals Access Macros
 
-A set of access macros are generated for each signal in the network within file `cog_comgen_CAN_NWID_network.h`. These macros provide an alternative mean of accessing the signals of the messages directly from their raw data instead of using the `s` structures defined in previous section.
+A set of access macros are generated for each signal in the network within file `cog_comgen_CAN_NWID_network.h`. These macros provide alternative means of accessing the signals of the messages directly from their raw data instead of using the `s` structures defined in previous section.
 
-If for some reason, the generated `s` structure fields don't get properly packed then the macros can be used as alternatives since they do not depend on compiler's struct logic. 
+If for some reason, the generated `s` structure fields don't get properly packed then the macros can be used as alternatives since they do not depend on compiler's struct logic. Instead, the macros use type casting, masking and shiftings in order to access the signals.
 
-At the end is use decission which means of accessing the signals fits better its needs.
+Another advantage of using these macros is that they do not face signal fragmentation situation. Meaning that regardless of the type of signal (except for array signals) a single macro can fully access it.
 
-The generated macros in `cog_comgen_CAN_NWID_network.h` operate anywais over the message `union`'s but they do over the `all` array rather than over the `s` structure. 
+At the end is users decission which means of accessing the signals fits better its needs either by using the `s` structure, the `all` array or the access macros.
 
-#### Extract signal macros (read from any provided array)
+#### "Extract" signal macros (read from any provided array)
 
-These macros have the following naming convention:
+Extract macros are generated for all non-array signals. These macros have the following naming convention:
 
-`#define CAN_CT_extract_MNUsignal(msg_buffer)`
+`#define CAN_NWID_extract_SIGNALNAME(msg_buffer)`
 
-The macro argument `msg_buffer` is a pointer to an arbitrary array of bytes. The intention, however, is that this array has the same length as the signal's conveyor message and that msg_buffer is points always to the byte 'zero' of the message.
+The macro argument `msg_buffer` is a pointer to an arbitrary array of bytes. The intention, however, is that this array has the same length as the signal's conveyor message and that the provided msg_buffer points always to the byte 'zero' of the array.
 
 Example:
 
-Message 
+- Message:
+  
+  - Name: MESSAGE7
+  
+  - Length: 3 bytes
 
-#### Get signal macros (read from message's `union`)
+- MESSAGE7 signals: 
+  
+  - Signal_71: (start bit = 0, start byte = 0, length = 8)
+  
+  - Signal_72: (start bit = 0, start byte = 1, length = 7)
+  
+  - Signal_73: (start bit = 0, start byte = 2, length = 1)
 
-#### Write signal macros (write to any provided array)
+Three extract macros will be generated:
 
-#### Update signal macros (write to a message's `union`)
+`#define CAN_NWID_extract_Signal_71(msg_buffer)`
+
+`#define CAN_NWID_extract_Signal_72(msg_buffer)`
+
+`#define CAN_NWID_extract_Signal_73(msg_buffer)`
+
+A typical usage will imply defining a byte array representing the received MESSAGE7 raw data:
+
+`uint8_t MESSAGE7_data[3];`
+
+This array `MESSAGE7_data[3]` is expected to be updated with the raw received data. Once this is done, the extract macros can be used to read the individual signals from this array.
+
+```c
+void some_app_function()
+{
+  uint8_t MESSAGE7_data[3]; /* Local array for raw data of MESSAGE7 */
+  uint8_t my_Signal_71; /* Local variable for signal Signal_71 */
+  uint8_t my_Signal_72; /* Local variable for signal Signal_72 */
+  uint8_t my_Signal_73; /* Local variable for signal Signal_73 */
+
+  /* Code for updating MESSAGE7_data with the received data from CAN. Refer to further sections for information about this operation. */
+  /* ... */
+
+  /* Extracting signals from MESSAGE7_data array */
+  my_Signal_71 = CAN_NWID_extract_Signal_71(MESSAGE7_data);
+  my_Signal_72 = CAN_NWID_extract_Signal_72(MESSAGE7_data);
+  // Also possible this way...
+  my_Signal_73 = CAN_NWID_extract_Signal_73(&MESSAGE7_data[0]); 
+
+  /* Application code doing something with signals goes here */
+  /* ... */
+}
+```
+
+#### "Get" signal macros (read from message's `union`)
+
+Get macros are generated for all non-array signals. These "get" macros are similar to the "extract" macros but instead of providing an arbitrary array, they expect the message's union as argument and they operate over the `all` array.
+
+These macros have the following naming convention:
+
+`#define CAN_NWID_get_SIGNALNAME(msg_buffer)`
+
+The macro argument `msg_buffer` is a pointer to the conveyor's message union `S_MESSAGENAME`. These macros indeed use the extract macros but they pass the `msg_buffer.all` pointer to them:
+
+`#define CAN_NWID_get_SIGNALNAME(msg_buffer)` `(CAN_NWID_extract_SIGNALNAME(msg_buffer.all))`
+
+Usage Example:
+
+- Message (same message 7 as used before):
+  
+  - Name: MESSAGE7
+  
+  - Length: 3 bytes
+
+- MESSAGE7 signals: 
+  
+  - Signal_71: (start bit = 0, start byte = 0, length = 8)
+  
+  - Signal_72: (start bit = 0, start byte = 1, length = 7)
+  
+  - Signal_73: (start bit = 0, start byte = 2, length = 1)
+
+Three get macros will be generated:
+
+`#define CAN_NWID_get_Signal_71(msg_buffer)`
+
+`#define CAN_NWID_get_Signal_72(msg_buffer)`
+
+`#define CAN_NWID_get_Signal_73(msg_buffer)`
+
+A message's `S_MESSAGENAME` `union` is expected to be defined in this case. The raw received data needs to get updated into the `union` and then the get macros can be used over it.
+
+```c
+void some_app_function()
+{
+  S_MESSAGE7 MESSAGE7_union; /* Local union for the data of MESSAGE7 */
+  uint8_t my_Signal_71; /* Local variable for signal Signal_71 */
+  uint8_t my_Signal_72; /* Local variable for signal Signal_72 */
+  uint8_t my_Signal_73; /* Local variable for signal Signal_73 */
+
+  /* Code for updating MESSAGE7_union with the received data from CAN. Refer to further sections for information about this operation. */
+  /* ... */
+
+  /* Getting signals from MESSAGE7_union array */
+  my_Signal_71 = CAN_NWID_get_Signal_71(MESSAGE7_union);
+  my_Signal_72 = CAN_NWID_get_Signal_72(MESSAGE7_union);
+  my_Signal_73 = CAN_NWID_get_Signal_73(MESSAGE7_union); 
+
+  /* Application code doing something with signals goes here */
+  /* ... */
+}
+```
+
+Regardless of the signal type, a single macro is generated which will provide all the signal's data. Hence, the local data getting the signal's data shall be long enough to accomodate the full signal's data.
+
+Gcc compiler provides basic data up-to 64-bits (`long long int`) so then any CAN signal (which can't never exceed 64-bits) can be accessed with a single macro statement.
+
+#### "Get" macros for array-signals (read from any provided array)
+
+For array-signals extract "pointer" macros are generated. These macros have the following naming convention:
+
+`#define CAN_NWID_get_ptr_SIGNALNAME(msg_buffer)` 
+
+The macro argument `msg_buffer` is a pointer to the conveyor's message union `S_MESSAGENAME`. These macros simply return the pointer to the corresponding starting byte of the signal in the `all` array of the union.
+
+The user can then operate over the signal as if it was a normal byte-array.
+
+Example:
+
+- Message:
+  
+  - Name: MESSAGE8
+  
+  - Length: 4 bytes
+
+- MESSAGE8 signals: 
+  
+  - Signal_81: (start bit = 0, start byte = 0, length = 24, **type = array**)
+  
+  - Signal_82: (start bit = 0, start byte = 3, length = 8, type = scalar)
+
+Following get macro will be generated for the array-signal Signal_81:
+
+`#define CAN_NWID_get_ptr_Signal_81(msg_buffer)`
+
+A message's `S_MESSAGENAME` `union` is expected to be defined in this case. The raw received data needs to get updated into the `union` and then the get pointer macro can be used over it.
+
+```c
+void some_app_function()
+{
+  S_MESSAGE8 MESSAGE8_union; /* Local union for the data of MESSAGE8 */
+  uint8_t * my_Signal_81; /* Local pointer variable for signal Signal_81 */
+  uint8_t my_Signal_82; /* Local variable for signal Signal_82 */
+
+  /* Code for updating MESSAGE8_union with the received data from CAN. Refer to further sections for information about this operation. */
+  /* ... */
+
+  /* Getting signal pointer for Signal_81 from MESSAGE8_union */
+  my_Signal_81 = CAN_NWID_get_Signal_81(MESSAGE8_union);
+
+  /* Application code doing something with signal goes here */
+  if(my_Signal_81[1] == 0xFF)
+  {
+      /* Do something if the second byte of the Signal_81 array is 0xFF */
+    /* ... */
+  }
+}
+```
+
+#### "Write" signal macros (write to any provided array)
+
+#### "Update" signal macros (write to a message's `union`)
 
 ## Accesing signals within a message
 
