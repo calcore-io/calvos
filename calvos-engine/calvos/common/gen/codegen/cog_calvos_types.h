@@ -8,6 +8,12 @@ import pathlib as plib
 import calvos.common.codegen as cg
 
 from cog_codegen import log_debug, log_info, log_warn, log_error, log_critical, C_gen_info
+
+try:
+	with open(cog_proj_pickle_file, 'rb') as f:
+		project = pic.load(f)
+except Exception as e:
+        print('Failed to access pickle file %s. Reason: %s' % (cog_pickle_file, e))
 ]]] */
 // [[[end]]]
 /*============================================================================*/
@@ -75,7 +81,25 @@ for key, data_type in cg.dt_compiler.items():
  ]]] */
 // [[[end]]]
 
-typedef uint32_t intNative_t;
+/* MCU dependant symbols */
+/* [[[cog
+
+# Definition of basic data types
+sym_word_size_name = "MCU_WORD_SIZE"
+sym_word_size_val = project.get_simple_param_val("common.codegen", "codegen_word_size")
+
+code_str = "#define " + sym_word_size_name + "\t\t" + str(sym_word_size_val)
+cog.outl(code_str)
+
+# Definition of native data types
+sym_u_native_name = "uintNat_t"
+cog.outl("typedef " +  cg.get_dtv(sym_word_size_val, "i", False) + " " + sym_u_native_name)
+
+sym_native_name = "intNat_t"
+cog.outl("typedef " +  cg.get_dtv(sym_word_size_val, "i", True) + " " + sym_native_name)
+
+ ]]] */
+// [[[end]]]
 
 /* Error symbols */
 typedef enum{
@@ -198,5 +222,7 @@ typedef union{
 /* Macros for critical sections */
 #define CALVOS_CRITICAL_ENTER()
 #define CALVOS_CRITICAL_EXIT()
+
+
 
 #endif /* CALVOS_TYPES_H */

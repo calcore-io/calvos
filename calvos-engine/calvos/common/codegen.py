@@ -957,6 +957,9 @@ def cog_generator(input_file, out_dir, work_dir, gen_path, variables = None):
     if cog_output_file_str.find("static_", 0, 7) == 0:
         cog_output_file_str = cog_output_file_str[7:]
     cog_output_file = out_dir / cog_output_file_str
+    
+    # Get project pickle full file name  
+    project_pickle = project_object.get_work_file_path("common.project", "project_pickle")
         
     # Invoke code generation
     # ----------------------           
@@ -964,6 +967,7 @@ def cog_generator(input_file, out_dir, work_dir, gen_path, variables = None):
                '-d', \
                '-D', 'input_worksheet=' + input_file, \
                '-D', 'project_working_dir=' + str(work_dir), \
+               '-D', 'cog_proj_pickle_file=' + str(project_pickle),
                '-o', str(cog_output_file), \
                str(cog_input_file) ]
     
@@ -983,11 +987,16 @@ def cog_generator(input_file, out_dir, work_dir, gen_path, variables = None):
                  % ((str(out_dir / cog_output_file_str)), str(cog_return)))
         print("INFO: code generation return value: ",cog_return)
 
+
+project_object = None
 #===================================================================================================
 def load_input(input_file, input_type, params, project_obj):
     """ Loads input file and returns the corresponding object. """
     del input_type, params # Unused parameters
     
+    global project_object
+    
+    project_object = project_obj
     parse_codegen_spreadsheet(input_file)
     # This function for this specific module returns a dummy object.
     return 0

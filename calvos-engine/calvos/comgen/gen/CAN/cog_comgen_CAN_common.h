@@ -131,13 +131,14 @@ typedef enum{
 /* Types for CAN messages dynamic data */
 typedef struct{
 	FlagsNative available;
-	intNative_t timedout;
+	intNat_t timedout;
 	NodeUint32 timeout_queue;
+	uint8_t * sig_avlbl_flags;
 }CANrxMsgDynamicData;
 
 typedef struct{
 	CANtxState state;
-	intNative_t BAF_active;
+	intNat_t BAF_active;
 	uint32_t period_timer;	/* In ticks */
 	const struct CANtxMsgStaticData* txQueueNext;
 }CANtxMsgDynamicData;
@@ -177,7 +178,7 @@ typedef struct CANtxMsgStaticData{
 
 /* Declaration of TX transmission queue */
 typedef struct{
-	intNative_t length;
+	intNat_t length;
 	const CANtxMsgStaticData* head;
 	const CANtxMsgStaticData* tail;
 }CANtxQueue;

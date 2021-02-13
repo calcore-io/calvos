@@ -151,6 +151,35 @@ if len(list_of_rx_msgs) > 0:
 ]]] */
 // [[[end]]]
 
+/* RX available flags */
+/* RX signal availability flag indexes */
+/* [[[cog
+if len(list_of_rx_msgs) > 0:
+	# Estimate size of
+	sym_sig_idx_pfx = "kCAN_" + net_name_str + "sig_avlbl_idx_"
+	macro_names = []
+	macro_values = []
+	for message in subnet.messages.values():
+		if subnet.get_message_direction(node_name,message.name) == nw.CAN_RX:
+			message_signals = subnet.get_signals_of_message(message.name)
+			index = 0
+			for signal in message_signals:
+				macro_name = sym_sig_idx_pfx + signal.name
+				macro_value = "(" + str(index) + "u)"
+				index += 1
+				macro_names.append(macro_name)
+				macro_values.append(macro_value)
+
+	max_len = cg.get_str_max_len(macro_names)
+	max_len += TAB_SPACE
+
+	for i, macro_name in enumerate(macro_names):
+		code_string = "#define " + macro_name \
+					+ cg.gen_padding(max_len, len(macro_name)) + macro_values[i]
+		cog.outl(code_string)
+]]] */
+// [[[end]]]
+
 /* Array of Rx messages dynamic data */
 /* [[[cog
 if len(list_of_rx_msgs) > 0:
