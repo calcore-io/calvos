@@ -133,7 +133,6 @@ typedef struct{
 	FlagsNative available;
 	intNat_t timedout;
 	NodeUint32 timeout_queue;
-	uint8_t * sig_avlbl_flags;
 }CANrxMsgDynamicData;
 
 typedef struct{
@@ -155,6 +154,8 @@ typedef struct CANrxMsgStaticData{
 	Callback rx_callback;
 	Callback timeout_callback;
 	uint8_t* data;
+	uint8_t * sig_avlbl_flags;
+	uint8_t sig_avlbl_buf_len;
 	CANrxMsgDynamicData* dyn;
 	CANrxMsgStaticFields fields;
 	const struct CANrxMsgStaticData* searchPrev;

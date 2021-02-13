@@ -219,11 +219,13 @@ if len(list_of_rx_msgs) > 0:
 	sym_sig_idx_pfx = "kCAN_" + net_name_str + "sig_avlbl_idx_"
 	macro_names = []
 	macro_values = []
+	avlbl_flags_idx = {}
 	for message in subnet.messages.values():
 		if subnet.get_message_direction(node_name,message.name) == nw.CAN_RX:
 			message_signals = subnet.get_signals_of_message(message.name)
 			index = 0
 			for signal in message_signals:
+				avlbl_flags_idx.update({signal.name : index})
 				macro_name = sym_sig_idx_pfx + signal.name
 				macro_value = "(" + str(index) + "u)"
 				index += 1
@@ -247,9 +249,12 @@ if len(list_of_rx_msgs) > 0:
 	sym_avlbl_buff_idx_pfx = "kCAN_" + net_name_str + "avlbl_buffer_idx_"
 	macro_names = []
 	macro_values = []
+	avlbl_msg_buff_idx = {}
 	avlbl_buff_byte = 0
 	for message in subnet.messages.values():
 		if subnet.get_message_direction(node_name,message.name) == nw.CAN_RX:
+			avlbl_msg_buff_idx.update({message.name : avlbl_buff_byte})
+
 			macro_name = sym_avlbl_buff_idx_pfx + message.name
 			macro_value = "(" + str(avlbl_buff_byte) + "u)"
 
@@ -270,10 +275,39 @@ if len(list_of_rx_msgs) > 0:
 ]]] */
 // [[[end]]]
 
+/* RX signal availability flags buffer slot sizes */
+/* [[[cog
+if len(list_of_rx_msgs) > 0:
+	# Calculate padding spaces
+	sym_avlbl_size_idx_pfx = "kCAN_" + net_name_str + "avlbl_slot_len_"
+	macro_names = []
+	macro_values = []
+	for message in subnet.messages.values():
+		if subnet.get_message_direction(node_name,message.name) == nw.CAN_RX:
+			macro_name = sym_avlbl_size_idx_pfx + message.name
+
+			message_signals = subnet.get_signals_of_message(message.name)
+			avlbl_buff_len = \
+				int(cg.calculate_base_type_len(len(message_signals))/8)
+			macro_value = "(" + str(avlbl_buff_len) + "u)"
+
+			macro_names.append(macro_name)
+			macro_values.append(macro_value)
+
+	max_len = cg.get_str_max_len(macro_names)
+	max_len += TAB_SPACE
+
+	for i, macro_name in enumerate(macro_names):
+		code_string = "#define " + macro_name \
+					+ cg.gen_padding(max_len, len(macro_name)) + macro_values[i]
+		cog.outl(code_string)
+]]] */
+// [[[end]]]
+
 /* RX signals availability buffer size */
 /* [[[cog
 if len(list_of_rx_msgs) > 0:
-	sym_avlbl_buff_len = "kCAN_" + net_name_str + "buffer_len"
+	sym_avlbl_buff_len = "kCAN_" + net_name_str + "avlbl_buffer_len"
 	sym_avlbl_buff_len_val = str(avlbl_buff_byte)
 
 	cog.outl("#define "+sym_avlbl_buff_len+"\t\t("+sym_avlbl_buff_len_val+"u)")
@@ -408,20 +442,14 @@ if len(subnet.messages) > 0:
 			def_update_direct = "CAN_"+net_name_str+"update_direct_" \
 							+ signal.name + "(" + data_in_str + ")"
 
-			sym_avlb_get = "CAN_" + net_name_str + "available_" \
+			sym_avlb_get = "CAN_" + net_name_str + "get_avlbl_" \
 							+ signal.name + "()"
-			sym_avlb_clear = "CAN_" + net_name_str + "clr_available_" \
-							+ signal.name + "()"
-
-			sym_avlb_get_C = "CAN_" + net_name_str + "client_available_" \
-							+ signal.name + "()"
-			sym_avlb_clear_C = "CAN_" + net_name_str + "clr_client_available_C" \
+			sym_avlb_clear = "CAN_" + net_name_str + "clr_avlbl_" \
 							+ signal.name + "()"
 
 			max_len = cg.get_str_max_len([def_read_array, def_get_direct, \
 										def_write_array, def_update_direct, \
-										sym_avlb_get, sym_avlb_clear, \
-										sym_avlb_get_C, sym_avlb_clear_C])
+										sym_avlb_get, sym_avlb_clear])
 
 			# From longest string add TAB_SPACE spaces for padding
 			max_len += TAB_SPACE
@@ -435,8 +463,6 @@ if len(subnet.messages) > 0:
 
 			pad_avlb_get = cg.gen_padding(max_len, len(sym_avlb_get))
 			pad_avlb_clear = cg.gen_padding(max_len, len(sym_avlb_clear))
-			pad_avlb_get_C = cg.gen_padding(max_len, len(sym_avlb_get_C))
-			pad_avlb_clear_C = cg.gen_padding(max_len, len(sym_avlb_clear_C))
 
 			# Print read macro comment
 			cog.outl("/"+chr(42)+" Macros for direct reading of signal \"" \
@@ -466,10 +492,44 @@ if len(subnet.messages) > 0:
 					cog.outl("#define " + def_update_direct + pad_update_direct \
 						+ def_write.replace("("+array_str,"("+msg_stat_data+".data"))
 
+			cog.outl("")
 			# Signal available flags macros
 			# -----------------------------
 			# Available macros are only for RX messages.
+			cog.outl("/"+chr(42)+" Macros for available flags handling of signal \"" \
+					+ signal.name + "\". " + chr(42) + "/")
 
+			sym_avlbl_buffer_name = "can" + net_name_str + node_name_str + "avlbl_buffer"
+
+			# Available flags only apply for RX signals
+			if msg_is_tx is False:
+				casting_type = cg.calculate_base_type_len(len(message_signals))
+				if casting_type > 8:
+					# Get available macro
+					macro_value = "((" + cg.get_dtv(casting_type) +")&" + sym_avlbl_buffer_name \
+						+ "[" + sym_avlbl_buff_idx_pfx+message.name + "] >> " \
+						+ sym_sig_idx_pfx + signal.name + ") & 1u)"
+
+					cog.outl("#define "+sym_avlb_get+pad_avlb_get+macro_value)
+				else:
+					macro_value = "((" + sym_avlbl_buffer_name \
+						+ "[" + sym_avlbl_buff_idx_pfx+message.name + "] >> " \
+						+ sym_sig_idx_pfx + signal.name + ") & 1u)"
+
+					cog.outl("#define "+sym_avlb_get+pad_avlb_get+macro_value)
+
+				# Clear available macro
+				working_byte = math.floor(avlbl_flags_idx[signal.name] / 8)
+				working_bit = avlbl_flags_idx[signal.name] - (working_byte*8)
+				working_mask = cg.get_bit_mask(1, working_bit, True, 8)
+
+				macro_value = "(" + sym_avlbl_buffer_name \
+					+ "[" + str(avlbl_msg_buff_idx[message.name] + working_byte) + "] = " \
+					+ sym_avlbl_buffer_name \
+					+ "[" + str(avlbl_msg_buff_idx[message.name] + working_byte) + "] & " \
+					+ cg.to_hex_string_with_suffix(working_mask) + ")"
+
+				cog.outl("#define " + sym_avlb_clear + pad_avlb_clear + macro_value)
 
 			cog.outl("")
 ]]] */

@@ -151,6 +151,16 @@ if len(list_of_rx_msgs) > 0:
 ]]] */
 // [[[end]]]
 
+/* Rx available flags buffer */
+/* [[[cog
+if len(list_of_rx_msgs) > 0:
+	sym_avlbl_buffer_name = "can" + net_name_str + node_name_str + "avlbl_buffer"
+	sym_avlbl_buff_len = "kCAN_" + net_name_str + "avlbl_buffer_len"
+	code_str = cg.get_dtv(8) + " " + sym_avlbl_buffer_name + "[" + sym_avlbl_buff_len + "];"
+	cog.outl(code_str)
+]]] */
+// [[[end]]]
+
 /* RX available flags */
 /* RX signal availability flag indexes */
 /* [[[cog
@@ -210,6 +220,9 @@ if len(list_of_rx_msgs) > 0:
 	callback_rx_sufix = "_rx_callback"
 	callback_tout_sufix = "_timeout_callback"
 
+	sym_avlbl_buff_idx_pfx = "kCAN_" + net_name_str + "avlbl_buffer_idx_"
+	sym_avlbl_size_idx_pfx = "kCAN_" + net_name_str + "avlbl_slot_len_"
+
 	array_data = []
 	data_idx = 0
 	for i, msg_name in enumerate(sorted_rx_msgs.keys()):
@@ -224,10 +237,14 @@ if len(list_of_rx_msgs) > 0:
 		# Msg timeout callback
 		array_data.append("&" + callback_prefix + msg_name + callback_tout_sufix)
 		# Data Buffer
-		array_data.append("&" + sym_rx_data_name + "["+ str(data_idx) +"]")
+		array_data.append(" \\\n\t\t\t\t&" + sym_rx_data_name + "["+ str(data_idx) +"]")
 		data_idx += subnet.messages[msg_name].len
+		# Available Flags Buffer
+		array_data.append("&" + sym_avlbl_buffer_name + "["+ sym_avlbl_buff_idx_pfx + msg_name +"]")
+		# Available Flags Buffer Length
+		array_data.append(sym_avlbl_size_idx_pfx + msg_name)
 		# Pointer to dynamic data
-		array_data.append("&" + sym_rx_dyn_data_name + "["+ str(i) +"]")
+		array_data.append(" \\\n\t\t\t\t&" + sym_rx_dyn_data_name + "["+ str(i) +"]")
 		# Msg Len
 		array_data.append(str(subnet.messages[msg_name].len) + "u")
 		# Msg extended id?
@@ -248,7 +265,7 @@ if len(list_of_rx_msgs) > 0:
 			array_data.append("NULL")
 
 		ALL_DATA_END = len(array_data)-1
-		SUB_STRUCT_BEGIN = 6
+		SUB_STRUCT_BEGIN = 8
 		SUB_STRUCT_END = SUB_STRUCT_BEGIN + 1
 		code_string = "{"
 		for j, piece_str in enumerate(array_data):
@@ -346,7 +363,7 @@ if len(list_of_tx_msgs) > 0:
 		# Msg tx callback
 		array_data.append("&" + callback_prefix + msg_name + callback_tx_sufix)
 		# Data Buffer
-		array_data.append("&" + sym_tx_data_name + "["+ str(data_idx) +"]")
+		array_data.append(" \\\n\t\t\t\t&" + sym_tx_data_name + "["+ str(data_idx) +"]")
 		data_idx += subnet.messages[msg_name].len
 		# Pointer to dynamic data
 		array_data.append("&" + sym_tx_dyn_data_name + "["+ str(i) +"]")
@@ -415,8 +432,16 @@ if len(list_of_tx_msgs) > 0:
 		|| (data_len == 0u)){
 			// Copy data to buffer
 			memcpy(msg_static_data->data, data_in, msg_static_data->fields.len);
-			// Set available flags
+			// Set Message available flags
 			msg_static_data->dyn->available.all = kAllOnes32;
+			// Set Signals available flags
+			if(msg_static_data->sig_avlbl_buf_len == 1){
+				*msg_static_data->sig_avlbl_flags = kAllOnes8;
+			}else{
+				for(uint32t i=0; i < msg_static_data->sig_avlbl_buf_len; i++){
+					*msg_static_data->sig_avlbl_flags[i] = kAllOnes8;
+				}
+			}
 			// clear timeout flag
 			msg_static_data->dyn->timedout = kFalse;
 			// Invoke rx callback
