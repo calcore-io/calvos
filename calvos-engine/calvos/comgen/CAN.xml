@@ -36,6 +36,30 @@
 			</clv:Desc>
 			<clv:Default>False</clv:Default>
 		</clv:ParamDefinition>
+		<clv:ParamDefinition type="str" id="CAN_enum_sym_prefix"
+			category="catCAN_general">
+			<clv:Title>
+				Prefix for data types enumerated symbols
+			</clv:Title>
+			<clv:Desc>
+				Prefix for data types enumerated symbols.
+				Use $ to indicate an empty string.
+Use ${NWID} to indicate the network ID.
+			</clv:Desc>
+			<clv:Default>kCAN_${NWID}_</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="str" id="CAN_enum_type_prefix"
+			category="catCAN_general">
+			<clv:Title>
+				Prefix for type names of signal enumerations
+			</clv:Title>
+			<clv:Desc>
+				Prefix for type names of signal enumerations.
+Leave empty to name the generated types exactly as the source data_type.
+Use ${DATATYPE} to indicate the Data_Type name.
+			</clv:Desc>
+			<clv:Default>t_${DATATYPE}</clv:Default>
+		</clv:ParamDefinition>
 		<clv:ParamDefinition type="list" id="CAN_msg_search_algorithms"
 			category="catCAN_general" is_read_only="true" is_advanced="false">
 			<clv:Title>Msg search algorithms</clv:Title>

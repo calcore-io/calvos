@@ -4,7 +4,7 @@ This document describes how to define a CAN network within the calvos system, ho
 
 # CAN Network definition
 
-The CAN network to generate needs to be defined first using the "CAN Network Definition.ods" template. Different tabs within the template need to be filled-up in order to fully define the network. A file based on this template shall be created per each required network. These files defining the networks can be freely named.
+The CAN network to generate needs to be defined first using the "CAN Network Definition.ods" template (currently only ods format is supported). Different tabs within the template need to be filled-up in order to fully define the network. A file based on this template shall be created per each required network. These files defining the networks can be freely named.
 
 ## Network definitions
 
@@ -116,7 +116,7 @@ User can define custom enumerated data types. These data types need to be define
 
 - **Enum Values:** definition of enumerated symbols and their explicit values (optional). Needs to be a list of comma-separated symbol definitions for the enumeration (a standard C enumeration will be generated for each user-defined type). If an explicit integer value is desired for a given symbol, it needs to be specified between parentheses next to the symbol's name.
   
-  Symbol names need to comply with C-idenfitier syntax and shall be *unique* amognst all enumerated symbols of the user-defined enumerated data types.
+  Symbol names need to comply with C-identifier syntax and shall be *unique* amognst all enumerated symbols of the user-defined enumerated data types.
   
   Examples:
   
@@ -136,7 +136,7 @@ User can define custom enumerated data types. These data types need to be define
     
     *Enum values:* SomeSymbol, AnotherSymbol (3), OneMoreSymbol
     
-    SomeSymbol doesn't have an explicit values so it will get a zero by default (C- enumeration behavior) AnotherSymbol will get a value of 4 and OneMoreSymbol will automatically get a value of 4 (C- enumeration behavior).
+    SomeSymbol doesn't have an explicit values so it will get a zero by default (C- enumeration behavior) AnotherSymbol will get a value of 3 and OneMoreSymbol will automatically get a value of 4 (C- enumeration behavior).
 
 ## Configuring the calvos-engine generator
 

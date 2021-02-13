@@ -146,7 +146,7 @@ sym_txing_msg_name = "can_" + net_name_str +  node_name_str + "transmittingMsg"
 
 sym_hal_confirm_tx_return = "void"
 sym_hal_confirm_tx_name = "can_"+net_name_str+node_name_str+"HALconfirmTxMsg"
-sym_hal_confirm_tx_args = "()"
+sym_hal_confirm_tx_args = "(void)"
 
 code_str = sym_hal_confirm_tx_return+" "+sym_hal_confirm_tx_name+sym_hal_confirm_tx_args+"{\n"
 cog.outl(code_str)

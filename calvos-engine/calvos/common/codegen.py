@@ -728,6 +728,16 @@ def file_exists(file_name):
         
     return return_value
 
+def resolve_wildcards(in_str, wildcards):
+    """ Return the input string with the wildcard(s) resolved """
+    out_str = in_str
+    if type(wildcards) is dict:
+        for wildcard, value in wildcards.items():
+            out_str = out_str.replace("${"+wildcard+"}", str(value))
+    else:
+        log_warn("Input wildcards shall be a dictionary.")
+        
+    return out_str
 
 def C_license():
     """ Returns a string with the license in C comment format. """

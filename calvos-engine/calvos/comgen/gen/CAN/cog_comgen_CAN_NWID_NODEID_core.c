@@ -456,7 +456,7 @@ if len(list_of_tx_msgs) > 0:
 	tx_proc_task = project.get_simple_param_val("comgen.CAN","CAN_tx_task_period")
 
 	sym_tx_proc_func_name = "can_task_"+str(tx_proc_task)+"ms_"+net_name_str+node_name_str+"txProcess"
-	code_str = "void "+sym_tx_proc_func_name+"(){"
+	code_str = "void "+sym_tx_proc_func_name+"(void){"
 	cog.outl(code_str)
 
 	code_strs = ""
@@ -498,7 +498,7 @@ if len(list_of_tx_msgs) > 0:
 	tx_proc_task = project.get_simple_param_val("comgen.CAN","CAN_tx_queue_task_ms")
 
 	sym_tx_retry_func_name = "can_task_"+str(tx_proc_task)+"ms_"+net_name_str+node_name_str+"txRetry"
-	code_str = "void "+sym_tx_retry_func_name+"(){"
+	code_str = "void "+sym_tx_retry_func_name+"(void){"
 	cog.outl(code_str)
 
 	function_body = """
@@ -536,7 +536,7 @@ if len(list_of_tx_msgs) > 0:
 /* [[[cog
 if len(list_of_tx_msgs) > 0:
 	sym_core_init_name = "can_"+net_name_str+node_name_str+"coreInit"
-	code_str = "void "+sym_core_init_name+"(){"
+	code_str = "void "+sym_core_init_name+"(void){"
 	cog.outl(code_str)
 
 	function_body = """

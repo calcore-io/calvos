@@ -171,7 +171,7 @@ for i, macro_name in enumerate(macro_names):
 /* [[[cog
 
 # Calculate padding spaces
-tx_proc_task = project.get_simple_param_val("comgen.CAN","CAN_tx_task_period")
+tx_proc_task = project.get_simple_param_val(network.module,"CAN_tx_task_period")
 macro_prefix = "kCAN_" + net_name_str + "msgTxPeriod_"
 macro_names = []
 macro_values = []
@@ -201,20 +201,39 @@ for i, macro_name in enumerate(macro_names):
 /* -------------------------------------------------------------------------- */
 
 /* [[[cog
+
+# Resolve enum symbols wildcards
+datat_symb_prfx = network.get_simple_param("CAN_enum_sym_prefix")
+if datat_symb_prfx == "$":
+	datat_symb_prfx = ""
+else:
+	datat_symb_prfx = \
+		cg.resolve_wildcards(datat_symb_prfx, {"NWID":network.id_string})
+
+datat_type_name = network.get_simple_param("CAN_enum_type_prefix")
+
 for enum_type in network.enum_types.values():
 	cog.out("typedef enum{\n\t")
 	counter = 0
 	code_string = ""
 	for enum_entry in enum_type.enum_entries:
 		counter += 1
-		code_string += "kCAN_" + net_name_str + enum_entry
+		code_string += datat_symb_prfx + enum_entry
 		if enum_type.enum_entries[enum_entry] is not None:
 			code_string += " = " + str(enum_type.enum_entries[enum_entry])
 		if counter < len(enum_type.enum_entries):
 			#Append a comma, new line and tab for all entries except the last one
 			code_string += ",\n\t"
 	cog.outl(code_string)
-	cog.outl("}t_" + enum_type.name + ";\n")
+
+	# Resolve type name
+	if datat_type_name == "" or  datat_type_name is None:
+		datat_type_name = enum_type.name
+	else:
+		datat_type_name = \
+			cg.resolve_wildcards(datat_type_name, {"DATATYPE":enum_type.name})
+
+	cog.outl("}" + datat_type_name + ";\n")
 ]]] */
 // [[[end]]]
 

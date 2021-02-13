@@ -121,7 +121,7 @@ if len(list_of_rx_msgs) > 0:
 	for message_name in list_of_rx_msgs:
 		# Generate Rx callback
 		callback_name = callback_prefix + message_name + callback_rx_sufix
-		code_str = "extern void "+callback_name+"();"
+		code_str = "extern void "+callback_name+"(void);"
 		cog.outl(code_str)
 ]]] */
 // [[[end]]]
@@ -134,7 +134,7 @@ if len(list_of_rx_msgs) > 0:
 	for message_name in list_of_rx_msgs:
 		# Generate timeout callback
 		callback_name = callback_prefix + message_name + callback_tout_sufix
-		code_str = "extern void "+callback_name+"();"
+		code_str = "extern void "+callback_name+"(void);"
 		cog.outl(code_str)
 ]]] */
 // [[[end]]]
@@ -147,7 +147,7 @@ if len(list_of_tx_msgs) > 0:
 	for message_name in list_of_tx_msgs:
 		# Generate timeout callback
 		callback_name = callback_prefix + message_name + callback_tx_sufix
-		code_str = "extern void "+callback_name+"();"
+		code_str = "extern void "+callback_name+"(void);"
 		cog.outl(code_str)
 ]]] */
 // [[[end]]]

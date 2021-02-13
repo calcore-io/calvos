@@ -152,7 +152,7 @@ if len(list_of_rx_msgs) > 0:
 		# Generate Rx callback
 		cog.outl(get_rx_callback_header(message_name,node_name,network_name))
 		callback_name = callback_prefix + message_name + callback_rx_sufix
-		code_str = "void "+callback_name+"(){\n\t/"+chr(42)+" User code goes here... "+chr(42)+"/\n}"
+		code_str = "void "+callback_name+"(void){\n\t/"+chr(42)+" User code goes here... "+chr(42)+"/\n}"
 		cog.outl(code_str)
 		cog.outl("")
 ]]] */
@@ -167,7 +167,7 @@ if len(list_of_rx_msgs) > 0:
 		# Generate timeout callback
 		cog.outl(get_timeout_callback_header(message_name,node_name,network_name))
 		callback_name = callback_prefix + message_name + callback_tout_sufix
-		code_str = "void "+callback_name+"(){\n\t/"+chr(42)+" User code goes here... "+chr(42)+"/\n}"
+		code_str = "void "+callback_name+"(void){\n\t/"+chr(42)+" User code goes here... "+chr(42)+"/\n}"
 		cog.outl(code_str)
 ]]] */
 // [[[end]]]
@@ -181,7 +181,7 @@ if len(list_of_tx_msgs) > 0:
 		# Generate timeout callback
 		cog.outl(get_tx_callback_header(message_name,node_name,network_name))
 		callback_name = callback_prefix + message_name + callback_tx_sufix
-		code_str = "void "+callback_name+"(){\n\t/"+chr(42)+" User code goes here... "+chr(42)+"/\n}"
+		code_str = "void "+callback_name+"(void){\n\t/"+chr(42)+" User code goes here... "+chr(42)+"/\n}"
 		cog.outl(code_str)
 ]]] */
 // [[[end]]]
