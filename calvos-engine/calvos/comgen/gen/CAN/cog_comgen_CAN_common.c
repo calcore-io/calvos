@@ -40,12 +40,12 @@ cog.outl("/"+chr(42)+chr(42)+" \\file\t\t"+file_name+" "+padding_str+chr(42)+"/"
 ]]] */
 // [[[end]]]
 /** \brief     	Common CAN functions definitions.
- *  \details   	Contains data structures to ease the handling of the CAN
- *				signals.
+ *  \details   	Implements common functionality for CAN (common to multiple
+ *  			networks, nodes, etc.)
  *  \author    	Carlos Calvillo
  *  \version   	1.0
- *  \date      	2020-11-15
- *  \copyright 	2020 Carlos Calvillo.
+ *  \date      	2021-01-12
+ *  \copyright 	2021 Carlos Calvillo.
  */
 /*============================================================================*/
 /* [[[cog
@@ -224,6 +224,37 @@ CalvosError can_txQueueInit(CANtxQueue* queue){
 	}
 
 	return return_value;
+}
+
+/* ===========================================================================*/
+/** Function for clearing all available flags of a received CAN msg.
+ *
+ * Clears all the available flags of a CAN RX message.
+ *
+ * @param msg_idx 	Index of the node's message (refer to enumeration
+ * 					CAN_NWID_NODEID_rxMsgs).
+ * @param msg_idx_max 	Max number of Rx messages in the node (refer to
+ * 						constant kCAN_NWID_NODEID_nOfRxMsgs for the given node).
+ * @param msg_struct 	Pointer to the node's messages static data structure.
+ * ===========================================================================*/
+CalvosError can_clearAllAvlblFlags(uint32_t msg_idx, uint32_t msg_idx_max, \
+								   const CANtxMsgStaticData* msg_struct){
+	CalvosError return_val = kError;
+
+	// Check if index is valid
+	if(msg_idx < msg_idx_max){
+		return_val = kNoError;
+		// Clear Message available flags
+		msg_struct[msg_idx]->dyn->available.all = 0;
+		// Clear Signals available flags
+		if(msg_static_data->sig_avlbl_buf_len == 1){
+			msg_struct[msg_idx]->sig_avlbl_flags = 0;
+		}else{
+			for(uint32t i=0; i < msg_static_data->sig_avlbl_buf_len; i++){
+				msg_struct[msg_idx]->sig_avlbl_flags[i] = 0;
+			}
+		}
+	}
 }
 
 /* ===========================================================================*/

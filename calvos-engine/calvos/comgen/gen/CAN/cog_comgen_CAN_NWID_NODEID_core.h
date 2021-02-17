@@ -39,9 +39,9 @@ if padding > 1:
 cog.outl("/"+chr(42)+chr(42)+" \\file\t\t"+file_name+" "+padding_str+chr(42)+"/")
 ]]] */
 // [[[end]]]
-/** \brief     	Header file CAN Signals definitions.
- *  \details   	Contains data structures to ease the handling of the CAN
- *				signals.
+/** \brief     	Header file for CAN core functionality.
+ *  \details   	Declares functions and macros for the CAN core functionality of
+ *  			a given network and a given node.
  *  \author    	Carlos Calvillo
  *  \version   	1.0
  *  \date      	2020-11-15
@@ -124,7 +124,7 @@ if len(list_of_rx_msgs) > 0:
 
 	# Rx available buffer
 	# -------------------
-	sym_avlbl_buffer_name = "can" + net_name_str + node_name_str + "avlbl_buffer"
+	sym_avlbl_buffer_name = "can_" + net_name_str + node_name_str + "avlbl_buffer"
 	sym_avlbl_buff_len = "kCAN_" + net_name_str + "avlbl_buffer_len"
 	code_str = "extern " + cg.get_dtv(8) + " " \
 			   + sym_avlbl_buffer_name + "[" + sym_avlbl_buff_len + "];"
@@ -206,6 +206,14 @@ if len(list_of_tx_msgs) > 0:
 	code_str = "extern void "+sym_tx_retry_func_name+"(void);"
 	cog.outl(code_str)
 
+# Initi signals function
+sym_init_sigs_ret = "void"
+sym_init_sigs_name = "can_"+net_name_str+node_name_str+"signalsInit"
+sym_init_sigs_args = "(void)"
+code_str = "extern "+sym_init_sigs_ret+" "+sym_init_sigs_name+sym_init_sigs_args+";"
+cog.outl(code_str)
+
+# Core init function
 sym_core_init_name = "can_"+net_name_str+node_name_str+"coreInit"
 code_str = "extern void "+sym_core_init_name+"(void);"
 cog.outl(code_str)

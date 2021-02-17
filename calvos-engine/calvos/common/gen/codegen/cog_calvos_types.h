@@ -30,7 +30,7 @@ cog.outl("/"+chr(42)+chr(42)+" \\file\t\t"+file_name+" "+padding_str+chr(42)+"/"
 ]]] */
 // [[[end]]]
 /** \brief     	Header file for calvos type definitions.
- *  \details   	Contains typedef to be used across all calvos related source
+ *  \details   	Contains typedefs to be used across all calvos related source
  *				code.
  *  \author    	Carlos Calvillo
  *  \version   	1.0
@@ -109,31 +109,31 @@ typedef enum{
 
 typedef void (*Callback)(void);
 
-typedef struct{
+typedef struct NodeUint32{
 	uint32_t value;
 	struct NodeUint32 * prev;
 	struct NodeUint32 * next;
 }NodeUint32;
 
-typedef struct{
+typedef struct NodeUint8{
 	uint8_t value;
 	struct NodeUint8 * prev;
 	struct NodeUint8 * next;
 }NodeUint8;
 
-typedef struct{
+typedef struct NodeUint16{
 	uint16_t value;
 	struct NodeUint16 * prev;
 	struct NodeUint16 * next;
 }NodeUint16;
 
-typedef struct{
+typedef struct NodeUint64{
 	uint64_t value;
 	struct NodeUint64 * prev;
 	struct NodeUint64 * next;
 }NodeUint64;
 
-typedef struct{
+typedef struct NodeVoidPtr{
 	void * value;
 	struct NodeVoidPtr * prev;
 	struct NodeVoidPtr * next;

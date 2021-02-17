@@ -39,13 +39,13 @@ if padding > 1:
 cog.outl("/"+chr(42)+chr(42)+" \\file\t\t"+file_name+" "+padding_str+chr(42)+"/")
 ]]] */
 // [[[end]]]
-/** \brief     	Header file CAN Signals definitions.
- *  \details   	Contains data structures to ease the handling of the CAN
- *				signals.
+/** \brief     	Header file for common CAN definitions.
+ *  \details   	Declares data structures, functions, etc. common for CAN (common
+ *  			to multiple networks, nodes, etc.)
  *  \author    	Carlos Calvillo
  *  \version   	1.0
- *  \date      	2020-11-15
- *  \copyright 	2020 Carlos Calvillo.
+ *  \date      	2021-01-12
+ *  \copyright 	2021 Carlos Calvillo.
  */
 /*============================================================================*/
 /* [[[cog
@@ -192,6 +192,8 @@ CalvosError can_txQueueEnqueue(CANtxQueue* queue, const CANtxMsgStaticData* node
 const CANtxMsgStaticData* can_txQueueGetHead(CANtxQueue* queue);
 CalvosError can_txQueueDequeue(CANtxQueue* queue, const CANtxMsgStaticData* node);
 CalvosError can_txQueueInit(CANtxQueue* queue);
+CalvosError can_clearAllAvlblFlags(uint32_t msg_idx, uint32_t msg_idx_max, \
+								   const CANtxMsgStaticData* msg_struct);
 
 /* Exported Prototypes */
 extern const CANrxMsgStaticData* can_traverseRxSearchTree(uint32_t msg_id, \

@@ -38,9 +38,9 @@ if padding > 1:
 cog.outl("/"+chr(42)+chr(42)+" \\file\t\t"+file_name+" "+padding_str+chr(42)+"/")
 ]]] */
 // [[[end]]]
-/** \brief     	Header file CAN Signals definitions.
+/** \brief     	Header file CAN Signals/messages definitions.
  *  \details   	Contains data structures to ease the handling of the CAN
- *				signals.
+ *				signals/messages for a given network.
  *  \author    	Carlos Calvillo
  *  \version   	1.0
  *  \date      	2020-11-15

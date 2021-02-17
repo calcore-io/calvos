@@ -39,9 +39,10 @@ if padding > 1:
 cog.outl("/"+chr(42)+chr(42)+" \\file\t\t"+file_name+" "+padding_str+chr(42)+"/")
 ]]] */
 // [[[end]]]
-/** \brief     	Source file for CAN user callbacks.
- *  \details   	Implements the CAN core functionality for the handling of the
- *  			defined messages/signals in the given network.
+/** \brief     	Source file for CAN Hardware Abstraction Layer functions.
+ *  \details   	Defines functions that need to be filled with user code in order
+ *  			to integrate the CAN interaction layer with the hardware
+ *  			abstraction layer in the target MCU.
  *  \author    	Carlos Calvillo
  *  \version   	0.1
  *  \date      	2021-02-01

@@ -41,7 +41,7 @@ cog.outl("/"+chr(42)+chr(42)+" \\file\t\t"+file_name+" "+padding_str+chr(42)+"/"
 // [[[end]]]
 /** \brief     	Source file for CAN Core functionality.
  *  \details   	Implements the CAN core functionality for the handling of the
- *  			defined messages/signals in the given network.
+ *  			defined messages/signals in the given network and given node.
  *  \author    	Carlos Calvillo
  *  \version   	1.0
  *  \date      	2021-01-15
@@ -154,7 +154,7 @@ if len(list_of_rx_msgs) > 0:
 /* Rx available flags buffer */
 /* [[[cog
 if len(list_of_rx_msgs) > 0:
-	sym_avlbl_buffer_name = "can" + net_name_str + node_name_str + "avlbl_buffer"
+	sym_avlbl_buffer_name = "can_" + net_name_str + node_name_str + "avlbl_buffer"
 	sym_avlbl_buff_len = "kCAN_" + net_name_str + "avlbl_buffer_len"
 	code_str = cg.get_dtv(8) + " " + sym_avlbl_buffer_name + "[" + sym_avlbl_buff_len + "];"
 	cog.outl(code_str)
@@ -410,6 +410,7 @@ if len(list_of_tx_msgs) > 0:
  *
  * Verifies if received message belongs to this node and if so, signal its
  * reception and invokes the corresponding callback.
+ * This function is typically called from the CAN RX ISR.
  *
  * @param msg_id 	Id of the received message.
  * @param data_in 	Pointer to the message's received data.
@@ -583,6 +584,30 @@ if len(list_of_tx_msgs) > 0:
 // [[[end]]]
 
 /* ===========================================================================*/
+/** Set signals initial values.
+ *
+ * Initializes the signals with defined initial value if this is different than
+ * zero (all signal data buffers are previously initialized with zeros).
+ * ===========================================================================*/
+/* [[[cog
+sym_init_sigs_ret = "void"
+sym_init_sigs_name = "can_"+net_name_str+node_name_str+"signalsInit"
+sym_init_sigs_args = "(void)"
+
+code_str = sym_init_sigs_ret+" "+sym_init_sigs_name+sym_init_sigs_args+"{"
+cog.outl(code_str)
+
+# Write init values code string
+
+function_body = """
+	// TODO: implement this function
+"""
+function_body = function_body[1:]
+cog.outl(function_body+"}")
+]]] */
+// [[[end]]]
+
+/* ===========================================================================*/
 /** Function for initialization of CAN core.
  *
  * Initializes data for CAN core functionality of current node.
@@ -596,13 +621,17 @@ if len(list_of_tx_msgs) > 0:
 	function_body = """
 	// Clear RX data buffer
 	memset(&"""+sym_rx_data_name+",0u,"+sym_rx_data_len+""");
+	// Clear RX available flags buffer
+	memset(&"""+sym_avlbl_buffer_name+",0u,"+sym_avlbl_buff_len+""");
 	// Clear TX data buffer
 	memset(&"""+sym_tx_data_name+",0u,"+sym_tx_data_len+""");
-
 	// Clear RX dynamic data
 	memset(&"""+sym_rx_dyn_data_name+",0u,sizeof("+sym_rx_dyn_data_type+")*("+sym_rx_msgs+"""));
 	// Clear TX dynamic data
 	memset(&"""+sym_tx_dyn_data_name+",0u,sizeof("+sym_tx_dyn_data_type+")*("+sym_tx_dyn_data_len+"""));
+
+	// Init signal values
+	"""+sym_init_sigs_name+"""();
 
 	// Init TX queue
 	can_txQueueInit(&"""+sym_tx_queue_name+""");
@@ -614,5 +643,3 @@ if len(list_of_tx_msgs) > 0:
 	cog.outl(function_body+"}")
 ]]] */
 // [[[end]]]
-
-

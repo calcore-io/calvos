@@ -32,9 +32,10 @@ if padding > 1:
 cog.outl("/"+chr(42)+chr(42)+" \\file\t\t"+file_name+" "+padding_str+chr(42)+"/")
 ]]] */
 // [[[end]]]
-/** \brief     	Header file CAN Signals definitions.
- *  \details   	Contains data structures to ease the handling of the CAN
- *				signals.
+/** \brief     	Header file CAN Signals/Messages definitions of a given node.
+ *  \details   	Declares macros, functions, etc. for the handling of signals and
+ *  			messages for a given node taking into account the messages/
+ *  			signals direction (TX/RX) with respect to the node.
  *  \author    	Carlos Calvillo
  *  \version   	1.0
  *  \date      	2020-11-15
@@ -337,7 +338,6 @@ if len(list_of_rx_msgs) > 0:
 		cog.outl(symbol_name)
 	cog.outl("\tkCAN_" + net_name_str + node_name_str + "nOfRxMsgs")
 	cog.outl("}"+enum_name+";")
-
 ]]] */
 // [[[end]]]
 
@@ -398,6 +398,7 @@ if len(subnet.messages) > 0:
 		cog.outl("/"+chr(42)+" ----------- Macros for "+dir_str+" message \"" + message.name \
 				+ "\" ----------- " + chr(42) + "/")
 
+		cog.outl("/"+chr(42)+chr(42)+chr(42)+" Message Level macros " + chr(42)+chr(42)+chr(42) + "/")
 		# Message get macro.
 		macro_name = "CAN_" + net_name_str + node_name_str+"get_msg_"+message_name
 		macro_args = "(data_struct)"
@@ -421,8 +422,21 @@ if len(subnet.messages) > 0:
 			code_str = "#define "+macro_name+macro_args+"\t\t"+macro_vals
 			cog.outl(code_str)
 
+		if msg_is_tx is False:
+			# Message clear all available flags macro.
+			cog.outl()
+			macro_name = "CAN_" + net_name_str + node_name_str+"clr_avlbl_flags_"+message_name
+			macro_vals = "can_clearAllAvlblFlags("+ sym_rx_idx_pfx + message_name \
+				+", kCAN_" + net_name_str + node_name_str + "nOfRxMsgs, &"+ sym_rx_stat_data_name+")"
+			code_str = "#define "+macro_name+"()"+"\t\t"+macro_vals
+			cog.outl(code_str)
+			cog.outl()
+
+		# Direct signal access macros
 		array_str = "msg_buffer"
 		data_in_str = "data_in"
+
+		cog.outl("/"+chr(42)+chr(42)+chr(42)+" Signal Level macros " + chr(42) +chr(42)+chr(42)+"/")
 
 		for signal in message_signals:
 			# Referenced names
@@ -499,7 +513,7 @@ if len(subnet.messages) > 0:
 			cog.outl("/"+chr(42)+" Macros for available flags handling of signal \"" \
 					+ signal.name + "\". " + chr(42) + "/")
 
-			sym_avlbl_buffer_name = "can" + net_name_str + node_name_str + "avlbl_buffer"
+			sym_avlbl_buffer_name = "can_" + net_name_str + node_name_str + "avlbl_buffer"
 
 			# Available flags only apply for RX signals
 			if msg_is_tx is False:

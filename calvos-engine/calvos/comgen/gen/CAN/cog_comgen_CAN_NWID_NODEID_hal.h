@@ -39,9 +39,8 @@ if padding > 1:
 cog.outl("/"+chr(42)+chr(42)+" \\file\t\t"+file_name+" "+padding_str+chr(42)+"/")
 ]]] */
 // [[[end]]]
-/** \brief     	Header file CAN Signals definitions.
- *  \details   	Contains data structures to ease the handling of the CAN
- *				signals.
+/** \brief     	Header file for CAN Hardware Abstraction Layer functions.
+ *  \details   	Contains delcarations of functions for CAN HAL integration.
  *  \author    	Carlos Calvillo
  *  \version   	1.0
  *  \date      	2020-11-15

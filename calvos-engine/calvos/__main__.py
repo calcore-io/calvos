@@ -18,6 +18,7 @@ of embedded systems in C-language.
 import sys
 import os
 import pathlib as pl
+import shutil
 import logging
 import traceback
 
@@ -121,6 +122,10 @@ USAGE
                   +"If not provided, will look from installed python packages."))
         parser.add_argument("-l","--log", dest="log_level", required=False, \
             help="Logging level: 0 - Debug, 1 - Info, 2 - Warning, 3 - Error. Default is 1 - Info.")
+        parser.add_argument("-e","--export", dest="export", required=False, \
+            help="Path where backups of the exported C-code will be placed. This is only used if -e argument is provided.")
+        parser.add_argument("-b","--backup", dest="backup", required=False, \
+            help="Path where the generated C-code will be copied.")
         parser.add_argument('-V', '--version', action='version', version=program_version_message)
         parser.add_argument('-v', '--ver', action='version', version=program_version_message)
 
@@ -246,7 +251,103 @@ USAGE
             calvos_project.load_project()
             
             calvos_project.process_project()
-                     
+            
+            #==============================================================================
+            # Copy generated code
+            #==============================================================================
+            if args.export is not None:
+                log.info("main","============== Exporting generated code. ==============")
+                export_path = string_to_path(args.export)
+                if cg.folder_exists(export_path):
+                    # Get files to export
+                    c_files = list(project_path_output.glob('*.c'))
+                    h_files = list(project_path_output.glob('*.h'))
+                    
+                    # If backup location is defined then do the backup
+                    if args.backup is not None:
+                        MAX_BKUP_COPIES = 10
+                        current_bkup_copy = 0
+                        
+                        log.info("main","-------------- Backing up files. --------------")
+                        backup_path =  string_to_path(args.backup)
+                        if export_path != backup_path:
+                            if cg.folder_exists(backup_path) is False:
+                                log.info("main", " Backup path '%s' doesn't exist, creating it..." \
+                                         % backup_path)
+                                cg.create_folder(backup_path)
+                            # Get backup copy number to use  
+                            for file in c_files:
+                                while current_bkup_copy <= MAX_BKUP_COPIES:
+                                    file_name = str(file.name)
+                                    if current_bkup_copy > 0:
+                                        file_name = str(current_bkup_copy) + "_" + file_name  
+                                    dest_file = backup_path / file_name
+                                    if cg.file_exists(dest_file):
+                                        # Increment copy number  
+                                        current_bkup_copy += 1
+                                    else:
+                                        # File doesn't exist, use current backup cupy number
+                                        break
+                            
+                            # Backup files to be overwritten
+                            file_counter = 0
+                            for file in c_files:
+                                file_name = str(file.name)
+                                file_name_dest = file_name
+                                if current_bkup_copy > 0:
+                                    file_name_dest = str(current_bkup_copy) + "_" +  file_name_dest
+                                orig_file = export_path / file_name
+                                dest_file = backup_path / file_name_dest
+                                if cg.file_exists(orig_file):
+                                    # Copy file to backup location
+                                    shutil.copy(orig_file, dest_file)
+                                    file_counter += 1
+                            for file in h_files:
+                                file_name = str(file.name)
+                                file_name_dest = file_name
+                                if current_bkup_copy > 0:
+                                    file_name_dest = str(current_bkup_copy) + "_" + file_name_dest 
+                                orig_file = export_path / file_name
+                                dest_file = backup_path / file_name_dest
+                                if cg.file_exists(orig_file):
+                                    # Copy file to backup location
+                                    shutil.copy(orig_file, dest_file)
+                                    file_counter += 1
+                            
+                            log.info("main", " Backup completed. '%s' file(s) backed-up." \
+                                         % file_counter)
+                        else:
+                            arguments_OK = False
+                            log.warning("main", "Provided Export and Backup folders are same. " \
+                                + "Export operation cancelled.")
+                    
+                    # Export files
+                    if arguments_OK is True:
+                        log.info("main","-------------- Exporting files. --------------")
+                        
+                        file_counter = 0
+                        for file in c_files:
+                            file_name = file.name
+                            orig_file = project_path_output / file_name
+                            dest_file = export_path / file_name
+                            if cg.file_exists(orig_file):
+                                # Copy file to backup location
+                                shutil.copy(orig_file, dest_file)
+                                file_counter += 1
+                        for file in h_files:
+                            file_name = file.name
+                            orig_file = project_path_output / file_name
+                            dest_file = export_path / file_name
+                            if cg.file_exists(orig_file):
+                                # Copy file to backup location
+                                shutil.copy(orig_file, dest_file)
+                                file_counter += 1
+                        
+                        log.info("main", "Export completed. '%s' file(s) exported." % file_counter)
+                else:
+                    log.warning("main", "Export folder '%s' doesn't exist. No export performed." \
+                             % export_path)
+                       
             log.info("main","============== Finished calvOS project processing. ==============")
             for counter_name, counts in log.counters.items():
                 log.info("main", "\"" + counter_name + "\" messages : " + str(counts))
