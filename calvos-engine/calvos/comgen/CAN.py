@@ -1920,12 +1920,14 @@ class Network_CAN:
         self.add_cog_source("can_node_hal_h", "cog_comgen_CAN_NWID_NODEID_hal.h", True, \
                             [["comgen.CAN", "common_h"], \
                              ["comgen.CAN", "network_h"]], \
-                            {"category" : "node"})
+                            {"category" : "node"}, \
+                            user_code=True)
         self.add_cog_source("can_node_hal_c", "cog_comgen_CAN_NWID_NODEID_hal.c", False, \
                             [["comgen.CAN", "common_h"], \
                              ["comgen.CAN", "can_node_hal_h"], \
                              ["comgen.CAN", "core_h"]], \
-                            {"category" : "node"})
+                            {"category" : "node"}, \
+                            user_code=True)
         self.add_cog_source("node_net_h", "cog_comgen_CAN_NWID_NODEID_node_network.h", True, \
                             [["comgen.CAN", "common_h"], \
                              ["comgen.CAN", "network_h"], \
@@ -1944,10 +1946,12 @@ class Network_CAN:
         self.add_cog_source("callbacks_h", "cog_comgen_CAN_NWID_NODEID_callbacks.h", True, \
                             [["comgen.CAN", "common_h"], \
                              ["comgen.CAN", "node_net_h"]], \
-                            {"category" : "node"})
+                            {"category" : "node"}, \
+                            user_code=True)
         self.add_cog_source("callbacks_c", "cog_comgen_CAN_NWID_NODEID_callbacks.c", False, \
                             [["comgen.CAN", "callbacks_h"]], \
-                            {"category" : "node"})
+                            {"category" : "node"}, \
+                            user_code=True)
 
     #===============================================================================================    
     def get_cog_includes(self, source_id): 
@@ -1971,7 +1975,7 @@ class Network_CAN:
 
     #===============================================================================================    
     def add_cog_source(self, cog_id, cog_in_file, is_header = False, relations = None, \
-                       dparams = {}):
+                       dparams = {}, ** kwargs):
         """ Adds a cog source to this network object's cog files list. 
         
         Parameters
@@ -1982,10 +1986,17 @@ class Network_CAN:
         """ 
         
         global cog_sources
-
-        cog_out_file = self.get_cog_out_name(cog_in_file)
-        cog_sources.sources.update({cog_id: cg.CogSources.CogSrc(\
-                cog_id,cog_in_file, cog_out_file, is_header, [], dparams)})
+        
+        _user_code = kwargs.get('user_code', False)
+        # Create source object
+        source_obj = cg.CogSources.CogSrc(\
+                cog_id,cog_in_file, None, is_header, [], dparams, user_code=_user_code)
+        
+        # Determine cog output file name
+        source_obj.cog_out_file = self.get_cog_out_name(source_obj)
+        
+        # Update sources dictionary
+        cog_sources.sources.update({cog_id: source_obj})
         
         if relations is not None:
             for relation in relations:
@@ -2005,16 +2016,20 @@ class Network_CAN:
         
         #TODO: Optimize this function so that it only updates a selected list of source_ids
         for source_id, source_obj in cog_sources.sources.items():
-            cog_out_file = self.get_cog_out_name(source_obj.cog_in_file, wildcards)
+            cog_out_file = self.get_cog_out_name(source_obj, wildcards)
             cog_sources.sources[source_id].cog_out_file = cog_out_file
         
         
     #===============================================================================================    
-    def get_cog_out_name(self, cog_in_file, wildcards = {}): 
+    def get_cog_out_name(self, source_obj, wildcards = {}): 
         """ Generates cog output file name as per a given input file name. """
         #remove "cog_" prefix to output file names
-        if cog_in_file.find("cog_") == 0:  
-            cog_output_file = cog_in_file[4:]
+        if source_obj.cog_in_file.find("cog_") == 0:  
+            cog_output_file = source_obj.cog_in_file[4:]
+        
+        if source_obj.user_code is True:
+            # Prepend string 'USER_'
+            cog_output_file = "USER_" + cog_output_file
             
         # Replace wildcards
         for wildcard, value in wildcards.items():

@@ -22,13 +22,6 @@
 			<Params>
 			</Params>
 		</Component>
-		<Component type="utils.time">
-			<Name></Name>
-			<Desc/>
-			<Input type="ods">"usr_in/Utilities_Definitions.ods"</Input>
-			<Params>
-			</Params>
-		</Component>
 	</Components>
 	<Params>
 		<Param id="log_level">INFO</Param>

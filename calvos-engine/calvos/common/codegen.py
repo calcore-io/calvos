@@ -876,7 +876,7 @@ class CogSources():
     class CogSrc():
         """ Models a single C-code source file. """
         def __init__(self, source_id, cog_in_file, cog_out_file = None, is_header = False, \
-                     relations = [], dparams = {}):
+                     relations = [], dparams = {}, ** kwargs):
             self.source_id = source_id
             self.cog_in_file = cog_in_file
             # cog_out_file equal to None means that out file is same than cog_in_file
@@ -891,6 +891,8 @@ class CogSources():
             self.dparams = dparams # Params in the form of dictionary
             
             self.generated = False
+            
+            self.user_code = kwargs.get('user_code', False)
             
     class CogSrcRel():
         """ Models a source code relation for include purposes. """
