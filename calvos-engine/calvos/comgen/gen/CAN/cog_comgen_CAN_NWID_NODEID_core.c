@@ -439,8 +439,8 @@ if len(list_of_tx_msgs) > 0:
 			if(msg_static_data->sig_avlbl_buf_len == 1){
 				*msg_static_data->sig_avlbl_flags = kAllOnes8;
 			}else{
-				for(uint32t i=0; i < msg_static_data->sig_avlbl_buf_len; i++){
-					*msg_static_data->sig_avlbl_flags[i] = kAllOnes8;
+				for(uint32_t i=0; i < msg_static_data->sig_avlbl_buf_len; i++){
+					msg_static_data->sig_avlbl_flags[i] = kAllOnes8;
 				}
 			}
 			// clear timeout flag
@@ -550,9 +550,7 @@ if len(list_of_tx_msgs) > 0:
  * ===========================================================================*/
 /* [[[cog
 if len(list_of_tx_msgs) > 0:
-	tx_proc_task = project.get_simple_param_val("comgen.CAN","CAN_tx_queue_task_ms")
-
-	sym_tx_retry_func_name = "can_task_"+str(tx_proc_task)+"ms_"+net_name_str+node_name_str+"txRetry"
+	sym_tx_retry_func_name = "can_"+net_name_str+node_name_str+"txRetry"
 	code_str = "void "+sym_tx_retry_func_name+"(void){"
 	cog.outl(code_str)
 

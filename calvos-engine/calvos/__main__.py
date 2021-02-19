@@ -257,6 +257,7 @@ USAGE
             #==============================================================================
             if args.export is not None:
                 log.info("main","============== Exporting generated code. ==============")
+                print("INFO: Exporting generated C-code...")
                 export_path = string_to_path(args.export)
                 if cg.folder_exists(export_path):
                     # Get files to export
@@ -269,6 +270,7 @@ USAGE
                         current_bkup_copy = 0
                         
                         log.info("main","-------------- Backing up files. --------------")
+                        print("INFO: Backing up C-code to be overwritten during export...")
                         backup_path =  string_to_path(args.backup)
                         if export_path != backup_path:
                             if cg.folder_exists(backup_path) is False:
@@ -316,6 +318,7 @@ USAGE
                             
                             log.info("main", " Backup completed. '%s' file(s) backed-up." \
                                          % file_counter)
+                            print("INFO: Backup completed. '%s' file(s) backed-up." % file_counter)
                         else:
                             arguments_OK = False
                             log.warning("main", "Provided Export and Backup folders are same. " \
@@ -344,6 +347,7 @@ USAGE
                                 file_counter += 1
                         
                         log.info("main", "Export completed. '%s' file(s) exported." % file_counter)
+                        print("INFO: Export completed. '%s' file(s) exported." % file_counter)
                 else:
                     log.warning("main", "Export folder '%s' doesn't exist. No export performed." \
                              % export_path)

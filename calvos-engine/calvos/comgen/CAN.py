@@ -2026,11 +2026,7 @@ class Network_CAN:
         #remove "cog_" prefix to output file names
         if source_obj.cog_in_file.find("cog_") == 0:  
             cog_output_file = source_obj.cog_in_file[4:]
-        
-        if source_obj.user_code is True:
-            # Prepend string 'USER_'
-            cog_output_file = "USER_" + cog_output_file
-            
+  
         # Replace wildcards
         for wildcard, value in wildcards.items():
             if value is not None:
@@ -2041,7 +2037,7 @@ class Network_CAN:
         return cog_output_file
         
     #===============================================================================================    
-    def cog_generator(self, input_file, cog_output_file, project_pickle_file, \
+    def cog_generator(self, source_obj, project_pickle_file, \
                              comp_pickle_file = None, variables = None):
         """ Invoke cog generator for the specified file.
         """
@@ -2051,10 +2047,16 @@ class Network_CAN:
         work_dir = self.project_obj.get_simple_param_val("common.project", "project_path_working")
         gen_path = self.gen_path
         
-        input_file = str(input_file) 
+        input_file = str(source_obj.cog_in_file)
         comgen_CAN_cog_input_file = gen_path / input_file
                 
         # Set output file with path
+        if source_obj.user_code is True:
+            # Prepend string 'USER_'
+            cog_output_file = "USER_" + source_obj.cog_out_file
+        else:
+            cog_output_file = source_obj.cog_out_file
+            
         comgen_CAN_cog_output_file = out_dir / cog_output_file
                 
         # Invoke code generation
@@ -2156,8 +2158,7 @@ class Network_CAN:
                         include_var = json.dumps(includes_lst)
                         variables.update({"include_var" : include_var})
                          
-                    self.cog_generator(cog_source.cog_in_file, cog_source.cog_out_file, \
-                                       project_pickle, cog_serialized_network_file, \
+                    self.cog_generator(cog_source, project_pickle, cog_serialized_network_file, \
                                        variables)
             
             # Generate network source file(s)
@@ -2175,8 +2176,7 @@ class Network_CAN:
                     # Add variable for NWID wildcard
                     variables.update({"NWID_wildcard" : str(NWID_wildcard)})
                          
-                    self.cog_generator(cog_source.cog_in_file, cog_source.cog_out_file, \
-                                       project_pickle, cog_serialized_network_file, \
+                    self.cog_generator(cog_source, project_pickle, cog_serialized_network_file, \
                                        variables)
             
             # Generate Node specific source file(s)
@@ -2208,9 +2208,8 @@ class Network_CAN:
                             # Add variable containing current's node name
                             variables.update({"node_name" : str(node.name)})
                                  
-                            self.cog_generator(cog_source.cog_in_file, cog_source.cog_out_file, \
-                                               project_pickle, cog_serialized_network_file, \
-                                               variables)
+                            self.cog_generator(cog_source, project_pickle, \
+                                               cog_serialized_network_file, variables)
                 else:
                     log_warn("No messages found for node '%s'. No C-code generated for the node." \
                              % node.name)

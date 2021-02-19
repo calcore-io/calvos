@@ -225,15 +225,14 @@ for enum_type in network.enum_types.values():
 			#Append a comma, new line and tab for all entries except the last one
 			code_string += ",\n\t"
 	cog.outl(code_string)
-
 	# Resolve type name
 	if datat_type_name == "" or  datat_type_name is None:
-		datat_type_name = enum_type.name
+		type_name = enum_type.name
 	else:
-		datat_type_name = \
+		type_name = \
 			cg.resolve_wildcards(datat_type_name, {"DATATYPE":enum_type.name})
 
-	cog.outl("}" + datat_type_name + ";\n")
+	cog.outl("}" + type_name + ";\n")
 ]]] */
 // [[[end]]]
 

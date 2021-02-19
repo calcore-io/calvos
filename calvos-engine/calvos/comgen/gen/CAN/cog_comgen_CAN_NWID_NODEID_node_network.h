@@ -426,8 +426,8 @@ if len(subnet.messages) > 0:
 			# Message clear all available flags macro.
 			cog.outl()
 			macro_name = "CAN_" + net_name_str + node_name_str+"clr_avlbl_flags_"+message_name
-			macro_vals = "can_clearAllAvlblFlags("+ sym_rx_idx_pfx + message_name \
-				+", kCAN_" + net_name_str + node_name_str + "nOfRxMsgs, &"+ sym_rx_stat_data_name+")"
+			macro_vals = "can_clearAllAvlblFlags(&"+ sym_rx_stat_data_name + "[" + sym_rx_idx_pfx \
+				+ message_name + "])"
 			code_str = "#define "+macro_name+"()"+"\t\t"+macro_vals
 			cog.outl(code_str)
 			cog.outl()

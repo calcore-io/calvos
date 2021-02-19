@@ -1,9 +1,16 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Sep 29 14:39:09 2020
+""" CalvOS Code Generation Module.
+
+Module for code generation utilities.
 
 @author: Carlos Calvillo
+@copyright:  2020 Carlos Calvillo. All rights reserved.
+@license:    GPL v3
 """
+__version__ = '0.1.0'
+__date__ = '2020-09-29'
+__updated__ = '2020-09-29'
+
 import cogapp as cog
 import pyexcel as pe
 import re

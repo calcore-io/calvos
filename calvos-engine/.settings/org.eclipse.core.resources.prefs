@@ -2,6 +2,7 @@ eclipse.preferences.version=1
 encoding//calvos/__main__.py=utf-8
 encoding//calvos/comgen/CAN.py=utf-8
 encoding//calvos/common/codegen.py=utf-8
+encoding//calvos/common/general.py=utf-8
 encoding//calvos/common/logsys.py=utf-8
 encoding//calvos/common/project.py=utf-8
 encoding//calvos/rwsd.py=utf-8

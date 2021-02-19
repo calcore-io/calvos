@@ -93,10 +93,10 @@ cog.outl(code_str)
 
 # Definition of native data types
 sym_u_native_name = "uintNat_t"
-cog.outl("typedef " +  cg.get_dtv(sym_word_size_val, "i", False) + " " + sym_u_native_name)
+cog.outl("typedef " +  cg.get_dtv(sym_word_size_val, "i", False) + " " + sym_u_native_name + ";")
 
 sym_native_name = "intNat_t"
-cog.outl("typedef " +  cg.get_dtv(sym_word_size_val, "i", True) + " " + sym_native_name)
+cog.outl("typedef " +  cg.get_dtv(sym_word_size_val, "i", True) + " " + sym_native_name + ";")
 
  ]]] */
 // [[[end]]]

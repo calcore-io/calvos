@@ -1,8 +1,16 @@
-'''
-Created on Dec 20, 2020
+# -*- coding: utf-8 -*-
+""" CalvOS General Module.
+
+Module for miscelaneous general features of the calvos engine.
 
 @author: Carlos Calvillo
-'''
+@copyright:  2020 Carlos Calvillo. All rights reserved.
+@license:    GPL v3
+"""
+__version__ = '0.1.0'
+__date__ = '2020-12-20'
+__updated__ = '2020-12-20'
+
 import json
 import re
 

@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Sun Dec  6 00:19:28 2020
+""" CalvOS Logging System.
+
+Module for the logging system use across all calvos engine.
 
 @author: Carlos Calvillo
+@copyright:  2020 Carlos Calvillo. All rights reserved.
+@license:    GPL v3
 """
+__version__ = '0.1.0'
+__date__ = '2020-12-06'
+__updated__ = '2020-12-06'
 
 import logging
 import traceback

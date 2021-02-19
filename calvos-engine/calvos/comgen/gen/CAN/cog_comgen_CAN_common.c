@@ -237,22 +237,15 @@ CalvosError can_txQueueInit(CANtxQueue* queue){
  * 						constant kCAN_NWID_NODEID_nOfRxMsgs for the given node).
  * @param msg_struct 	Pointer to the node's messages static data structure.
  * ===========================================================================*/
-CalvosError can_clearAllAvlblFlags(uint32_t msg_idx, uint32_t msg_idx_max, \
-								   const CANtxMsgStaticData* msg_struct){
-	CalvosError return_val = kError;
-
-	// Check if index is valid
-	if(msg_idx < msg_idx_max){
-		return_val = kNoError;
-		// Clear Message available flags
-		msg_struct[msg_idx]->dyn->available.all = 0;
-		// Clear Signals available flags
-		if(msg_static_data->sig_avlbl_buf_len == 1){
-			msg_struct[msg_idx]->sig_avlbl_flags = 0;
-		}else{
-			for(uint32t i=0; i < msg_static_data->sig_avlbl_buf_len; i++){
-				msg_struct[msg_idx]->sig_avlbl_flags[i] = 0;
-			}
+void can_clearAllAvlblFlags(const CANrxMsgStaticData* msg_struct){
+	// Clear Message available flags
+	msg_struct->dyn->available.all = 0;
+	// Clear Signals available flags
+	if(msg_struct->sig_avlbl_buf_len == 1){
+		*msg_struct->sig_avlbl_flags = 0;
+	}else{
+		for(uint32_t i=0; i < msg_struct->sig_avlbl_buf_len; i++){
+			msg_struct->sig_avlbl_flags[i] = 0;
 		}
 	}
 }

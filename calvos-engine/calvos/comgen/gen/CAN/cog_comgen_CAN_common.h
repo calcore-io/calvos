@@ -192,8 +192,7 @@ CalvosError can_txQueueEnqueue(CANtxQueue* queue, const CANtxMsgStaticData* node
 const CANtxMsgStaticData* can_txQueueGetHead(CANtxQueue* queue);
 CalvosError can_txQueueDequeue(CANtxQueue* queue, const CANtxMsgStaticData* node);
 CalvosError can_txQueueInit(CANtxQueue* queue);
-CalvosError can_clearAllAvlblFlags(uint32_t msg_idx, uint32_t msg_idx_max, \
-								   const CANtxMsgStaticData* msg_struct);
+void can_clearAllAvlblFlags(const CANrxMsgStaticData* msg_struct);
 
 /* Exported Prototypes */
 extern const CANrxMsgStaticData* can_traverseRxSearchTree(uint32_t msg_id, \
