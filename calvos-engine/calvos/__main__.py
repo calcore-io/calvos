@@ -123,9 +123,9 @@ USAGE
         parser.add_argument("-l","--log", dest="log_level", required=False, \
             help="Logging level: 0 - Debug, 1 - Info, 2 - Warning, 3 - Error. Default is 1 - Info.")
         parser.add_argument("-e","--export", dest="export", required=False, \
-            help="Path where backups of the exported C-code will be placed. This is only used if -e argument is provided.")
+            help="Path where to export (copy) the generated C-code.")
         parser.add_argument("-b","--backup", dest="backup", required=False, \
-            help="Path where the generated C-code will be copied.")
+            help="Path where backups of the overwritten C-code during an export C-code will be placed. This is only used if -e argument is provided.")
         parser.add_argument('-V', '--version', action='version', version=program_version_message)
         parser.add_argument('-v', '--ver', action='version', version=program_version_message)
 
