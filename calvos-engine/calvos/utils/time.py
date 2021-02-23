@@ -7,7 +7,7 @@ calvos.utils.time models utilities for time related function.
 @copyright:  2021 Carlos Calvillo. All rights reserved.
 @license:    GPL v3
 """
-__version__ = '0.1.0'
+__version__ = '0.0.1'
 __date__ = '2021-01-17'
 __updated__ = '2021-01-17'
     

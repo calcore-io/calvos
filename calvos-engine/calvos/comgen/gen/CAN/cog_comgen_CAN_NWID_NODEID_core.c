@@ -347,7 +347,7 @@ if len(list_of_tx_msgs) > 0:
 	sym_tx_stat_data_type = "const CANtxMsgStaticData"
 	sym_tx_stat_data_len = "kCAN_" + net_name_str + node_name_str + "nOfTxMsgs"
 
-	cog.outl("const "+sym_tx_stat_data_type+" "+sym_tx_stat_data_name+"["+sym_tx_stat_data_len+"] = {\\")
+	cog.outl(sym_tx_stat_data_type+" "+sym_tx_stat_data_name+"["+sym_tx_stat_data_len+"] = {\\")
 
 	callback_prefix = "can_" + net_name_str + node_name_str
 	callback_tx_sufix = "_tx_callback"
@@ -489,7 +489,7 @@ if len(list_of_tx_msgs) > 0:
 		return_value = can_commonTransmitMsg(&"""+sym_tx_stat_data_name+"""[msg_idx], \\
 								  &"""+sym_tx_queue_name+""", \\
 								  &"""+sym_hal_transmit_name+""", \\
-								  """+sym_txing_msg_name+""");
+								  &"""+sym_txing_msg_name+""");
 	}
 
 	return return_value;
@@ -569,7 +569,7 @@ if len(list_of_tx_msgs) > 0:
 		return_value = can_commonTransmitMsg(msg_to_retry, \\
 								  NULL, \\
 								  &"""+sym_hal_transmit_name+""", \\
-								  """+sym_txing_msg_name+""");
+								  &"""+sym_txing_msg_name+""");
 		if(return_value == kNoError){
 			// Transmission succeeded. Dequeue the message.
 			can_txQueueDequeue(&"""+sym_tx_queue_name+""", NULL);

@@ -154,8 +154,16 @@ CalvosError can_txQueueEnqueue(CANtxQueue* queue, const CANtxMsgStaticData* node
 
 	/* Queue node at the tail if there is still empty space in the queue */
 	if(queue->length < kCANtxQueueLen){
-		queue->tail->dyn->txQueueNext = node;
-		queue->tail = node;
+		if(queue->length == 0){
+			// List is empty, make tail equal to new node and tail equal to head
+			queue->tail = node;
+			//queue->tail->dyn->txQueueNext = NULL;
+			queue->head = queue->tail;
+		}else{
+			// List is not empty, enqueue new node
+			queue->tail->dyn->txQueueNext = node;
+			queue->tail = node;
+		}
 		queue->length++;
 		return_value = kNoError;
 	}
@@ -193,12 +201,16 @@ CalvosError can_txQueueDequeue(CANtxQueue* queue, const CANtxMsgStaticData* node
 	CalvosError return_value = kError;
 
 	/* Dequeue node at the head if queue is not empty. */
-	if(queue->head != NULL){
+	if((queue->length > 0) && (queue->head != NULL)){
 		if(node != NULL){
 			node = queue->head;
 		}
-		queue->head = queue->head->dyn->txQueueNext;
 		queue->length--;
+		if(queue->length == 0){
+			queue->head = NULL;
+		}else{
+			queue->head = queue->head->dyn->txQueueNext;
+		}
 		return_value = kNoError;
 	}
 
@@ -264,32 +276,32 @@ void can_clearAllAvlblFlags(const CANrxMsgStaticData* msg_struct){
 CalvosError can_commonTransmitMsg(const CANtxMsgStaticData* msg_struct, \
 								  CANtxQueue* queue, \
 								  CANhalTxFunction can_hal_tx_function, \
-								  const CANtxMsgStaticData* transmitting_msg){
+								  const CANtxMsgStaticData** transmitting_msg){
 	CalvosError return_value = kError;
 	CalvosError local_return_value;
 
-	// Trigger CAN transmission to HAL if it is not being transmitted or
-	// pending for transmission
-	if((msg_struct->dyn->state != kCANtxState_transmitting) \
-	&& (msg_struct->dyn->state != kCANtxState_queued)){
-		local_return_value = (*can_hal_tx_function)(msg_struct);
-		if(local_return_value == kNoError){
-			// Message successfully triggered for transmission from HAL
-			msg_struct->dyn->state = kCANtxState_transmitting;
-			transmitting_msg = msg_struct;
-			return_value = kNoError;
-		}else{
-			// If queue is not NULL, queue message for a later transmission (retry)
-			if(queue != NULL){
-				local_return_value = can_txQueueEnqueue(queue, msg_struct);
-				if(local_return_value == kNoError){
-					// Queue succeeded
-					msg_struct->dyn->state = kCANtxState_queued;
-					return_value = kNoError;
-				}else{
-					msg_struct->dyn->state = kCANtxState_requested;
-				}
+	// Trigger CAN transmission to HAL
+	local_return_value = (*can_hal_tx_function)(msg_struct);
+	if(local_return_value == kNoError){
+		// Message successfully triggered for transmission from HAL
+		msg_struct->dyn->state = kCANtxState_transmitting;
+		*transmitting_msg = msg_struct;
+		return_value = kNoError;
+	}else{
+		// If queue is not NULL, queue message for a later transmission (retry)
+		if(queue != NULL){
+			local_return_value = can_txQueueEnqueue(queue, msg_struct);
+			if(local_return_value == kNoError){
+				// Queue succeeded
+				msg_struct->dyn->state = kCANtxState_queued;
+				return_value = kNoError;
 			}else{
+				msg_struct->dyn->state = kCANtxState_requested;
+			}
+		}else{
+			if(msg_struct->dyn->state != kCANtxState_queued){
+				// If message was not queued, set it to requested
+				// otherwise it will remain as queued
 				msg_struct->dyn->state = kCANtxState_requested;
 			}
 		}
@@ -301,14 +313,28 @@ CalvosError can_commonTransmitMsg(const CANtxMsgStaticData* msg_struct, \
 /** Function for confirming transmission of CAN message.
  *
  * @param transmitting_msg 	Pointer to the transmitting message's static data.
+ * @param check_msg_id 	If kTrue, then tx message will be confirmed only if the
+ * 						transmitted id provided in argument @c txd_msg_id
+ * 						matches with the one transmitted by calvos engine.
+ * 						Otherwise, confirmation will occur regardless of the id
+ * 						transmitted by HAL. In this case ensure there is no
+ * 						other SW components transmitting CAN messages other than
+ * 						calvos engine.
+ * @param txd_msg_id	Id of the message transmitted by the HAL. To be used for
+ * 						message confirmation if @c check_msg_id is @c kTrue
  * @Return 		Returns @c kNoError if provided @c transmitting_msg is not NULL.
  * 				Returns @c kError otherwise.
  * ===========================================================================*/
-void can_commonConfirmTxMsg(const CANtxMsgStaticData* transmitting_msg){
+void can_commonConfirmTxMsg(const CANtxMsgStaticData* transmitting_msg, \
+							uintNat_t check_msg_id, uint32_t txd_msg_id){
 
 	if(transmitting_msg != NULL){
-		transmitting_msg->dyn->state = kCANtxState_transmited;
-		// Clears transmitting message pointer
-		transmitting_msg = NULL;
+		// Confirm message only if the transmitted ID matches in case
+		// check_msg_id is set true. If check_msg_id is false
+		if(!check_msg_id || txd_msg_id == transmitting_msg->id){
+			transmitting_msg->dyn->state = kCANtxState_transmited;
+			// Clears transmitting message pointer
+			transmitting_msg = NULL;
+		}
 	}
 }

@@ -7,7 +7,7 @@ Module for managing a calvos project.
 @copyright:  2020 Carlos Calvillo. All rights reserved.
 @license:    GPL v3
 """
-__version__ = '0.1.0'
+__version__ = '0.0.1'
 __date__ = '2020-11-12'
 __updated__ = '2020-11-12'
 

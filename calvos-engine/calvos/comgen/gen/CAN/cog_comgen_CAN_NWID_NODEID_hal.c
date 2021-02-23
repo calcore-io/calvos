@@ -102,6 +102,22 @@ for message in subnet.messages.values():
  ]]] */
 // [[[end]]]
 
+/* Macro for confirming TX msg ID */
+/* This macro is generated based on parameter "CAN_tx_confirm_msg_id" */
+/* [[[cog
+#  TX confirm Msg ID
+# ------------------
+sym_tx_id_needed_name = "CAN_" + net_name_str + node_name_str + "CONFIRM_MSG_ID"
+tx_confirm_msg_id = project_obj.get_simple_param_val("comgen.CAN","CAN_tx_confirm_msg_id")
+if tx_confirm_msg_id is True:
+	sym_tx_id_needed_val = "kTrue"
+else:
+	sym_tx_id_needed_val = "kFalse"
+
+cog.outl("#define "+sym_tx_id_needed_name+"\t\t"+sym_tx_id_needed_val)
+ ]]] */
+// [[[end]]]
+
 
 /* =============================================================================
  * 	Function definitions
@@ -128,11 +144,46 @@ sym_can_transmit_body="""
 	CalvosError return_value = kError;
 	// Write HAL code to transmit a CAN message. Information about the message
 	// can be extracted from the provided msg_info structure.
+	#error "User code needed here. Remove this line when done."
 
 	return return_value;
 """
 sym_can_transmit_body = sym_can_transmit_body[1:]+"}"
 cog.outl(sym_can_transmit_body)
+]]] */
+// [[[end]]]
+
+/* ===========================================================================*/
+/** Function for getting the id of the message just transmitted by the HAL.
+ *
+ * This function returns the id of the CAN message just transmitted by the
+ * target CAN HAL. This function is invoked by the TX confirmation function
+ * "can_NWID_NODEID_HALconfirmTxMsg".
+ * ===========================================================================*/
+/* [[[cog
+# This function has a conditional compilation directive
+cog.outl("#if "+sym_tx_id_needed_name+"==kTrue")
+
+sym_get_tx_id_return = "uint32_t"
+sym_get_tx_id_name = "can_"+net_name_str+node_name_str+"HALgetTxdMsgId"
+sym_get_tx_id_args = "(void)"
+
+code_str = sym_get_tx_id_return+" "+sym_get_tx_id_name+sym_get_tx_id_args+"{\n"
+cog.outl(code_str)
+
+sym_get_tx_id_body="""
+	uint32_t txd_msg_id;
+	// Write user code to return the ID of the CAN message just transmitted
+	// by the CAN HAL.
+	#error "User code needed here. Remove this line when done."
+
+	return txd_msg_id;
+"""
+sym_get_tx_id_body = sym_get_tx_id_body[1:]+"}"
+cog.outl(sym_get_tx_id_body)
+
+# Close conditional compilation directive
+cog.outl("#endif")
 ]]] */
 // [[[end]]]
 
@@ -152,11 +203,19 @@ sym_hal_confirm_tx_args = "(void)"
 code_str = sym_hal_confirm_tx_return+" "+sym_hal_confirm_tx_name+sym_hal_confirm_tx_args+"{\n"
 cog.outl(code_str)
 
-sym_can_transmit_body="""
-	can_commonConfirmTxMsg("""+sym_txing_msg_name+""");
+sym_hal_confirm_tx_body="""
+#if """+sym_tx_id_needed_name+"""==kTrue
+	uint32_t txd_msg_id;
+	// Get ID of the message just transmitted
+	txd_msg_id = """+sym_get_tx_id_name+"""();
+	// Confirm TX message if ID matches
+	can_commonConfirmTxMsg("""+sym_txing_msg_name+""", kTrue, txd_msg_id);
+#else
+	can_commonConfirmTxMsg("""+sym_txing_msg_name+""", kFalse, NULL);
+#endif
 """
-sym_can_transmit_body = sym_can_transmit_body[1:]+"}"
-cog.outl(sym_can_transmit_body)
+sym_hal_confirm_tx_body = sym_hal_confirm_tx_body[1:]+"}"
+cog.outl(sym_hal_confirm_tx_body)
 ]]] */
 // [[[end]]]
 

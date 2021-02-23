@@ -122,6 +122,15 @@ sym_hal_transmit_args = "(const CANtxMsgStaticData* msg_info)"
 code_str = "extern "+sym_hal_transmit_return+" "+sym_hal_transmit_name+sym_hal_transmit_args+";"
 cog.outl(code_str)
 
+# HAL get transmitted ID function
+# -------------------------------
+sym_get_tx_id_return = "uint32_t"
+sym_get_tx_id_name = "can_"+net_name_str+node_name_str+"HALgetTxdMsgId"
+sym_get_tx_id_args = "(void)"
+
+code_str = "extern "+sym_get_tx_id_return+" "+sym_get_tx_id_name+sym_get_tx_id_args+";"
+cog.outl(code_str)
+
 # HAL Confirm Transmit Function
 # -----------------------------
 sym_hal_confirm_tx_return = "void"

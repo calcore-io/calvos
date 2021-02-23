@@ -8,7 +8,7 @@ protocol.
 @copyright:  2020 Carlos Calvillo. All rights reserved.
 @license:    GPL v3
 """
-__version__ = '0.1.0'
+__version__ = '0.0.1'
 __date__ = '2020-08-03'
 __updated__ = '2020-12-18'
     
@@ -80,12 +80,10 @@ SPONTAN = 0
 CYCLIC = 1
 CYCLIC_SPONTAN = 2
 BAF = 3
-
-
 # Constants for indicating read or write. Used by function get_signal_abstract_read
 READ = 0
 WRITE = 1
-
+# Constants for indicating message direction (transmission or reception)
 CAN_TX = 0
 CAN_RX = 1
 
@@ -390,6 +388,7 @@ class Network_CAN:
         Parameters
         ----------
             name : str
+                Name of the node to be removed.
         """
         if name not in self.nodes:
             #Node doesn't exist
@@ -479,11 +478,6 @@ class Network_CAN:
         else:
             log_warn(("Node: \"" + node_name \
                           + "\" not defined. Define first the node in the network"))
-        
-#    def remove_tx_message_to_node(self, node_name, message_name):
-#        
-#    def add_rx_message_to_node(self, node_name, message_name):
-#    
     
     #===============================================================================================
     def add_rx_message_to_subscribers(self, message_name, subscribers_string):
@@ -614,7 +608,11 @@ class Network_CAN:
     def get_messages_structures(self):
         """ Gets layout structure of all messages.
         
+        Performs signal fragmentation as needed in order to produce a message layout structure
+        ready to be used for corresponding C-code generation.
+        
         return
+        ------
             array of MessageStructure objects.
         
         """               
@@ -1020,7 +1018,10 @@ class Network_CAN:
     
     #===============================================================================================        
     def add_signal_to_message(self, message_name, signal_name, start_byte, start_bit):
-        """ Adds a signal to a message with the speficied layout information. """
+        """ Adds a signal to a message with the speficied layout information. 
+        If soace in the target message is available, then the given signal is added with its
+        layout information.
+        """
         #Check if message exists
         if message_name in self.messages:
             #Check if signal exists
@@ -1101,6 +1102,7 @@ class Network_CAN:
             
     #===============================================================================================    
     def set_signal_data_type(self, signal_name, data_type):
+        """ Sets the data type of a signal. """
         if signal_name in self.signals:
             if data_type in data_types_list:
                 # Data type of signal is a prefixed one (not custom)
@@ -1127,7 +1129,10 @@ class Network_CAN:
     
     #===============================================================================================
     def get_sorted_signals_by_layout(self, grouped_by_message = False):
-        """ Sorts the signals in this network according to their layout """
+        """ Sorts the signals in this network according to their layout.
+        
+        Sorting order is as follows: sort by message name, then by start byte, then by start bit.
+        """
         return_list = {}
         sorted_signals_list = []
         
@@ -1145,8 +1150,6 @@ class Network_CAN:
             sorted_signals_list = \
                 sorted(sorted_signals_list, \
                        key= lambda signal_entry : list(signal_entry.values())[0].message)
-                
-                
 
             # Sort signals by layout within each message
             # Following code will create temporal individual lists of signals
@@ -1614,8 +1617,6 @@ class Network_CAN:
     def fragment_signal(self, signal_name, abs_start_bit, abs_end_bit, \
             nominal_type_len = 8, leading_type_len = None, trailing_type_len = None):
         """ Fragments a signal based on its size and layout information.
-        
-            If signal is
         """
         if leading_type_len is None:
             leading_type_len = nominal_type_len
@@ -2017,8 +2018,7 @@ class Network_CAN:
         #TODO: Optimize this function so that it only updates a selected list of source_ids
         for source_id, source_obj in cog_sources.sources.items():
             cog_out_file = self.get_cog_out_name(source_obj, wildcards)
-            cog_sources.sources[source_id].cog_out_file = cog_out_file
-        
+            cog_sources.sources[source_id].cog_out_file = cog_out_file      
         
     #===============================================================================================    
     def get_cog_out_name(self, source_obj, wildcards = {}): 

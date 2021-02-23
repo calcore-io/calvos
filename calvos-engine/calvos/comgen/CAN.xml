@@ -126,5 +126,13 @@ Use ${DATATYPE} to indicate the Data_Type name.
 				Time in ms of TX queue task.
 			</clv:Desc>
 			<clv:Default>10</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="boolean" id="CAN_tx_confirm_msg_id"
+			category="catCAN_network">
+			<clv:Title>TX confirm mesage ID</clv:Title>
+			<clv:Desc>
+				If True, TX confirmation will check for transmitted ID.
+			</clv:Desc>
+			<clv:Default>True</clv:Default>
 		</clv:ParamDefinition></clv:ParamsDefinitions>
 </clv:ComponentDefinition>

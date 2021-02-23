@@ -7,7 +7,7 @@ Module for code generation utilities.
 @copyright:  2020 Carlos Calvillo. All rights reserved.
 @license:    GPL v3
 """
-__version__ = '0.1.0'
+__version__ = '0.0.1'
 __date__ = '2020-09-29'
 __updated__ = '2020-09-29'
 

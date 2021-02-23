@@ -7,7 +7,7 @@ Module for the logging system use across all calvos engine.
 @copyright:  2020 Carlos Calvillo. All rights reserved.
 @license:    GPL v3
 """
-__version__ = '0.1.0'
+__version__ = '0.0.1'
 __date__ = '2020-12-06'
 __updated__ = '2020-12-06'
 
