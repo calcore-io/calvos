@@ -80,6 +80,7 @@ subnet = network.get_subnetwork([node_name])
 // [[[end]]]
 
 #include "calvos.h"
+#include <string.h>
 
 /* -------------------------------------------------------------------------- */
 // 		Network Messages
@@ -398,8 +399,10 @@ if len(subnet.messages) > 0:
 		cog.outl("/"+chr(42)+" ----------- Macros for "+dir_str+" message \"" + message.name \
 				+ "\" ----------- " + chr(42) + "/")
 
-		cog.outl("/"+chr(42)+chr(42)+chr(42)+" Message Level macros " + chr(42)+chr(42)+chr(42) + "/")
+		cog.outl("/"+chr(42)+chr(42)+chr(42)+" Message Level macros " \
+			+ chr(42)+chr(42)+chr(42) + "/")
 		# Message get macro.
+		cog.outl("/"+chr(42)+" Get message data from unified buffer "+chr(42)+"/")
 		macro_name = "CAN_" + net_name_str + node_name_str+"get_msg_"+message_name
 		macro_args = "(data_struct)"
 		macro_vals = "CALVOS_CRITICAL_ENTER();"+line_sep_str+"memcpy(data_struct.all,"+line_sep_str \
@@ -412,7 +415,7 @@ if len(subnet.messages) > 0:
 
 		if msg_is_tx is True:
 			# Message update macro is only for TX messages.
-
+			cog.outl("/"+chr(42)+" Update message data to be transmitted "+chr(42)+"/")
 			macro_name = "CAN_" + net_name_str + node_name_str+"update_msg_"+message_name
 			macro_args = "(data_struct)"
 			macro_vals = "CALVOS_CRITICAL_ENTER();"+line_sep_str+"memcpy(" \
@@ -421,11 +424,30 @@ if len(subnet.messages) > 0:
 
 			code_str = "#define "+macro_name+macro_args+"\t\t"+macro_vals
 			cog.outl(code_str)
+			cog.outl()
 
 		if msg_is_tx is False:
-			# Message clear all available flags macro.
+			# Message get available flags macro.
+			cog.outl("/"+chr(42)+" Get message available flags "+chr(42)+"/")
+			macro_name = "CAN_" + net_name_str + node_name_str+"get_msg_avlbl_flags_"+message_name
+			macro_vals = "("+ sym_rx_stat_data_name + "[" + sym_rx_idx_pfx \
+				+ message_name + "].dyn->available)"
+			code_str = "#define "+macro_name+"()"+"\t\t"+macro_vals
+			cog.outl(code_str)
 			cog.outl()
-			macro_name = "CAN_" + net_name_str + node_name_str+"clr_avlbl_flags_"+message_name
+
+			# Message clear available flags macro.
+			cog.outl("/"+chr(42)+" Clear message available flags "+chr(42)+"/")
+			macro_name = "CAN_" + net_name_str + node_name_str+"clr_msg_avlbl_flags_"+message_name
+			macro_vals = sym_rx_stat_data_name + "[" + sym_rx_idx_pfx \
+				+ message_name + "].dyn->available.all = 0u;"
+			code_str = "#define "+macro_name+"()"+"\t\t"+macro_vals
+			cog.outl(code_str)
+			cog.outl()
+
+			# Message clear all available flags macro.
+			cog.outl("/"+chr(42)+" Clear all available flags (message and signals) "+chr(42)+"/")
+			macro_name = "CAN_" + net_name_str + node_name_str+"clr_all_avlbl_flags_"+message_name
 			macro_vals = "can_clearAllAvlblFlags(&"+ sym_rx_stat_data_name + "[" + sym_rx_idx_pfx \
 				+ message_name + "])"
 			code_str = "#define "+macro_name+"()"+"\t\t"+macro_vals

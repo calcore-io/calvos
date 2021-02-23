@@ -53,9 +53,8 @@ cog.outl(C_gen_info("File Name"))
 #define GENERAL_DEFS_H
 
 /* Macros for critical sections */
-#warning "Insert user code to enter critical section. Remove this directive when done."
+#warning "Insert user code to enter and exit critical section. Remove this directive when done."
 #define CALVOS_CRITICAL_ENTER()
-#warning "Insert user code to exit critical section. Remove this directive when done."
 #define CALVOS_CRITICAL_EXIT()
 
 #endif /* GENERAL_DEFS_H */
