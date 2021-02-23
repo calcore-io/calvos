@@ -219,10 +219,4 @@ typedef union{
 #define kAllOnes32 	0xFFFFFFFFul
 #define kAllOnes64 	0xFFFFFFFFFFFFFFFFull
 
-/* Macros for critical sections */
-#define CALVOS_CRITICAL_ENTER()
-#define CALVOS_CRITICAL_EXIT()
-
-
-
 #endif /* CALVOS_TYPES_H */

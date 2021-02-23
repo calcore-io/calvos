@@ -1024,3 +1024,6 @@ def generate(input_object, out_path, working_path, calvos_path, params):
     
     cog_file_name = "cog_static_calvos.h"
     cog_generator(cog_file_name, out_path, working_path, cog_files_path)
+    
+    cog_file_name = "cog_USER_general_defs.h"
+    cog_generator(cog_file_name, out_path, working_path, cog_files_path)
