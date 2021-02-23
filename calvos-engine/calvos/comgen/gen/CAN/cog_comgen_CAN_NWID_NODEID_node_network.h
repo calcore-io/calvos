@@ -517,31 +517,26 @@ if len(subnet.messages) > 0:
 
 			# Available flags only apply for RX signals
 			if msg_is_tx is False:
-				casting_type = cg.calculate_base_type_len(len(message_signals))
-				if casting_type > 8:
-					# Get available macro
-					macro_value = "((" + cg.get_dtv(casting_type) +")&" + sym_avlbl_buffer_name \
-						+ "[" + sym_avlbl_buff_idx_pfx+message.name + "] >> " \
-						+ sym_sig_idx_pfx + signal.name + ") & 1u)"
-
-					cog.outl("#define "+sym_avlb_get+pad_avlb_get+macro_value)
-				else:
-					macro_value = "((" + sym_avlbl_buffer_name \
-						+ "[" + sym_avlbl_buff_idx_pfx+message.name + "] >> " \
-						+ sym_sig_idx_pfx + signal.name + ") & 1u)"
-
-					cog.outl("#define "+sym_avlb_get+pad_avlb_get+macro_value)
-
-				# Clear available macro
 				working_byte = math.floor(avlbl_flags_idx[signal.name] / 8)
 				working_bit = avlbl_flags_idx[signal.name] - (working_byte*8)
-				working_mask = cg.get_bit_mask(1, working_bit, True, 8)
+				working_clr_mask = cg.get_bit_mask(1, working_bit, True, 8)
 
+				if working_bit > 0:
+					macro_value = "((" + sym_avlbl_buffer_name \
+						+ "[" + str(avlbl_msg_buff_idx[message.name] + working_byte) + "] >> " \
+						+ cg.to_hex_string_with_suffix(working_bit) + ") & 0x01u)"
+				else:
+					macro_value = "(" + sym_avlbl_buffer_name \
+					+ "[" + str(avlbl_msg_buff_idx[message.name] + working_byte) + "] & 0x01u)"
+
+				cog.outl("#define "+sym_avlb_get+pad_avlb_get+macro_value)
+
+				# Clear available macro
 				macro_value = "(" + sym_avlbl_buffer_name \
 					+ "[" + str(avlbl_msg_buff_idx[message.name] + working_byte) + "] = " \
 					+ sym_avlbl_buffer_name \
 					+ "[" + str(avlbl_msg_buff_idx[message.name] + working_byte) + "] & " \
-					+ cg.to_hex_string_with_suffix(working_mask) + ")"
+					+ cg.to_hex_string_with_suffix(working_clr_mask) + ")"
 
 				cog.outl("#define " + sym_avlb_clear + pad_avlb_clear + macro_value)
 
