@@ -8,6 +8,7 @@ Module for managing a calvos project.
 @license:    GPL v3
 """
 __version__ = '0.0.1'
+from odf import element
 __date__ = '2020-11-12'
 __updated__ = '2020-11-12'
 
@@ -69,15 +70,13 @@ class Project:
         """
         self.name = name
 
-        project_file = cg.string_to_path(project_file)
-        self.project_file = project_file
-        # Extract project path
-        self.project_path = project_file.parent.resolve()
-        
-        self.calvos_path = cg.string_to_path(calvos_path)
-        
-
-        self.paths = {"project_path" : cg.string_to_path(self.project_path),
+        if project_file is not None:
+            project_file = cg.string_to_path(project_file)
+            self.project_file = project_file
+            # Extract project path
+            self.project_path = project_file.parent.resolve()
+            
+            self.paths = {"project_path" : cg.string_to_path(self.project_path),
                       "project_inputs" : self.project_path / "usr_in",
                       "project_output" : self.project_path / "out",
                       "project_working_dir" : self.project_path / "out/working_dir",
@@ -85,6 +84,12 @@ class Project:
                       "project_templates" : self.project_path / "out/doc/templates",
                       "calvos_path" : cg.string_to_path(str(self.calvos_path))
                       }
+        else:
+            self.project_file = None
+            self.project_path = None
+            self.paths = {}
+            
+        self.calvos_path = cg.string_to_path(calvos_path)
 
         self.components_definitions = {} #Expected dict {comp_type : CompDefinition object}
         self.components = [] #List of Component objects
@@ -931,6 +936,25 @@ class Project:
         return return_value
     
     #===============================================================================================
+    def get_component_root_path(self, component_id):
+        """ Returns the path with cog files for the given component. 
+        
+        Parameters
+        ----------
+            component_id, str
+                String constituing the component name, for example: "utils.time" or
+                "comgen.CAN", etc.
+        """     
+        path_lst = component_id.split(".")
+        module_name = path_lst[-1]
+        root_path_val = cg.string_to_path(self.calvos_path)
+        for i, element in enumerate(path_lst):
+            if i < len(path_lst) - 1:
+                root_path_val = root_path_val / element
+                
+        return root_path_val
+    
+    #===============================================================================================
     def get_component_gen_path(self, component_id):
         """ Returns the path with cog files for the given component. 
         
@@ -952,12 +976,12 @@ class Project:
     
     #===============================================================================================
     def get_component_default_data_file(self, component_id):
-        """ Returns the path with cog files for the given component. 
+        """ Returns the expected file name with default data for mandatory components.
         
         Parameters
         ----------
             component_id, str
-                String constituing the component name, for example: "utils.time" or
+                String constituting the component name, for example: "utils.time" or
                 "comgen.CAN", etc.
         """     
         data_path_lst = component_id.split(".")
@@ -967,11 +991,35 @@ class Project:
         for i, element in enumerate(data_path_lst):
             if i < len(data_path_lst) - 1:
                 data_path_val = data_path_val / element
-                file_name += str(element) + "-"
+                file_name += str(element) + "-"   
         data_path_val = data_path_val / "usr_in" / (file_name + module_name + ".ods")
         
         return data_path_val
-                          
+    
+    #===============================================================================================
+    def get_list_of_templates(self):
+        """ Returns a list of paths with file names of user in templates """
+        component_lst = self.find_components(self.calvos_path)
+        comp_paths = []
+        template_files = []
+        
+        # Gather list of component's root paths
+        for component_id in component_lst.keys():
+            comp_path = self.get_component_root_path(component_id)
+            comp_path /= "usr_in"
+            if comp_path not in comp_paths:
+                comp_paths.append(comp_path)
+        
+        # Gather all templates from path list created above
+        for path in comp_paths: 
+            # Find all files starting with "template -"
+            for file_path in path.glob('template -*.*'):
+                if file_path.is_file() is True:
+                    if file_path not in template_files:
+                        template_files.append(file_path)
+        
+        return template_files
+                  
     #===============================================================================================        
     class CompDefinition:
         """ Class for modeling a calvos project component definition. """

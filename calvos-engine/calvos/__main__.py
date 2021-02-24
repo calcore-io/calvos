@@ -126,6 +126,8 @@ USAGE
             help="Optional. PATH: path where to export (copy) the generated C-code.")
         parser.add_argument("-b","--backup", dest="backup", required=False, \
             help="Optional. PATH: path where backups of the overwritten C-code during an export C-code will be placed. This is only used if -e argument is provided.")
+        parser.add_argument("-t","--templates", dest="templates", required=False, \
+            help="Will provide the calvos user input templates into the provided PATH. No project will be processed if this argument is provided.")
         parser.add_argument('-V', '--version', action='version', version=program_version_message)
         parser.add_argument('-v', '--ver', action='version', version=program_version_message)
 
@@ -134,6 +136,7 @@ USAGE
         project = args.project
         calvos = args.calvos
         log_level = args.log_level
+        templates_path = args.templates
         
         arguments_OK = True
 
@@ -168,6 +171,52 @@ USAGE
                 print("Error: not finding calvos package path")
                 return 2
         
+        # ----------------------------------------------------------------------------------
+        # Generate Templates if argument -t is provided. THis supersedes project processing.
+        # ----------------------------------------------------------------------------------
+        if templates_path is not None:
+            # Check if path exists
+            templates_path = string_to_path(templates_path)
+            if folder_exists(templates_path):
+                files_lst = []
+                file_count = 0
+                # Create a dummy project object
+                import calvos.common.logsys as lg
+             
+                log_output_file = templates_path / "log.log"
+                if file_exists(log_output_file):
+                    log_output_file.unlink()
+                 
+                lg.log_system = lg.Log(1, log_output_file)
+                log = lg.log_system
+                log.add_logger("main")
+            
+                import calvos.common.project as pj
+                log.info("main", \
+                         "============== Extracting User Input Templates ==============")
+                print("INFO: ============== Extracting User Input Templates ==============")
+                calvos_project = pj.Project("Project Name", None, calvos_path)
+                files_lst = calvos_project.get_list_of_templates()
+                
+                for file in files_lst:
+                    file_name = file.name
+                    dest_file = templates_path / file_name
+                    shutil.copy(file, dest_file)
+                    file_count += 1
+                print("INFO: Done. '%s' templates exported. " % file_count)
+                log.info("main", \
+                         "Done. '%s' templates exported. " % file_count)
+            else:
+                print("ERROR: Provided folder '%s' doesn't exist." % templates_path)
+                log.error("main", \
+                         "Provided folder '%s' doesn't exist." % templates_path)
+                
+            print("INFO: Don't provide argument -t if a project needs to be processed.")
+            return 0    
+        
+        # ----------------------------------------------------------------------------------
+        # Start project processing if argument -t was not provided
+        # ----------------------------------------------------------------------------------
         if project is not None:
             project_file = string_to_path(project)
             if file_exists(project_file):
