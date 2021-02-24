@@ -7,14 +7,6 @@
 	<AutoDate></AutoDate>
 	<AutoFile></AutoFile>
 	<Components>
-		<Component type="common.codegen">
-			<Name>A codegen component</Name>
-			<Desc/>
-			<Input type="ods">"usr_in/Code_Generation_Setup.ods"</Input>
-			<Params>
-				<Param name="test">Value</Param>
-			</Params>
-		</Component>
 		<Component type="comgen.CAN">
 			<Name></Name>
 			<Desc/>

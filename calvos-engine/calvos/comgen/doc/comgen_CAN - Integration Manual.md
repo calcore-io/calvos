@@ -4,7 +4,11 @@ This document describes how to define a CAN network within the calvos system, ho
 
 # CAN Network definition
 
-The CAN network to generate needs to be defined first using the "CAN Network Definition.ods" template (currently only ods format is supported). Different tabs within the template need to be filled-up in order to fully define the network. A file based on this template shall be created per each required network. These files defining the networks can be freely named.
+The CAN network to generate needs to be defined first using the "CAN Network Definition.ods" template. Currently only ODS format is supported, however, it is possible to edit the template in MS Excel and then save it as ODS.
+
+Different tabs within the template need to be filled-up in order to fully define the network. A file based on this template shall be created per each required network. These files defining the networks can be freely named.
+
+Calvos supports a project with multiple networks and each network with multiple nodes. Provided that network names and not the same and that each node gets allocate a CAN peripheral in the target MCU. 
 
 ## Network definitions
 
@@ -24,7 +28,7 @@ Node definitions need to be specified in tab "Network_and_Nodes".
 
 A row per each node is expected in tab "Network_and_Nodes" starting below the corresponding titles row.
 
-- **Node Name:** Indicates the name of the node. Needs to comply with C-identifier syntax. This name will be used extensively across the generated code for the given node. Hence, it is recomended that the name is short. For example: NODE_1, DCM, BCM, etc.
+- **Node Name:** Indicates the name of the node. Needs to comply with C-identifier syntax. This name will be used extensively across the generated code for the given node. Hence, it is recommended that the name is short. For example: NODE_1, DCM, BCM, etc.
 
 - **Description:** A textual description of the node. Used only for documentation purposes. Not used for code generation. Can be any text string consisting of multiple sentences, paragraphs, etc. as desired.
 
@@ -34,22 +38,21 @@ Message definitions need to be specified in tab "Messages".
 
 - **Message Name:** Name of the message. Needs to comply with C-identifier syntax and needs to be unique per message.
 
-- **Message ID:** message identifier. Needs to be unique for each message within the same network. It can be entered in decimal format or hexadecimal format (with 0x prefix).
+- **Message ID:** message identifier. An integer number not exceeding 11-bits for standard CAN id messages and 29-bits for extended id messages. Needs to be unique for each message within the same network. It can be entered in decimal format or hexadecimal format (with 0x prefix).
 
 - **Extended Frame?:** Indicates if the given message has extended id. Use values "yes" or "no" (without quotes).
 
 - **Data Length (bytes):** Indicates the length of the data for the message. It can be from 1 to 8.
 
-- **Description:** A textual description of the message. Used only for documentation purposes. Not used for code generation. Can be any text string consisting of multiple sentences, paragraphs, etc. as desired.
+- **Description:** A textual description of the message. Used only for documentation purposes. Not used for code generation. Can be any text string consisting of multiple sentences, paragraphs, etc., as desired.
 
-- **Publisher:** node publishing the message. It shall be one of the node names defined in tab "Network_and_Nodes".
+- **Publisher:** node publishing (transmitting) the message. It shall be one of the node names defined in tab "Network_and_Nodes".
 
-- **Subscribers:** Node or nodes subscribing to the message. Timeout in milliseconds for each subscribing node can be specified within parentheses. Shall be a comma sepparated list of node names (within nodes defined in "Network_and_Nodes"). If a timeout definition is required for a given subscribing node it shall be specified between parentheses next to the node's name. Examples:
-  
+- **Subscribers:** Node or nodes subscribing to (receiving) the message. Timeout in milliseconds for each subscribing node can be specified within parentheses. Shall be a comma separated list of node names (valid nodes defined in "Network_and_Nodes"). If a timeout definition is required for a given subscribing node it shall be specified between parentheses next to the node's name. Examples:
   - Node_1, Node_2 (100), Node_3, Node_4 (1000)   --> Message is subscribed by nodes Node_1, Node_2, Node_3 and Node_4. Timeout of 100 ms is defined for Node_2 and a timeout of 1000 ms is defined for Node_4.
   
   - Node_5  --> Only Node_5 is a subscriber of the node.
-
+  
 - **Tx Type:** Indicates the transmission type from the publishing node perspective. Allowed values are:
   
   - cyclic: message is cyclic. Period needs to be defined.
@@ -77,25 +80,23 @@ Signal definitions need to be specified in tab "Signals".
   
   - scalar: indicates that the signal is of an scalar type (integer, etc.).
   
-  - custom__data__type: can use any name of a user-defined enumerated data type (see section below).
+  - *custom data* type: can use any name of an user-defined enumerated data type within tab "Data Types" (see section below).
 
-- **Length (bits):** length in bits of the signal. Can be betwenn 1 and upto the message size (e.g., 64 bits for an 8-byte length message). The signal must fit in the message available space (space not occipied by other message's signals).
+- **Length (bits):** length in bits of the signal. Can be between 1 and up-to the message size (e.g., 64 bits for an 8-byte length message). The signal must fit in the message available space (space not occupied by other message signals).
 
 - **Conveyor Message:** name of the message transporting the signal. Shall be a defined message name within tab "Messages".
 
-- **Start Byte:** Layout information: starting byte position of the signal within the
-   conveyor message.
-
-- **Start Bit:** Layout information: starting bitposition of the signal within the conveyor
-   message.
+- **Start Byte:** Layout information: starting byte position of the signal within the conveyor message.
+  
+- **Start Bit:** Layout information: starting bit position (with respect to the start byte) of the signal within the conveyor
+   message. E.g. if a signal starts at absolute bit position 33 (starting counting with byte 0 and bit 0), then its start byte shall be 4 and its start bit shall be 1.
   
   **Note:** Bits occupied by the signal (as determined by its starting byte, starting bit and length) shall not overlap with other signals conveyed by the same message.
 
-- **Initial Value:** value of the signal to be set during initialization. Shall be a valid value as per the associated signal type. For signals of type array, this value will be used in all the array's bytes. Left empty if no initial value is required (by default all data is initialized will all zeros).
+- **Initial Value:** value of the signal to be set during initialization. Shall be a valid value as per the associated signal type. For signals of type array, this value will be used in all the array's bytes. Left empty if no initial value is required (by default all data is initialized with all zeros).
 
-- **Fail Safe value:** value for the signal to be set when the conveyor message timesout (from subscribing node's perspective). Shall be a valid value as per the
-   associated signal type. If left empty then no change will be performed upon detection of conveyor message timeout (last known value will be kept). This is meaningless if the conveyor message doesn't have a defined timeout.
-
+- **Fail Safe value:** value for the signal to be set when the conveyor message times-out (from subscribing node's perspective). Shall be a valid value as per the associated signal type. If left empty then no change will be performed upon detection of conveyor message timeout (last known value will be kept). This is meaningless if the conveyor message doesn't have a defined timeout.
+  
 - **Offset:** if signal is of scalar type, it is often useful to define an offset and a resolution (see next parameter) to give a physical meaning to the signal's raw value. The offset and resolution are used to defined a linear equation for the physical value of the signal:
   
   - *physical_value* = **resolution** * *raw_value* + **offset**
@@ -112,11 +113,11 @@ Signal definitions need to be specified in tab "Signals".
 
 User can define custom enumerated data types. These data types need to be defined in tab "Data Types".
 
-- **Type name:** name of the user-defined enumerated data type. Needs to comply with C-identifier syntax.
+- **Type name:** name of the user-defined enumerated data type. Needs to comply with C-identifier syntax and be unique across all networks.
 
 - **Enum Values:** definition of enumerated symbols and their explicit values (optional). Needs to be a list of comma-separated symbol definitions for the enumeration (a standard C enumeration will be generated for each user-defined type). If an explicit integer value is desired for a given symbol, it needs to be specified between parentheses next to the symbol's name.
   
-  Symbol names need to comply with C-identifier syntax and shall be *unique* amognst all enumerated symbols of the user-defined enumerated data types.
+  Symbol names need to comply with C-identifier syntax and shall be *unique* amongst all enumerated symbols of the user-defined enumerated data types.
   
   Examples:
   
@@ -140,8 +141,7 @@ User can define custom enumerated data types. These data types need to be define
 
 ## Configuring the calvos-engine generator
 
-The calvos-engine responsible of generating C source code based on the CAN network definition can be configured. Main configurable parameters are listed in tab "Config" of
-the CAN Network Definition template.
+The calvos-engine responsible of generating C source code based on the CAN network definition can be configured. Main configurable parameters are listed in tab "Config" of the CAN Network Definition template.
 
 In tab "Config", following fields are present:
 
@@ -163,7 +163,7 @@ User-configurable parameters are listed below:
   
   Each node needs to be encompassed by double quotes `"Node_Name"`
   
-  Each node needs to be comma sepparated.
+  Each node needs to be comma separated.
   
   If User value is empty or is equal to `[]`, then code for all network nodes will be generated.
   
@@ -173,7 +173,13 @@ User-configurable parameters are listed below:
   
   - ["Node_2", "Node_4"]  --> will generate code for nodes Node_2 and Node_4
 
-- `CAN_gen_file_full_names`: If set to TRUE will force full-names for generated source code and symbols. Refer to section [Source Code Names Optimization](#name_opt) for more details on this parameter.
+- `CAN_gen_file_full_names`: If set to TRUE will force full-names for generated source code and symbols. Refer to section [Source Code Names Optimization](#Source-Code-Names-Optimization) for more details on this parameter.
+
+- `CAN_tx_confirm_msg_id` 
+
+- `CAN_tx_task_period`
+
+- `CAN_tx_queue_len`
 
 **Note:** The rest of parameters are not expected to be defined by the user or are currently not implemented so then do not modify the "User Value" for them.
 
@@ -293,7 +299,7 @@ Currently, `calvos` is not yet properly packaged so it needs to be set-up before
    
    Note: for simplicity we will assume that we are in a MS Windows environment and that the installed python 3.7 or newer can be invoked directly from the console, i.e., the python executable path is defined in the PATH system variable.
 
-2. Get following dependencies (for example using`python -m pip install <module_name>`):
+2. Get following dependencies (for example using `python -m pip install <module_name>`):
    
    - cogapp
    
@@ -303,11 +309,7 @@ Currently, `calvos` is not yet properly packaged so it needs to be set-up before
    
    - pyexcel-ods
    
-   - pyexcel-xls
-   
-   - pyexcel-xlsx
-
-3. Get the `calvos` python source code from github [GitHub - calcore-io/calvos: Open Source SW Utilities for Embedded Systems](https://github.com/calcore-io/calvos) and put in *C:\calvos* Open a command line and navigate into folder *C:\calvos\calvos-engine*
+3. Get the `calvos` python source code from github [GitHub - calcore-io/calvos: Open Source SW Utilities for Embedded Systems](https://github.com/calcore-io/calvos) and put it in *C:\calvos* Open a command line and navigate into folder *C:\calvos\calvos-engine*
 
 4. Run command `python -m calvos -v`
 
@@ -319,19 +321,36 @@ In order to generate our project we need to run the following command from *C:\c
 
 `python -m calvos -c c:\calvos\calvos-engine\calvos -p c:\my_calvos_project\project.xml`
 
-If everythin wen't Ok then the generated source code shall be located in the default output folder:
+If everything went Ok then the generated source code shall be located in the default output folder:
 
 - *c:\my_calvos_project\out*
 
-Information about the project processing and possible warnings/erorrs found during the processing can be consulted in the generated log file located in the project's *root* folder:
+Information about the project processing and possible warnings/errors found during the processing can be consulted in the generated log file located in the project's *root* folder:
 
 - *c:\my_calvos_project\log.log*
 
-If `calvos` package failed to execute check if there are missing python dependancies that need to be installed or if the proper python version is being used (this can be checked by typing in `python -v` a console. Shown version shall be equal to or greater than 3.7).
+If `calvos` package failed to execute check if there are missing python dependencies that need to be installed or if the proper python version is being used (this can be checked by typing in `python -v` a console. Shown version shall be equal to or greater than 3.7).
 
 Generated code shall correspond to the defined CAN network as well as some global files used across all calvos project.
 
-# Global Generated Source Code
+### Exporting the Generated Code
+
+It is possible to automatically export the generated source code into an user-defined path. At the end, the goal of the calvos generated code is to be integrated into the user's project. For this, the optional "export" command line argument `-e` can be used to indicate such location where the generated code will be automatically copied to.
+
+If the export argument `-e` is used then the files in the exporting folder will be overwritten without user prompt. This should normally not be a problem since the generated source code that requires user instrumentation is generated with prefix "USER_ " and hence user instrumentation shouldn't be overwritten (user shall remove the prefix "USER_" once instrumentation is done). Nevertheless, it may be many reasons why a backup of the code that the export overwrites is desired. For this, a "backup" command line argument `-b` is in place. If `-b` is provided it shall indicate the path where the backup of the files to be replaced during the export operation is to be located.
+
+The backup strategy produces multiple sets of backed-up files. Up-to 10 sets will be created if the calvos-engine is invoked multiple times with the export `-e` argument. These sets will be located in the path specified in the backup argument `-b`. 
+
+## Instrumenting User Code
+
+Generated source code is classified in two categories: static code and user code.
+
+- **Static Code:** Is the generated source code that doesn't need any user instrumentation and hence, is not expected to be modified by the user.
+- **User Code:** Is the generated source code that needs some user instrumentation. Source code files in this category are generated with a prefix "USER_ " in the file name. The user *shall instrument* the required code and once done the files need to be re-named to remove such "USER_" prefix. 
+
+# CAN Interaction Layer Generated Source Code
+
+## Global Generated Source Code
 
 Couple of generated files are general ones not tied to the CAN network but required for a proper integration of the calvos generated source code into the user's target project.
 
@@ -342,11 +361,11 @@ Those global files are:
 | `calvos_types.h` | Typedefs used across generated source code. If a type re-definition error is found when integrating this code into the target project then comment out the re-defined types in this file ensuring that the original definition in the target project matches the ones commented out. |
 | `calvos.h`       | Header file for including global headers like `calvos_types.h` across all calvos generated source code.                                                                                                                                                                              |
 
-# CAN Generated Source Code
+## CAN Generated Source Code
 
 The generated source code for the CAN network(s) is categorized in common code common to all CAN entities), network specific code and node specific code.
 
-## Common Code
+### Common Code
 
 Code common to all CAN generated source code. These set of files will be generated once regardless of the number of networks or nodes defined in the project.
 
@@ -355,50 +374,50 @@ Code common to all CAN generated source code. These set of files will be generat
 | `comgen_CAN_common.h` | Contains definitions used across all CAN generated code. For example, common data structures, symbol definitions, internally used common functions, etc. |
 | `comgen_CAN_common.c` | Implements common functionality for CAN. For example, logic for queuing transmission messages, binary search tree for received messages, etc.            |
 
-## Network-specific Code
+### Network-specific Code
 
 Code that needs to be generated per each defined network in the project. E.g., if two networks are defined, then two sets of these source code files will be generated, one per each network.
 
 When referring to a file in this category or symbols within those files, the wildcard NWID (network ID) will be used in this documentation to represent the corresponding network ID. 
 
-For example, if the defined network has an ID equal to 'C', then a flie referred as `comgen_CAN_NWID_network.h` corresponds to a generated file with name`comgen_CAN_C_network.h`.
+For example, if the defined network has an ID equal to 'C', then a file referred as `comgen_CAN_NWID_network.h` corresponds to a generated file with name`comgen_CAN_C_network.h`.
 
-| File                            | File contents                                                                                                                                                                            |
-| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `cog_comgen_CAN_NWID_network.h` | Defines network-wide symbols and data structures for messages information (lengths, ids, data structures, etc), signals (APIs to access signals) and user-defined enumerated data types. |
-|                                 |                                                                                                                                                                                          |
-|                                 |                                                                                                                                                                                          |
+| File                            | File contents                                                |
+| ------------------------------- | ------------------------------------------------------------ |
+| `cog_comgen_CAN_NWID_network.h` | Defines network-wide symbols and data structures for messages information (lengths, ids, data structures, etc.), signals (APIs to access signals) and user-defined enumerated data types. |
+|                                 |                                                              |
+|                                 |                                                              |
 
-## Node-specific Code
+### Node-specific Code
 
 Code that needs to be generated per each defined node within a network that has been selected for code generation (selected in parameter `CAN_gen_nodes`). A set of these files will be generated for each selected node in each defined network. These source code files will contain the corresponding node's name in the file names and symbols within them.
 
-When referring to a file in this category, the wildcard NODEID (node name) will be used in this documentation to represent the corresponding node. For example, if the generated node name is 'NODE_1', then a flie referred as `comgen_CAN_NWID_NODEID_node_network.h` corresponds to a generated file with name`comgen_CAN_C_NODE_1_node_network.h`.
+When referring to a file in this category, the wildcard NODEID (node name) will be used in this documentation to represent the corresponding node. For example, if the generated node name is 'NODE_1', then a file referred as `comgen_CAN_NWID_NODEID_node_network.h` corresponds to a generated file with name`comgen_CAN_C_NODE_1_node_network.h`.
 
-| File                                    | File contents                                                                                                                                                               |
-| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| File                                    | File contents                                                |
+| --------------------------------------- | ------------------------------------------------------------ |
 | `comgen_CAN_NWID_NODEID_node_network.h` | Defines symbols for node specific message information (message directions, timeouts, etc.), direct signal access macros (directly accessing from node's data buffers), etc. |
-| `comgen_CAN_NWID_NODEID_hal.h`          | Header for node's interfaces with CAN hardware abstraction layer in the target MCU.                                                                                         |
-| `comgen_CAN_NWID_NODEID_hal.c`          | Implemmentation of node's interfaces with CAN hardware abstraction layer in the target MCU.                                                                                 |
-| `cog_comgen_CAN_NWID_NODEID_core.h`     | Header for the node's CAN core functionality.                                                                                                                               |
-| `cog_comgen_CAN_NWID_NODEID_core.c`     | Implementation of the node's CAN core functionality.                                                                                                                        |
-| `comgen_CAN_NWID_NODEID_callbacks.h`    | Header for the node's callbacks                                                                                                                                             |
-| `comgen_CAN_NWID_NODEID_callbacks.c`    | Implementation of the node's callbacks                                                                                                                                      |
+| `comgen_CAN_NWID_NODEID_hal.h`          | Header for node's interfaces with CAN hardware abstraction layer in the target MCU. |
+| `comgen_CAN_NWID_NODEID_hal.c`          | Implementation of node's interfaces with CAN hardware abstraction layer in the target MCU. |
+| `cog_comgen_CAN_NWID_NODEID_core.h`     | Header for the node's CAN core functionality.                |
+| `cog_comgen_CAN_NWID_NODEID_core.c`     | Implementation of the node's CAN core functionality.         |
+| `comgen_CAN_NWID_NODEID_callbacks.h`    | Header for the node's callbacks                              |
+| `comgen_CAN_NWID_NODEID_callbacks.c`    | Implementation of the node's callbacks                       |
 
-## Source Code Names Optimization
+### Source Code Names Optimization
 
 In order to avoid generating source code with long (and probably cumbersome) names (file names plus symbols names inside them). A name "optimization" is available. This optimization is only active if parameter `CAN_gen_file_full_names` is set to FALSE.
 
-If only one network is defined in the project then the NWID wildcard will be replaced by an empty string rather than the network's ID (if only one network is defined then there is no need to generate multiple network specific files and hence there is no need to disntinguish between the files and symbol names like in the case of having multiple networks).
+If only one network is defined in the project then the NWID wildcard will be replaced by an empty string rather than the network's ID (if only one network is defined then there is no need to generate multiple network specific files and hence there is no need to distinguish between the files and symbol names like in the case of having multiple networks).
 
-If only one node is generated in a given network, the corresponding NODEID wildcard will be replaced by an empty string rather than the node's name. Similar logic as in the NWID optimization is appliced (no need to distinguish symbols for several nodes).
+If only one node is generated in a given network, the corresponding NODEID wildcard will be replaced by an empty string rather than the node's name. Similar logic as in the NWID optimization is applied (no need to distinguish symbols for several nodes).
 
-For example, if only one network (network id: "CT") is defined in the project and only a single node ["NODE_1"] is selected for generation, the file `comgen_CAN_NWID_NODEID_node_network.h`will be generated with the name `comgen_CAN_network.h`. However, if parameter `CAN_gen_file_full_names` is set to TRUE, the optmization won't take place and the generated file will have its full name: `comgen_CAN_CT_NODE_1_node_network.h`.
+For example, if only one network (network id: "CT") is defined in the project and only a single node ["NODE_1"] is selected for generation, the file `comgen_CAN_NWID_NODEID_node_network.h`will be generated with the name `comgen_CAN_network.h`. However, if parameter `CAN_gen_file_full_names` is set to TRUE, the optimization won't take place and the generated file will have its full name: `comgen_CAN_NWID_NODEID_node_network.h`.
 
 **Note:** Optimization is also applied to the defined symbols within the generated files as
 required.
 
-# Integration in Target Project
+# Integration into Target Project
 
 The integration needs to be done in a per-node basis. This means, each generated node needs to be integrated in the target's project. Hence, the hardware abstraction layer needs to be also defined per each node.
 
@@ -410,29 +429,33 @@ Function `can_NWID_NODEID_coreInit()` needs to be called during initialization p
 
 ## HAL Integration
 
-For each node, a HAL integration is required for the reception and also for the transmission part of the code.
+For each node, a HAL integration is required for the CAN reception and transmission by the target's MCU CAN peripheral.
 
 ### HAL integration for reception
 
 Following tasks are required in order to integrate the reception of CAN messages with the MCU's HAL (these steps need to be performed for each generated node):
 
-1. Function `can_NWID_NODEID_HALreceiveMsg()` needs to be invoked within the HAL function that signals the reception of a CAN message for the associated CAN peripheral (typically within ISR context). If multiple nodes are generated, each of the generated functions need to be invoked from the corresponding CAN peripherals.
+1. Initialize CAN HAL. User shall instrument during SW initialization phase, code for initializing the CAN peripheral with following characteristics:
    
+   - CAN reception shall allow all the defined node RX messages (set acceptance filters appropriately).
+   - Preferably an ISR shall be configured and instrumented corresponding to a successful reception of a CAN msg.
+   - Preferably an ISR shall be configured and instrumented corresponding to a successful transmission of a CAN msg.
+   
+2. Function `can_NWID_NODEID_HALreceiveMsg()` needs to be invoked within the HAL function that signals the reception of a CAN message by the CAN peripheral (typically within ISR context). If multiple nodes are generated, each of the generated functions need to be invoked from the corresponding CAN peripherals.
+
    Following arguments need to be provided:
-   
-   - `msg_id`: an unsigned integer containing the received message id (either and
-     standard or an extended id value).
-   
-   - `data_in`: a byte-pointer pointing to the place where the received data resides
-     from the HAL layer. Data will be copied from this pointer into the generated reception data buffer `can_NWID_NODEID_RxDataBuffer`.
-   
+
+   - `msg_id`: an unsigned integer containing the received message id (either and standard or an extended id value).
+     
+   - `data_in`: a byte-pointer pointing to the place where the received data resides from the HAL layer. Data will be copied from this pointer into the generated reception data buffer `can_NWID_NODEID_RxDataBuffer`.
+     
    - `data_len`: Length (number of bytes) of the received data. The data copy operation from the HAL to the reception buffer will be done for this amount of bytes in the case that the message is a valid rx message for the node.
 
-This function will first perform a search in order to determine if the received message id belongs to the node (its a suscribed message for the node). If it is then the received data will be copied to the reception buffer, corresponding message available flags will be set and the message reception callback will be invoked.
+This function will first perform a search in order to determine if the received message id belongs to the node (its a subscribed message for the node). If it is then the received data will be copied to the reception buffer, corresponding message available flags will be set and the message reception callback will be invoked.
 
 2. Write user-defined code within the reception message callback `can_NWID_NODEID_MESSAGEID_rx_callback()` as needed. MESSAGEID corresponds to the received message name. These callbacks are defined in file `comgen_CAN_NWID_NODEID_callbacks.c`.
    
-   **Note:** If function `can_NWID_NODEID_HALreceiveMsg()`is called wihin ISR context, then the callbacks will be also called within ISR context so the user code shall be as small as possible.
+   **Note:** If function `can_NWID_NODEID_HALreceiveMsg()`is called within ISR context, then the callbacks will be also called within ISR context so the user code shall be as small as possible.
    
    Is also possible to poll for the reception of messages based on their available flags (in case user doesn't want to use the callbacks directly).
 
@@ -454,9 +477,26 @@ Following tasks are required in order to integrate the transmission of CAN messa
    
    - Indication of extended id can be taken from `msg_info->fields.is_extended_id`. This is a boolean value with `1` indicating that the message has an extended id and `0` if it has an standard id.
 
-2. Invoke callback for message transmission confirmation from HAL. Function `can_CT_NODE_1_HALconfirmTxMsg()` needs to be called within the HAL function that signals the confirmation of the latest CAN message transmission. This function does't require any argument.
+2. Implement function for getting the ID of the message just transmitted by the HAL. If generation parameter `CAN_tx_confirm_msg_id` is set to `True` then function `can_NWID_NODEID_HALgetTxdMsgId` needs to be instrumented with code to return the ID of the CAN message just transmitted by the HAL. This function will be used by the CAN TX confirmation function `can_NWID_NODEID_HALconfirmTxMsg`. If generation parameter `CAN_tx_confirm_msg_id` is False then this function won't get generated. In this case, message confirmation will be done as long as `can_NWID_NODEID_HALconfirmTxMsg` is invoked regardless of the ID of the message transmitted by HAL.
+
+3. Invoke callback for message transmission confirmation from HAL. Function `can_NWID_NODEID_HALconfirmTxMsg()` needs to be called within the HAL function that signals the confirmation of the latest CAN message transmission (typically within ISR context). This function doesn't require any argument.
 
 ## Transmission Task integration
+
+Function  `can_task_<time>ms_NWID_NODEID_txProcess`  is generated and is in charge of triggering the transmission of the messages defined as `cyclic` or `cyclic_spontan` with their defined periods. This function needs to be invoked from a periodic task of the target OS with a period equal to parameter `CAN_tx_task_period` in milliseconds. The function name will indicate the required periodicity. For example, if `CAN_tx_task_period` is set to 10ms, then generated function will be named `can_task_10ms_NWID_NODEID_txProcess` and shall be called with such periodicity. Default value of `CAN_tx_task_period` is indeed 10ms.
+
+### Transmission of non-cyclic messages
+
+Function `can_task_<time>ms_NWID_NODEID_txProcess` only deals with cyclic transmissions of messages. If spontaneous transmissions are required then user can invoke function `can_NWID_NODEID_transmitMsg` as required. Refer to section [Transmitting Messages](#Transmitting-Messages) for more information. 
+
+## Transmission Retry Mechanism
+
+Calvos CAN IL implements a queueing and retry mechanism for transmission messages. If for a given reason a transmission request is rejected by the HAL (e.g., due to it is busy in another transfer) then the requested TX message gets queued for a later retransmission attempt. The length of this queue is determined by parameter `CAN_tx_queue_len` which defaults to 5. Function `can_NWID_NODEID_txRetry` is indeed in charge of performing such queue navigation and retransmission attempts. Therefore, function `can_NWID_NODEID_txRetry` needs to be invoked by the user in one of the following two options:
+
+1. Invoke  `can_NWID_NODEID_txRetry` at a task level. For example, invoking this function in a 5ms periodic task will attempt a transmission retry every 5ms until all queued messages are transmitted. If it is up-to the user to define how fast to invoke this function. It can even be invoked in the same task where `CAN_tx_task_period` is called. In this last case, it is recommended to first call `can_NWID_NODEID_txRetry` and then `CAN_tx_task_period` in order to give priority to the retries.
+2. Invoke  `can_NWID_NODEID_txRetry` on event after a transmission of a CAN message by the HAL. In this option function `can_NWID_NODEID_txRetry`  can be invoked right after a CAN transmission confirmation from the HAL. For example within the TX ISR. This will lead to a retry of a queued transmission as soon as possible most likely creating a back-to-back transmission of a queued message.
+
+Which option to use (or even another one) is up-to the user to decide.
 
 # Application Usage
 
@@ -478,14 +518,14 @@ Following tasks are required in order to integrate the transmission of CAN messa
 
 ## CAN Data Structures
 
-A data structure is generated for each message within file `cog_comgen_CAN_NWID_network.h`. The purpose of this structure is to faciliate the access of the signals defined in such message.
+A data structure is generated for each message within file `cog_comgen_CAN_NWID_network.h`. The purpose of this structure is to facilitate the access of the signals defined in such message.
 
 **IMPORTANT:** For all examples here following assumptions are made:
 
 - Target MCU is little endian (big endian is currently not supported).
-- Compiler is set in a way that the structures are "packed", this means no memory alignment is performed between fields but rather the compiler reduces the structure size as much as possible. For example, this is achieved in gcc by using the compiler directive `__attribute__((packed))` after the `struct` keyword.
+- Compiler is set in a way that the structures are "packed", this means no memory alignment is performed between fields but rather the compiler reduces the structure size as much as possible. For example, this is achieved in `gcc` by using the compiler directive `__attribute__((packed))` after the `struct` keyword.
 
-The data structure generated for each message is an `union` having on the one hand an `struct` (called `s`) defining the message's signals as fields of it according to their layout information and on the other hand a byte-array (named `all`) of lenght equal to the message's length in order to provide raw access to the message's data.
+The data structure generated for each message is an `union` having on the one hand an `struct` (called `s`) defining the message's signals as fields of it according to their layout information and on the other hand a byte-array (named `all`) of length equal to the message's length in order to provide raw access to the message's data.
 
 ```c
 typedef union{
@@ -498,19 +538,19 @@ typedef union{
 
 Wildcard MESSAGENAME corresponds to the defined message name.
 
-### Cannonical and Non-Cannonical Signals/Messages
+### Canonical and Non-Canonical Signals/Messages
 
 The generated structure `s` can be either a bitfield or a regular structure depending on the layout of the message's signals.
 
-If all the signals of the message are *cannonical* then a regular structure is generated (not a bitfield).
+If all the signals of the message are *canonical* then a regular structure is generated (not a bitfield).
 
-If at least one signal is *non-cannonical* then a bitfield is generated within structure `s` to model the different signals.
+If at least one signal is *non-canonical* then a bitfield is generated within structure `s` to model the different signals.
 
-A signal is defined as *cannonical* if its starting bit is a multiple of 8 (meaning that the signal starts at an exact byte position) and if its length is also multiple of 8 (the signal length occupies full byte(s)). If this is not met, then the signal is considered *non-cannonical*.
+A signal is defined as *canonical* if its starting bit is a multiple of 8 (meaning that the signal starts at an exact byte position) and if its length is also multiple of 8 (the signal length occupies full byte(s)). If this is not met, then the signal is considered *non-canonical*.
 
-A *message* is cannonical if all of its signals are cannonical and is non-cannonical if at least one of its signals is non-cannonical.
+A *message* is canonical if all of its signals are canonical and is non-canonical if at least one of its signals is non-canonical.
 
-Example of cannonical message:
+Example of canonical message:
 
 - Message:
   
@@ -539,7 +579,7 @@ The generated structure `s` for MESSAGE1 will look as follows:
     } s;
 ```
 
-Example of non-cannonical message:
+Example of non-canonical message:
 
 - Message:
   
@@ -557,7 +597,7 @@ Example of non-cannonical message:
   
   - Signal_24: (start bit = 0, start byte = 4, length = 8)
 
-Since signal Signal_22 is non-cannonical, a bitfield will be generated. The resulting structure `s` for MESSAGE2 will look then as follows:
+Since signal Signal_22 is non-canonical, a bitfield will be generated. The resulting structure `s` for MESSAGE2 will look then as follows:
 
 ```c
     struct {
@@ -579,13 +619,13 @@ Notice the inserted reserved fields which correspond to empty space in the messa
 
 If a signal:
 
-- Is non-cannonical or,
+- Is non-canonical or,
 
-- Is cannonical but its length is greater than 8 bits **and** doesn't exactly match the size of the compiler's basic data types (8, 16, 32 or 64 bits for gcc compiler) then the signal will need to be **fragmented** within the structure *s*. 
+- Is canonical but its length is greater than 8 bits **and** doesn't exactly match the size of the compiler's basic data types (8, 16, 32 or 64 bits for gcc compiler) then the signal will need to be **fragmented** within the structure *s*. 
 
 If a signal gets fragmented it can no longer be accessed by a single field within the structure `s` but the access will need to be performed individually per each generated fragment (or can be accessed as a whole via access *macros* explained in further sections).
 
-Examples of non-cannonical signals fragmentations:
+Examples of non-canonical signals fragmentations:
 
 - Message:
   
@@ -599,7 +639,7 @@ Examples of non-cannonical signals fragmentations:
   
   - Signal_32: (start bit = 0, start byte = 2, **length = 15**)
 
-Signals Signal_31 and Signal_32 are non-cannonical so they need to get fragmented. The resulting structure `s` for MESSAGE3 will look as follows:
+Signals Signal_31 and Signal_32 are non-canonical so they need to get fragmented. The resulting structure `s` for MESSAGE3 will look as follows:
 
 ```c
     struct {
@@ -619,7 +659,7 @@ Signals Signal_31 and Signal_32 are non-cannonical so they need to get fragmente
 
 Notice that each signal fragment gets a suffix `_x` where x indicates the fragment number.
 
-Example of cannonical signals fragmentation:
+Example of canonical signals fragmentation:
 
 - Message:
   
@@ -633,7 +673,7 @@ Example of cannonical signals fragmentation:
   
   - Signal_42: (start bit = 0, start byte = 3, **length = 40**)
 
-Signals Signal_41 and Signal_42 are cannonical, however, their sizes do not match the size of a basic data type so they need to get fragmented. The resulting structure `s` for MESSAGE4 will look as follows:
+Signals Signal_41 and Signal_42 are canonical, however, their sizes do not match the size of a basic data type so they need to get fragmented. The resulting structure `s` for MESSAGE4 will look as follows:
 
 ```c
     struct {
@@ -644,14 +684,14 @@ Signals Signal_41 and Signal_42 are cannonical, however, their sizes do not matc
     } s;
 ```
 
-Notice that each signal fragment gets a suffix `_x` where x indicates the fragment number and that no bit-field is generated since MESSAGE4 is a cannonical message.
+Notice that each signal fragment gets a suffix `_x` where x indicates the fragment number and that no bit-field is generated since MESSAGE4 is a canonical message.
 **Note:** the generator tries to reduce the number of fragments as possible trying to then chose the bigger possible fragment sizes.
 
-If a signal is defined as an **array** (currently only byte-arrays are supported) and if its conveyor message is also cannonical, then a regular array will be generated in structure `s` for such signal. Otherwise the array signal will get exploded into fragments corresponding to a byte each one.
+If a signal is defined as an **array** (currently only byte-arrays are supported) and if its conveyor message is also canonical, then a regular array will be generated in structure `s` for such signal. Otherwise the array signal will get exploded into fragments corresponding to a byte each one.
 
-**Note:** A signal of array type shall always be cannonical, it is not allowed to define an array signal starting at a bit position not multiple of a byte or for it to have a length not multiple of 8.
+**Note:** A signal of array type shall always be canonical, it is not allowed to define an array signal starting at a bit position not multiple of a byte or for it to have a length not multiple of 8.
 
-Example of an array signal in a cannonical message:
+Example of an array signal in a canonical message:
 
 - Message:
   
@@ -665,7 +705,7 @@ Example of an array signal in a cannonical message:
   
   - Signal_52: (start bit = 0, start byte = 4, length = 24, type = scalar)
 
-Signals Signal_51 and Signal_52 are cannonical, hence message is cannonical. Signal Signal_52 needs to get fragmented. The resulting structure `s` for MESSAGE5 will look as follows:
+Signals Signal_51 and Signal_52 are canonical, hence message is canonical. Signal Signal_52 needs to get fragmented. The resulting structure `s` for MESSAGE5 will look as follows:
 
 ```c
     struct {
@@ -675,7 +715,7 @@ Signals Signal_51 and Signal_52 are cannonical, hence message is cannonical. Sig
     } s;
 ```
 
-Example of an array signal in a non-cannonical message:
+Example of an array signal in a non-canonical message:
 
 - Message:
   
@@ -689,7 +729,7 @@ Example of an array signal in a non-cannonical message:
   
   - Signal_62: (start bit = 0, start byte = 4, **length = 23**, type = scalar)
 
-Signal_62 is non-cannonical, hence message is non-cannonical. A bitfield will be generated and therefore, array signal Signal_61 gets exploded into fragments. The resulting structure `s` for MESSAGE6 will look as follows:
+Signal_62 is non-canonical, hence message is non-canonical. A bitfield will be generated and therefore, array signal Signal_61 gets exploded into fragments. The resulting structure `s` for MESSAGE6 will look as follows:
 
 ```c
     struct {

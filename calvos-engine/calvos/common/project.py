@@ -114,6 +114,14 @@ class Project:
         component = comp_def_ojb.type
         
         log_debug("Loading definitions for component '%s'..." % component)
+        
+        # Load required instances
+        instances = XML_root.get("instances", None)
+        if instances is not None:
+            instances = grl.process_simple_param("list",instances)
+            if instances is not None:
+                comp_def_ojb.instances = instances
+        
 
         for param in XML_root.findall("./clv:ParamsDefinitions/clv:ParamDefinition", nsmap):
             param_id = param.get("id", None)
@@ -319,7 +327,40 @@ class Project:
 
                 else:
                     log_warn('Component type is invalid: "%s".' % component_type)
-    
+            
+            # Check if mandatory components are missing from project. In such case use default
+            # input data.
+            for component_def in self.components_definitions.values():
+                if component_def.instances is not None \
+                and len(component_def.instances) == 1 \
+                and component_def.instances[0] == 1:
+                # Component is mandatory. Check if user provided one
+                    user_component_found = False
+                    for component in self.components:
+                        if component.type == component_def.type:
+                            # Component found
+                            user_component_found = True
+                            break
+                    
+                    if user_component_found is False:
+                        # Look for default data and load it if found
+                        default_data_path = self.get_component_default_data_file(component_def.type)
+                        if cg.file_exists(default_data_path):
+                            # Load component from default data file
+                            log_info(("Loading default data for mandatory component '%s' from " \
+                                      + "file '%s'.") % (component_def.type,default_data_path))
+                            component_type = component_def.type 
+                            component_name = "Default: " + str(component_def.type)
+                            component_desc = "Default: " + str(component_def.type)
+                            component_input_type = IN_TYPE_ODS
+                            component_input = default_data_path
+                            component_params = {}
+                            project_component = self.Component(component_type, component_input, \
+                                                               component_input_type, component_params, \
+                                                               component_name, component_desc)
+                            
+                            self.components.append(project_component)
+                            log_info("Default data loaded for component '%s'." % component_name)
             log_info('Loading project components completed.')
             
             log_info("============== Resolving project paths. ==============")   
@@ -908,6 +949,28 @@ class Project:
         gen_path_val = gen_path_val / "gen" / module_name
         
         return gen_path_val
+    
+    #===============================================================================================
+    def get_component_default_data_file(self, component_id):
+        """ Returns the path with cog files for the given component. 
+        
+        Parameters
+        ----------
+            component_id, str
+                String constituing the component name, for example: "utils.time" or
+                "comgen.CAN", etc.
+        """     
+        data_path_lst = component_id.split(".")
+        module_name = data_path_lst[-1]
+        data_path_val = cg.string_to_path(self.calvos_path)
+        file_name = "default_data_"
+        for i, element in enumerate(data_path_lst):
+            if i < len(data_path_lst) - 1:
+                data_path_val = data_path_val / element
+                file_name += str(element) + "-"
+        data_path_val = data_path_val / "usr_in" / (file_name + module_name + ".ods")
+        
+        return data_path_val
                           
     #===============================================================================================        
     class CompDefinition:
