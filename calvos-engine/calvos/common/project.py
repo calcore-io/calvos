@@ -121,6 +121,16 @@ class Project:
         
         log_debug("Loading definitions for component '%s'..." % component)
         
+        # Load Title
+        title = XML_root.find("./clv:Title", nsmap)
+        if title is not None:
+            comp_def_ojb.title = title.text
+        
+        # Load Description
+        desc = XML_root.find("./clv:Desc", nsmap)
+        if desc is not None:
+            comp_def_ojb.desc = desc.text
+                
         # Load required instances
         instances = XML_root.get("instances", None)
         if instances is not None:
@@ -1110,6 +1120,13 @@ class Project:
                             cg.create_folder(out_path / "usr_in")
                         dest_file = out_path / "usr_in" / str(input_file)
                         shutil.copy(in_file, dest_file)
+                        
+            # Add comment to do not modify metadata
+            comment = ET.Comment(' Do NOT modify these metadata information. ')
+            xml_metadata = XML_root.find("Metadata")
+            if xml_metadata is not None:
+                xml_metadata.insert(0,comment)
+            
             
             log_info('Demo project XML created.')
             log_info('---------------- Exporting Demo project XML...')

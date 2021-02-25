@@ -4,7 +4,7 @@
 	xsi:schemaLocation="calvos ../common/schemas/_component_defs.xsd "
 	module="comgen.CAN" instances="[0]">
 	<clv:Title>CAN Network</clv:Title>
-	<clv:Desc>Models a network for protocol Controller Area Network (CAN).</clv:Desc>
+	<clv:Desc>Models a network for Controller Area Network (CAN) protocol.</clv:Desc>
 	<clv:Inputs>
 		<clv:Input type="ods">template - CAN Network Definition.ods</clv:Input></clv:Inputs>
 	<clv:ParamsDefinitions>

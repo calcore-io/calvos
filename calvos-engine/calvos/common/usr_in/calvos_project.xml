@@ -15,10 +15,11 @@
   </Components>
   <Params/>
   <Metadata>
+  	<!-- Do NOT modify these elements -->
     <clv:TemplateId>calvos_project</clv:TemplateId>
     <clv:TemplateVer>0.1.0</clv:TemplateVer>
-    <clv:TemplateTitle>Template for a Calvos Project</clv:TemplateTitle>
-    <clv:TemplateDesc>Template for a Calvos Project</clv:TemplateDesc>
+    <clv:TemplateTitle>Calvos Project</clv:TemplateTitle>
+    <clv:TemplateDesc>Template for modeling a Calvos Project</clv:TemplateDesc>
     <clv:TemplateDate>2021-02-24</clv:TemplateDate>
   </Metadata>
 </CalvosProject>
