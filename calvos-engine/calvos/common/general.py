@@ -93,9 +93,11 @@ def process_simple_param(param_type, param_value):
             error_msg = "Expected dictionary value for given parameter. Assumed 'None'.\n" \
                 + "JSON error: " + str(e)
     elif param_type == "boolean":
-        if param_value == "True" or param_value == "true" or param_value == "TRUE":
+        if param_value == "True" or param_value == "true" \
+        or param_value == "TRUE" or param_value == True:
             param_value = True
-        elif param_value == "False" or param_value == "false" or param_value == "FALSE":
+        elif param_value == "False" or param_value == "false" \
+        or param_value == "FALSE"  or param_value == False:
             param_value = False
         else:
             param_value = None

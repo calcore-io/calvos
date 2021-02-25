@@ -118,16 +118,19 @@ USAGE
         parser.add_argument("-p","--project", dest="project", required=True, \
             help="Mandatory. Full path with file name of the calvos project to be processed")
         parser.add_argument("-c","--calvos", dest="calvos", required=False, \
-            help=("Optional. Path where the calvos python package is located. " \
+            help=("Optional. Full path where the calvos python package is located. " \
                   +"If not provided, will look from installed python packages."))
         parser.add_argument("-l","--log", dest="log_level", required=False, \
-            help="Optional. Logging level: 0 - Debug, 1 - Info, 2 - Warning, 3 - Error. Default is 1 - Info.")
+            help=("Usage: -l logging_level. Optional. Logging_level: 0 - Debug, 1 - Info, "\
+                  + "2 - Warning, 3 - Error. Default is 1 - Info."))
         parser.add_argument("-e","--export", dest="export", required=False, \
-            help="Optional. PATH: path where to export (copy) the generated C-code.")
+            help="Optional. -e PATH: Generated C-code will be exported (copied) into the provided PATH.")
         parser.add_argument("-b","--backup", dest="backup", required=False, \
-            help="Optional. PATH: path where backups of the overwritten C-code during an export C-code will be placed. This is only used if -e argument is provided.")
+            help=("Optional.-b PATH: Backups of the overwritten C-code during an export operatin " \
+                  + "will be placed in PATH. This is only used if -e argument is provided."))
         parser.add_argument("-t","--templates", dest="templates", required=False, \
-            help="Will provide the calvos user input templates into the provided PATH. No project will be processed if this argument is provided.")
+            help=("-t PATH: Will provide an example calvos project with user input templates in " \
+                  + "the given PATH. No project will be processed if this argument is provided."))
         parser.add_argument('-V', '--version', action='version', version=program_version_message)
         parser.add_argument('-v', '--ver', action='version', version=program_version_message)
 
@@ -136,7 +139,6 @@ USAGE
         project = args.project
         calvos = args.calvos
         log_level = args.log_level
-        templates_path = args.templates
         
         arguments_OK = True
 
@@ -168,65 +170,10 @@ USAGE
                     #TODO: Test that statements above work as expected to extract calvos path
             if calvos_entry_found is False:
                 arguments_OK = False
-                print("Error: not finding calvos package path")
+                print("Error: not finding calvos package path." \
+                      + "Consider using -c argument to manually specify calvos package location.")
                 return 2
         
-        # ----------------------------------------------------------------------------------
-        # Generate Templates if argument -t is provided. THis supersedes project processing.
-        # ----------------------------------------------------------------------------------
-        if templates_path is not None:
-            # Check if path exists
-            templates_path = string_to_path(templates_path)
-            if folder_exists(templates_path):
-                files_lst = []
-                file_count = 0
-                # Create a dummy project object
-                import calvos.common.logsys as lg
-             
-                log_output_file = templates_path / "log.log"
-                if file_exists(log_output_file):
-                    log_output_file.unlink()
-                 
-                lg.log_system = lg.Log(1, log_output_file)
-                log = lg.log_system
-                log.add_logger("main")
-            
-                import calvos.common.project as pj
-                log.info("main", \
-                         "============== Extracting User Input Templates ==============")
-                print("INFO: ============== Extracting User Input Templates ==============")
-                calvos_project = pj.Project("Project Name", None, calvos_path)
-                files_lst = calvos_project.get_list_of_templates()
-                
-                for file in files_lst:
-                    file_name = file.name
-                    dest_file = templates_path / file_name
-                    shutil.copy(file, dest_file)
-                    file_count += 1
-                print("INFO: Done. '%s' templates exported. " % file_count)
-                log.info("main", \
-                         "Done. '%s' templates exported. " % file_count)
-            else:
-                print("ERROR: Provided folder '%s' doesn't exist." % templates_path)
-                log.error("main", \
-                         "Provided folder '%s' doesn't exist." % templates_path)
-                
-            print("INFO: Don't provide argument -t if a project needs to be processed.")
-            return 0    
-        
-        # ----------------------------------------------------------------------------------
-        # Start project processing if argument -t was not provided
-        # ----------------------------------------------------------------------------------
-        if project is not None:
-            project_file = string_to_path(project)
-            if file_exists(project_file):
-                # Extract project path
-                project_path = project_file.parent.resolve()
-                print("INFO: Project path: ", project_path)
-            else:
-                arguments_OK = False
-                print("Error: file: ", project_file, " doesn't exists.")
-
         if log_level is not None:
             if int(log_level) == 0:
                 log_level = logging.DEBUG
@@ -241,7 +188,58 @@ USAGE
                 print('Error: argument -l shall be from 0 to 3. Provided value: "%s"',log_level)
                 return 2
         else:
-            log_level = logging.INFO        
+            log_level = logging.INFO
+            
+        #==============================================================================
+        # Generate demo project if argument -t is provided.
+        #==============================================================================
+        if args.templates is not None:
+            # Check if path exists
+            templates_path = string_to_path(args.templates)
+            if folder_exists(templates_path):
+                # Create a dummy project object
+                import calvos.common.logsys as lg
+             
+                log_output_file = templates_path / "log.log"
+                if file_exists(log_output_file):
+                    log_output_file.unlink()
+                 
+                lg.log_system = lg.Log(log_level, log_output_file)
+                log = lg.log_system
+                log.add_logger("main")
+            
+                import calvos.common.project as pj
+                
+                log.info("main", \
+                         "============== Generating Demo Project ==============")
+                print("INFO: ============== Generating Demo Project ==============")
+                calvos_project = pj.Project("Project Name", None, calvos_path)
+                
+                calvos_project.gen_demo_project(templates_path)
+
+                print("INFO: Done. Demo project generated. ")
+                log.info("main", "Done. Demo project generated. ")
+            else:
+                print("ERROR: Provided folder '%s' doesn't exist." % templates_path)
+                log.error("main", \
+                         "Provided folder '%s' doesn't exist." % templates_path)
+                return 2
+                
+            print("INFO: Don't provide argument -t if a project needs to be processed.")
+            return 0    
+        
+        #==============================================================================
+        # Start project processing if argument -t was not provided
+        #==============================================================================
+        if project is not None:
+            project_file = string_to_path(project)
+            if file_exists(project_file):
+                # Extract project path
+                project_path = project_file.parent.resolve()
+                print("INFO: Project path: ", project_path)
+            else:
+                arguments_OK = False
+                print("Error: file: ", project_file, " doesn't exists.")
 
         if arguments_OK is True:
             #==============================================================================
@@ -302,7 +300,7 @@ USAGE
             calvos_project.process_project()
             
             #==============================================================================
-            # Copy generated code
+            # Process export argument
             #==============================================================================
             if args.export is not None:
                 log.info("main","============== Exporting generated code. ==============")

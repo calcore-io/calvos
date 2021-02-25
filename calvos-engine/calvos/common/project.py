@@ -13,6 +13,8 @@ __date__ = '2020-11-12'
 __updated__ = '2020-11-12'
 
 import xml.etree.ElementTree as ET
+import xml.dom.minidom
+import shutil
 import pathlib
 import importlib
 import json
@@ -69,6 +71,7 @@ class Project:
                 Path of the calvos python package.
         """
         self.name = name
+        self.calvos_path = cg.string_to_path(calvos_path)
 
         if project_file is not None:
             project_file = cg.string_to_path(project_file)
@@ -88,9 +91,7 @@ class Project:
             self.project_file = None
             self.project_path = None
             self.paths = {}
-            
-        self.calvos_path = cg.string_to_path(calvos_path)
-
+        
         self.components_definitions = {} #Expected dict {comp_type : CompDefinition object}
         self.components = [] #List of Component objects
         
@@ -127,7 +128,28 @@ class Project:
             if instances is not None:
                 comp_def_ojb.instances = instances
         
-
+        # Load component definition inputs if any
+        for input_file in XML_root.findall("./clv:Inputs/clv:Input", nsmap):
+            data_input = str(input_file.text).strip('"')
+            data_input = cg.string_to_path(data_input)
+            if data_input is not None:
+                input_type = input_file.get("type", None)
+                if input_type is None:
+                    log_warn(("Missing attribute 'type' for input data (element clv:Input) " \
+                           + "in XML component definition of component '%s'.") \
+                           % str(component))
+                is_default = grl.process_simple_param("boolean", \
+                                                      input_file.get("is_default", "False"))
+                if is_default is True:
+                    comp_def_ojb.default_input.update({data_input : input_type}) 
+                else:
+                    comp_def_ojb.inputs.update({data_input : input_type})
+            else:
+                log_error(("Wrong string '%s' for input data (element clv:Input) " \
+                           + "in XML component definition of component '%s'.") \
+                           % (str(input_file) , str(component)))
+        
+        # Load parameters if any
         for param in XML_root.findall("./clv:ParamsDefinitions/clv:ParamDefinition", nsmap):
             param_id = param.get("id", None)
             log_debug("Loading parameter '%s:%s'..." % (component, param_id))
@@ -310,7 +332,7 @@ class Project:
                     # Get input file, remove trailing/leading quotes
                     component_input = str(component.findtext("Input")).strip('"')
                     component_input = cg.string_to_path(component_input)
-                    # Check if path is relavite and make it aboslute based on project path
+                    # Check if path is relative and make it aboslute based on project path
                     if component_input.is_absolute() is False:
                         component_input = self.paths["project_path"] / component_input
                         
@@ -1019,7 +1041,109 @@ class Project:
                         template_files.append(file_path)
         
         return template_files
+    
+    #===============================================================================================
+    def gen_demo_project(self, out_path):
+        """ Generates a Demo Project and copies it to the provided output path. """
+
+        if cg.folder_exists(out_path):
+            # Gather demo project template and clean it up
+            # --------------------------------------------
+            # Get XML
+            nsmap = {"clv":"calvos"}
+            
+            ET.register_namespace("clv","calvos")
+            
+            XML_TEMPLATE_NAME = "calvos_project.xml"
+            project_xml = self.get_component_root_path(self.module) / "usr_in" / XML_TEMPLATE_NAME
+            XML_tree = ET.parse(project_xml)
+            XML_root = XML_tree.getroot()
+                 
+            xml_components = XML_root.find("Components")
+            # Remove any defined component -dummy ones-
+            for components in XML_root.findall("./Components"):
+                for component in components:
+                    components.remove(component)
+            
+            # Load parameters of found components
+            # -----------------------------------
+            log_info('---------------- Loading project parameters and component definitions...')
+            components_lst = self.find_components(self.calvos_path)
+            for comp_name, comp_xml in components_lst.items():
+                # Create component definition object
+                self.components_definitions.update({comp_name : self.CompDefinition(comp_name)})
+                # Parse XML with component definitions
+                defs_XML_tree = ET.parse(comp_xml)
+                defs_XML_root = defs_XML_tree.getroot()
+                self.load_component_definitions(defs_XML_root, self.components_definitions[comp_name])
+            
+            log_info('Loaded project parameters and component definitions.')
+            
+            # Update XML project with found components
+            # ----------------------------------------
+            log_info('---------------- Creating demo project XML...')
+            for component_id in components_lst.keys():
+                # Check if a template user input is defined. Only components with a defined user
+                # input will become an XML project component
+                if len(self.components_definitions[component_id].inputs) > 0:
+                    root_path = self.get_component_root_path(component_id)
+                    log_debug("Creating Component XML element for component '%s'..." % component_id)
+                    # Create component in XML
+                    xml_component = ET.SubElement(xml_components, "Component")
+                    xml_component.set("type", component_id)
+                    xml_subelement = ET.SubElement(xml_component, "Name")
+                    xml_subelement.text = self.components_definitions[component_id].title
+                    xml_subelement = ET.SubElement(xml_component, "Desc")
+                    xml_subelement.text = self.components_definitions[component_id].desc
+                    for input_file, file_type \
+                    in self.components_definitions[component_id].inputs.items():
+                        # Add input to XML    
+                        in_file = root_path / "usr_in" / str(input_file)
+                        usr_in_file = "\"usr_in/"+str(input_file)+"\""
+                        # Add input file to project XML
+                        xml_subelement = ET.SubElement(xml_component, "Input")
+                        xml_subelement.set("type", file_type)
+                        xml_subelement.text = usr_in_file
+                        # Export file
+                        log_debug("Exporting user input template file '%s'..." % str(input_file))
+                        if cg.folder_exists(out_path / "usr_in") is False:
+                            cg.create_folder(out_path / "usr_in")
+                        dest_file = out_path / "usr_in" / str(input_file)
+                        shutil.copy(in_file, dest_file)
+            
+            log_info('Demo project XML created.')
+            log_info('---------------- Exporting Demo project XML...')
+            # Export xml project file
+            out_path = cg.string_to_path(out_path)
+            tree = ET.ElementTree(XML_root)
+            self.indent_xml(XML_root)  
+            tree.write((out_path / XML_TEMPLATE_NAME), encoding="UTF-8")
+            log_info('Demo project XML exported.')
+        else:
+            log_error("Provided folder '%s' doesn't exist." % out_path)
                   
+    #===============================================================================================
+    def indent_xml(self, elem, level=0):
+        """ Indents an XML root element.
+        Taken from stack overvlow:
+        https://stackoverflow.com/questions/3095434/...
+        inserting-newlines-in-xml-file-generated-via-xml-etree-elementtree-in-python
+        """
+        
+        i = "\n" + level*"  "
+        if len(elem):
+            if not elem.text or not elem.text.strip():
+                elem.text = i + "  "
+            if not elem.tail or not elem.tail.strip():
+                elem.tail = i
+            for elem in elem:
+                self.indent_xml(elem, level+1)
+            if not elem.tail or not elem.tail.strip():
+                elem.tail = i
+        else:
+            if level and (not elem.tail or not elem.tail.strip()):
+                elem.tail = i
+    
     #===============================================================================================        
     class CompDefinition:
         """ Class for modeling a calvos project component definition. """
@@ -1031,6 +1155,8 @@ class Project:
             self.instances = kwargs.get('instances', None)
             self.params = kwargs.get('params', None)
             self.simple_params = {} # {param_id : SimpleParam object}
+            self.inputs = {}    # {file_name : file_type ("ods", "xml")}
+            self.default_inputs = {}    # {file_name : file_type ("ods", "xml")}
     
     #===============================================================================================
     class Component:
@@ -1102,4 +1228,5 @@ class Project:
         
         #===========================================================================================
         def set_object(self, component_object):
-            self.component_object = component_object       
+            self.component_object = component_object 
+                        

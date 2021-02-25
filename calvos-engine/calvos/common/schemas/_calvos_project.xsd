@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema elementFormDefault="qualified" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:clv="calvos">
+    <xsd:import schemaLocation="_general_defs.xsd" namespace="calvos"></xsd:import>
+    <xsd:complexType name="t_calvosProject">
+    	<xsd:annotation>
+    		<xsd:documentation>Models a Calvos Project</xsd:documentation>
+    	</xsd:annotation>
+    	<xsd:sequence>
+    		<xsd:element name="Name" type="xsd:string" minOccurs="1">
+    			<xsd:annotation>
+    				<xsd:documentation>Project Name</xsd:documentation>
+    			</xsd:annotation>
+    		</xsd:element>
+    		<xsd:element name="Desc" type="xsd:string" minOccurs="0" maxOccurs="1">
+    			<xsd:annotation>
+    				<xsd:documentation>Project description</xsd:documentation>
+    			</xsd:annotation>
+    		</xsd:element>
+    		<xsd:element name="Version" type="xsd:string" minOccurs="0" maxOccurs="1">
+    			<xsd:annotation>
+    				<xsd:documentation>
+    					Project version (user defined)
+    				</xsd:documentation>
+    			</xsd:annotation>
+    		</xsd:element>
+    		<xsd:element name="Date" type="xsd:string" minOccurs="0" maxOccurs="1">
+    			<xsd:annotation>
+    				<xsd:documentation>
+    					Project Date (user defined)
+    				</xsd:documentation>
+    			</xsd:annotation>
+    		</xsd:element>
+    		<xsd:element name="Components" type="t_projectComponents" minOccurs="1" maxOccurs="1">
+    		</xsd:element>
+    		<xsd:element name="Params" type="t_projectParams" minOccurs="0" maxOccurs="1">
+    		</xsd:element>
+    		<xsd:element name="Metadata" type="clv:t_commonMetadata"></xsd:element>
+    	</xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="t_projectComponents">
+    	<xsd:sequence>
+    		<xsd:element name="Component" type="t_projectComponent"></xsd:element>
+    	</xsd:sequence>
+    </xsd:complexType>
+    
+    <xsd:complexType name="t_projectComponent">
+    	<xsd:sequence>
+    		<xsd:element name="Name" type="xsd:string" minOccurs="1" maxOccurs="1">
+    		</xsd:element>
+    		<xsd:element name="Desc" type="xsd:string" minOccurs="1" maxOccurs="1">
+    		</xsd:element>
+    		<xsd:element name="Input" type="t_componentInput" minOccurs="1" maxOccurs="unbounded">
+    		</xsd:element>
+    		<xsd:element name="Params" type="t_projectParams" minOccurs="0" maxOccurs="1"></xsd:element>
+    	</xsd:sequence>
+    	<xsd:attribute name="type" use="required">
+    		<xsd:simpleType>
+    			<xsd:restriction base="xsd:string">
+    				<xsd:minLength value="3"></xsd:minLength>
+    				<xsd:pattern value="\w+(\.\w+)*"></xsd:pattern>
+    			</xsd:restriction>
+    		</xsd:simpleType>
+    	</xsd:attribute>
+    </xsd:complexType>
+
+    <xsd:complexType name="t_projectParams">
+    	<xsd:sequence>
+    		<xsd:element name="Param" type="t_projectParam" minOccurs="0" maxOccurs="unbounded"></xsd:element>
+    	</xsd:sequence>
+    </xsd:complexType>
+    
+    <xsd:complexType name="t_projectParam">
+    	<xsd:attribute name="id" type="xsd:string"></xsd:attribute>
+    </xsd:complexType>
+
+    <xsd:element name="CalvosProject" type="t_calvosProject"></xsd:element>
+
+    <xsd:complexType name="t_componentInput">
+    	<xsd:simpleContent>
+    		<xsd:extension base="xsd:string">
+    			<xsd:attribute name="type" use="required">
+    				<xsd:simpleType>
+    					<xsd:restriction base="xsd:string">
+    						<xsd:enumeration value="ods"></xsd:enumeration>
+    						<xsd:enumeration value="xml"></xsd:enumeration>
+    					</xsd:restriction>
+    				</xsd:simpleType>
+    			</xsd:attribute>
+    		</xsd:extension>
+    	</xsd:simpleContent>
+    </xsd:complexType>
+</xsd:schema>

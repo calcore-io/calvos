@@ -163,7 +163,7 @@
     		</xs:element>
     		<xs:element name="TemplateDate" type="xs:string" maxOccurs="1" minOccurs="0">
     		</xs:element>
-    		<xs:element name="Schema" type="clv:t_schemaInfo" maxOccurs="1" minOccurs="1"></xs:element>
+    		<xs:element name="Schema" type="clv:t_schemaInfo" maxOccurs="1" minOccurs="0"></xs:element>
     	</xs:sequence>
     </xs:complexType>
 
@@ -182,11 +182,16 @@
 
     <xs:complexType name="t_componentDef">
     	<xs:sequence>
-    		<xs:element name="Title" type="clv:t_title" maxOccurs="1" minOccurs="1">
+    		<xs:element name="Title" type="clv:t_title" maxOccurs="1"
+    			minOccurs="1">
     		</xs:element>
-    		<xs:element name="Desc" type="xs:string" maxOccurs="1" minOccurs="1">
+    		<xs:element name="Desc" type="xs:string" maxOccurs="1"
+    			minOccurs="1">
     		</xs:element>
-    		<xs:element name="ParamsDefinitions" type="clv:t_paramsDefs" maxOccurs="1" minOccurs="0"></xs:element>
+    		<xs:element name="Inputs" type="clv:t_UserInputs" minOccurs="0" maxOccurs="1"></xs:element>
+    		<xs:element name="ParamsDefinitions" type="clv:t_paramsDefs"
+    			maxOccurs="1" minOccurs="0">
+    		</xs:element>
     	</xs:sequence>
     	<xs:attribute name="module" type="clv:t_pyModule" use="required"></xs:attribute>
     	<xs:attribute name="instances" type="clv:t_instances" use="required"></xs:attribute>
@@ -274,5 +279,35 @@
 
 
     	<xs:attribute name="generate" type="xs:boolean" use="optional" default="true"></xs:attribute>
+    </xs:complexType>
+
+    <xs:simpleType name="t_usrInputType">
+    	<xs:restriction base="xs:string">
+    		<xs:enumeration value="ods"></xs:enumeration>
+    		<xs:enumeration value="xml"></xs:enumeration>
+    	</xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="t_UserInputs">
+    	<xs:sequence>
+    		<xs:element name="Input" type="clv:t_UserInput" minOccurs="0" maxOccurs="unbounded"></xs:element>
+    	</xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="t_UserInput">
+    	<xs:simpleContent>
+    		<xs:extension base="xs:string">
+    			<xs:attribute name="type" type="clv:t_usrInputType"
+    				use="required">
+    				<xs:annotation>
+    					<xs:documentation>
+    						Type of input: ods --> ODS spreadsheet xml
+    						--> XML file
+    					</xs:documentation>
+    				</xs:annotation>
+    			</xs:attribute>
+    			<xs:attribute name="is_default" type="xs:boolean" use="optional"></xs:attribute>
+    		</xs:extension>
+    	</xs:simpleContent>
     </xs:complexType>
 </xs:schema>

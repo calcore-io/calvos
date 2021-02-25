@@ -2464,7 +2464,7 @@ class Network_CAN:
                 if signal_type != "":
                     self.set_signal_data_type(signal_name, signal_type)
                 else:
-                    log_warn(("Signal \"" + signal_name 
+                    log_info(("Signal \"" + signal_name 
                               + "\" doesn't have a defined data type."))
                 # Add signal to the specified message if any
                 if signal_conv_msg != "":

@@ -674,7 +674,14 @@ def string_to_path(path_string):
         path_string = str(path_string)
     path_string = path_string.replace("\\", "/")
     
-    return pl.Path(path_string)
+    try:
+        return_path = pl.Path(path_string)
+    except Exception as e:
+        return_path = None
+        log_error(("Can't convert input string '%s' to a Path object. Assumed None. " \
+            + "Pathlib error: '%s'") % (str(path_string), str(e)))
+    
+    return return_path
 
     
 def folder_exists(path):
