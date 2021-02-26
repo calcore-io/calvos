@@ -1,9 +1,16 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Sep 29 14:39:09 2020
+""" CalvOS Code Generation Module.
+
+Module for code generation utilities.
 
 @author: Carlos Calvillo
+@copyright:  2020 Carlos Calvillo. All rights reserved.
+@license:    GPL v3
 """
+__version__ = '0.0.1'
+__date__ = '2020-09-29'
+__updated__ = '2020-09-29'
+
 import cogapp as cog
 import pyexcel as pe
 import re
@@ -384,8 +391,13 @@ def is_valid_identifier(input_string):
         Boolean: Returns True if input string has a C-language identifier syntax,
         returns False otherwise.
     """
+    
     identifier = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*\Z", re.UNICODE)
-    return re.match(identifier, input_string)
+    if re.match(identifier, input_string):
+        return_value = True
+    else:
+        return_value = False
+    return return_value
 
 #==============================================================================
 def is_hex_string(input_string):
@@ -478,7 +490,7 @@ def parse_special_string(input_string):
                 if is_valid_identifier(string_element):
                     #Valid symbol string, check if it is duplicated
                     if string_element not in return_dictionary:
-                        #Not duplitacted symbol string, add it to the output
+                        #Not duplicated symbol string, add it to the output
                         return_dictionary.update({string_element : None})
                     else:
                         #warning, duplicated symbol string
@@ -662,7 +674,14 @@ def string_to_path(path_string):
         path_string = str(path_string)
     path_string = path_string.replace("\\", "/")
     
-    return pl.Path(path_string)
+    try:
+        return_path = pl.Path(path_string)
+    except Exception as e:
+        return_path = None
+        log_error(("Can't convert input string '%s' to a Path object. Assumed None. " \
+            + "Pathlib error: '%s'") % (str(path_string), str(e)))
+    
+    return return_path
 
     
 def folder_exists(path):
@@ -723,10 +742,20 @@ def file_exists(file_name):
         
     return return_value
 
+def resolve_wildcards(in_str, wildcards):
+    """ Return the input string with the wildcard(s) resolved """
+    out_str = in_str
+    if type(wildcards) is dict:
+        for wildcard, value in wildcards.items():
+            out_str = out_str.replace("${"+wildcard+"}", str(value))
+    else:
+        log_warn("Input wildcards shall be a dictionary.")
+        
+    return out_str
 
 def C_license():
     """ Returns a string with the license in C comment format. """
-    return_str = """/*  This file is part of calvOS project.
+    return_str = """/*  This file is part of calvOS project <https://github.com/calcore-io/calvos>.
  *
  *  calvOS is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -859,7 +888,9 @@ class CogSources():
         self.sources = {} # {source_id : CogSrc object}
         
     class CogSrc():
-        def __init__(self, source_id, cog_in_file, cog_out_file = None, is_header = False, relations = None):
+        """ Models a single C-code source file. """
+        def __init__(self, source_id, cog_in_file, cog_out_file = None, is_header = False, \
+                     relations = [], dparams = {}, ** kwargs):
             self.source_id = source_id
             self.cog_in_file = cog_in_file
             # cog_out_file equal to None means that out file is same than cog_in_file
@@ -867,12 +898,67 @@ class CogSources():
             self.is_header = is_header
             self.additional_info = []
             
-            self.relations = [] # List of CogSrcRel objects
+            self.relations = relations # List of CogSrcRel objects
+            
+            self.generated = False
+            
+            self.dparams = dparams # Params in the form of dictionary
+            
+            self.generated = False
+            
+            self.user_code = kwargs.get('user_code', False)
             
     class CogSrcRel():
+        """ Models a source code relation for include purposes. """
         def __init__(self, module="", source_id=""):
             self.module = module
             self.source_id = source_id
+
+class TreeNode:
+    def __init__(self, val, prev = None, next = None):
+        self.val = val
+        self.prev = prev
+        self.next = next
+
+def inorderTree(root, result = []): 
+    return_val = []
+    if root: 
+        inorderTree(root.prev, result) 
+        return_val.append(root.val)
+        if root.prev is not None:
+            return_val.append(root.prev.val)
+        else:
+            return_val.append(None)
+        if root.next is not None:
+            return_val.append(root.next.val)
+        else:
+            return_val.append(None)
+        result.append(return_val)
+        inorderTree(root.next, result)
+    
+        
+def formTree(ordered_list, root = None):
+    if len(ordered_list) == 1:
+        node = TreeNode(ordered_list[0])
+        return node
+    else:
+        mid_idx = math.floor(len(ordered_list)/2)
+        if root is None:
+            root = TreeNode(ordered_list[mid_idx])
+        else:
+            root.val = ordered_list[mid_idx]
+        # left list
+        left_list = ordered_list[:mid_idx]
+        root.prev = formTree(left_list, root.prev)
+        # right list
+        if len(ordered_list) > 2:
+            right_list = ordered_list[mid_idx+1:]
+            root.next = formTree(right_list, root.next)
+        else:
+            pass
+        
+        return root
+        
 
 #===================================================================================================
 def cog_generator(input_file, out_dir, work_dir, gen_path, variables = None):
@@ -887,6 +973,9 @@ def cog_generator(input_file, out_dir, work_dir, gen_path, variables = None):
     if cog_output_file_str.find("static_", 0, 7) == 0:
         cog_output_file_str = cog_output_file_str[7:]
     cog_output_file = out_dir / cog_output_file_str
+    
+    # Get project pickle full file name  
+    project_pickle = project_object.get_work_file_path("common.project", "project_pickle")
         
     # Invoke code generation
     # ----------------------           
@@ -894,6 +983,7 @@ def cog_generator(input_file, out_dir, work_dir, gen_path, variables = None):
                '-d', \
                '-D', 'input_worksheet=' + input_file, \
                '-D', 'project_working_dir=' + str(work_dir), \
+               '-D', 'cog_proj_pickle_file=' + str(project_pickle),
                '-o', str(cog_output_file), \
                str(cog_input_file) ]
     
@@ -909,15 +999,20 @@ def cog_generator(input_file, out_dir, work_dir, gen_path, variables = None):
         log_info("Code generation successful: '%s'" % (str(out_dir / cog_output_file_str)))
         print("INFO: code generation successful: ",cog_output_file)
     else:
-        log_warn("Code generation error for '%s'. Cogapp return code: '%s'" \
+        log_error("Code generation error for '%s'. Cogapp return code: '%s'" \
                  % ((str(out_dir / cog_output_file_str)), str(cog_return)))
         print("INFO: code generation return value: ",cog_return)
 
+
+project_object = None
 #===================================================================================================
-def load_input(input_file, input_type, params):
+def load_input(input_file, input_type, params, project_obj):
     """ Loads input file and returns the corresponding object. """
     del input_type, params # Unused parameters
     
+    global project_object
+    
+    project_object = project_obj
     parse_codegen_spreadsheet(input_file)
     # This function for this specific module returns a dummy object.
     return 0
@@ -935,4 +1030,7 @@ def generate(input_object, out_path, working_path, calvos_path, params):
     cog_generator(cog_file_name, out_path, working_path, cog_files_path)
     
     cog_file_name = "cog_static_calvos.h"
+    cog_generator(cog_file_name, out_path, working_path, cog_files_path)
+    
+    cog_file_name = "cog_USER_general_defs.h"
     cog_generator(cog_file_name, out_path, working_path, cog_files_path)

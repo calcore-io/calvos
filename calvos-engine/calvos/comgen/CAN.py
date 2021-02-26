@@ -8,7 +8,7 @@ protocol.
 @copyright:  2020 Carlos Calvillo. All rights reserved.
 @license:    GPL v3
 """
-__version__ = '0.1.0'
+__version__ = '0.0.1'
 __date__ = '2020-08-03'
 __updated__ = '2020-12-18'
     
@@ -16,14 +16,16 @@ import pyexcel as pe
 import math
 from lxml import etree as ET
 import xml.dom.minidom
-import pickle as pic
+import pickle
 import cogapp as cog
 import pathlib as pl
 import importlib
 import json
+import copy
 
 import calvos.common.codegen as cg
 import calvos.common.logsys as lg
+import calvos.common.general as grl
 
 # --------------------------------------------------------------------------------------------------
 # Definitions for the logging system
@@ -78,11 +80,12 @@ SPONTAN = 0
 CYCLIC = 1
 CYCLIC_SPONTAN = 2
 BAF = 3
-
-
 # Constants for indicating read or write. Used by function get_signal_abstract_read
 READ = 0
 WRITE = 1
+# Constants for indicating message direction (transmission or reception)
+CAN_TX = 0
+CAN_RX = 1
 
 # Cog sources to use for code generation of this module
 cog_sources = cg.CogSources("comgen.CAN")
@@ -109,7 +112,8 @@ class Network_CAN:
                 "templateDesc": "Models a CAN Network"}
     
     #===============================================================================================    
-    def __init__(self, id_string = "", name = "", description = "", version = "", date = ""):
+    def __init__(self, project_obj, id_string = "", name = "", description = "", \
+                 version = "", date = ""):
         """ Class constructor.
         
         Parameters
@@ -135,6 +139,10 @@ class Network_CAN:
         self.version = str(version)
 
         self.date = str(date)
+        
+        self.project_obj = project_obj
+        
+        self.module = "comgen.CAN"
 
         #Dynamic data
         self.enum_types = {} # {type name, type object}
@@ -152,8 +160,16 @@ class Network_CAN:
             ["","p_","part_","_"], 0, \
             "List of prefixes to use for naming signal parts when fragmented.")
         
+        self.simple_params = {} # Non-default params for this object {param_id:SimpleParam obj, ...}
+        
         # Last input file used to fill-out data for this object
         self.input_file = None
+        
+#        self.gen_params = {}
+        
+        self.subnetwork = None # Expect object of class Network_CAN
+        
+        self.gen_path = self.project_obj.get_component_gen_path(self.module)
            
     #===============================================================================================
     @staticmethod
@@ -372,6 +388,7 @@ class Network_CAN:
         Parameters
         ----------
             name : str
+                Name of the node to be removed.
         """
         if name not in self.nodes:
             #Node doesn't exist
@@ -461,11 +478,6 @@ class Network_CAN:
         else:
             log_warn(("Node: \"" + node_name \
                           + "\" not defined. Define first the node in the network"))
-        
-#    def remove_tx_message_to_node(self, node_name, message_name):
-#        
-#    def add_rx_message_to_node(self, node_name, message_name):
-#    
     
     #===============================================================================================
     def add_rx_message_to_subscribers(self, message_name, subscribers_string):
@@ -517,20 +529,35 @@ class Network_CAN:
         """ Gets the direction ('Tx', 'Rx' or None) for the given node. """
         return_value = None
         if node_name in self.nodes and message_name in self.messages:
-            if self.messages[message_name].publisher is not None:
-                if self.messages[message_name].publisher == node_name:
-                    # This message is a TX message for the given node
-                    return_value = "Tx"
-                elif node_name in self.nodes[node_name].subscribed_messages:
-                    # This message is an RX message for the given node
-                    return_value = "Rx"
+            if self.messages[message_name].publisher == node_name:
+                # This message is a TX message for the given node
+                return_value = CAN_TX
+            elif message_name in self.nodes[node_name].subscribed_messages:
+                # This message is an RX message for the given node
+                return_value = CAN_RX
+        return return_value
+    
+    #===============================================================================================
+    def get_message_timeout(self, node_name, message_name):
+        """ Gets the timeout for the given message w.r.t. a given node. """
+        return_value = None
+        if node_name in self.nodes and message_name in self.messages:
+            if self.get_message_direction(node_name, message_name) == CAN_RX:
+                if self.nodes[node_name].subscribed_messages[message_name] is not None:
+                    return_value = self.nodes[node_name].subscribed_messages[message_name]
         return return_value
 
-#  
-#    def remove_rx_message_to_node(self, node_name, message_name):
-#           
-        
-
+    #===============================================================================================
+    def get_messages_of_node(self, node_name):
+        """ Gets the direction ('Tx', 'Rx' or None) for the given node. """
+        return_value = [] # List of node names
+        if node_name in self.nodes:
+            for message in self.messages.values():
+                if message.publisher == node_name:
+                    return_value.append(message.name)
+            for message_name in self.nodes[node_name].subscribed_messages.keys():
+                return_value.append(message_name)  
+        return return_value          
     
     #===============================================================================================
     def get_signals_of_message(self, message_name):
@@ -581,7 +608,11 @@ class Network_CAN:
     def get_messages_structures(self):
         """ Gets layout structure of all messages.
         
+        Performs signal fragmentation as needed in order to produce a message layout structure
+        ready to be used for corresponding C-code generation.
+        
         return
+        ------
             array of MessageStructure objects.
         
         """               
@@ -987,7 +1018,10 @@ class Network_CAN:
     
     #===============================================================================================        
     def add_signal_to_message(self, message_name, signal_name, start_byte, start_bit):
-        """ Adds a signal to a message with the speficied layout information. """
+        """ Adds a signal to a message with the speficied layout information. 
+        If soace in the target message is available, then the given signal is added with its
+        layout information.
+        """
         #Check if message exists
         if message_name in self.messages:
             #Check if signal exists
@@ -1068,6 +1102,7 @@ class Network_CAN:
             
     #===============================================================================================    
     def set_signal_data_type(self, signal_name, data_type):
+        """ Sets the data type of a signal. """
         if signal_name in self.signals:
             if data_type in data_types_list:
                 # Data type of signal is a prefixed one (not custom)
@@ -1094,7 +1129,10 @@ class Network_CAN:
     
     #===============================================================================================
     def get_sorted_signals_by_layout(self, grouped_by_message = False):
-        """ Sorts the signals in this network according to their layout """
+        """ Sorts the signals in this network according to their layout.
+        
+        Sorting order is as follows: sort by message name, then by start byte, then by start bit.
+        """
         return_list = {}
         sorted_signals_list = []
         
@@ -1112,8 +1150,6 @@ class Network_CAN:
             sorted_signals_list = \
                 sorted(sorted_signals_list, \
                        key= lambda signal_entry : list(signal_entry.values())[0].message)
-                
-                
 
             # Sort signals by layout within each message
             # Following code will create temporal individual lists of signals
@@ -1581,8 +1617,6 @@ class Network_CAN:
     def fragment_signal(self, signal_name, abs_start_bit, abs_end_bit, \
             nominal_type_len = 8, leading_type_len = None, trailing_type_len = None):
         """ Fragments a signal based on its size and layout information.
-        
-            If signal is
         """
         if leading_type_len is None:
             leading_type_len = nominal_type_len
@@ -1877,11 +1911,48 @@ class Network_CAN:
         
         cog_sources = cg.CogSources(module_name, gen_path = gen_path_val)
         
-        self.add_cog_source("network_h", "cog_comgen_CAN_NWID_network.h", True)
-        self.add_cog_source("core_h", "cog_comgen_CAN_NWID_core.h", True)
-        self.add_cog_source("core", "cog_comgen_CAN_NWID_core.c", False, \
-                            [["comgen.CAN", "network_h"],\
-                             ["comgen.CAN", "core_h"]])
+        self.add_cog_source("common_h", "cog_comgen_CAN_common.h", True, \
+                            None, {"category" : "common"})
+        self.add_cog_source("common_c", "cog_comgen_CAN_common.c", False, \
+                            [["comgen.CAN", "common_h"]], \
+                            {"category" : "common"})
+        self.add_cog_source("network_h", "cog_comgen_CAN_NWID_network.h", True, \
+                            None, {"category" : "network"})
+        self.add_cog_source("can_node_hal_h", "cog_comgen_CAN_NWID_NODEID_hal.h", True, \
+                            [["comgen.CAN", "common_h"], \
+                             ["comgen.CAN", "network_h"]], \
+                            {"category" : "node"}, \
+                            user_code=True)
+        self.add_cog_source("can_node_hal_c", "cog_comgen_CAN_NWID_NODEID_hal.c", False, \
+                            [["comgen.CAN", "common_h"], \
+                             ["comgen.CAN", "can_node_hal_h"], \
+                             ["comgen.CAN", "core_h"]], \
+                            {"category" : "node"}, \
+                            user_code=True)
+        self.add_cog_source("node_net_h", "cog_comgen_CAN_NWID_NODEID_node_network.h", True, \
+                            [["comgen.CAN", "common_h"], \
+                             ["comgen.CAN", "network_h"], \
+                             ["comgen.CAN", "core_h"]], \
+                            {"category" : "node"})
+        self.add_cog_source("core_h", "cog_comgen_CAN_NWID_NODEID_core.h", True, \
+                            [["comgen.CAN", "common_h"], \
+                             ["comgen.CAN", "network_h"], \
+                             ["comgen.CAN", "node_net_h"]], \
+                            {"category" : "node"})
+        self.add_cog_source("core", "cog_comgen_CAN_NWID_NODEID_core.c", False, \
+                            [["comgen.CAN", "core_h"], \
+                             ["comgen.CAN", "callbacks_h"],
+                             ["comgen.CAN","can_node_hal_h"]], \
+                            {"category" : "node"})
+        self.add_cog_source("callbacks_h", "cog_comgen_CAN_NWID_NODEID_callbacks.h", True, \
+                            [["comgen.CAN", "common_h"], \
+                             ["comgen.CAN", "node_net_h"]], \
+                            {"category" : "node"}, \
+                            user_code=True)
+        self.add_cog_source("callbacks_c", "cog_comgen_CAN_NWID_NODEID_callbacks.c", False, \
+                            [["comgen.CAN", "callbacks_h"]], \
+                            {"category" : "node"}, \
+                            user_code=True)
 
     #===============================================================================================    
     def get_cog_includes(self, source_id): 
@@ -1904,54 +1975,88 @@ class Network_CAN:
         return return_str
 
     #===============================================================================================    
-    def add_cog_source(self, cog_id, cog_in_file, is_header = False, relations = None):
+    def add_cog_source(self, cog_id, cog_in_file, is_header = False, relations = None, \
+                       dparams = {}, ** kwargs):
         """ Adds a cog source to this network object's cog files list. 
         
-            relations should be a list of lists [[module2, source_id1], [modul2, source_id2], ...]
+        Parameters
+        ----------
+            relations, list
+                Should be a list of lists to model the relation of cog_id source file with other
+                source files... expected -> [[module2, source_id1], [modul2, source_id2], ...]
         """ 
         
         global cog_sources
-
-        cog_out_file = self.get_cog_out_name(cog_in_file, self.id_string)
-        cog_sources.sources.update({cog_id: cg.CogSources.CogSrc(\
-                cog_id,cog_in_file, cog_out_file, is_header)})
+        
+        _user_code = kwargs.get('user_code', False)
+        # Create source object
+        source_obj = cg.CogSources.CogSrc(\
+                cog_id,cog_in_file, None, is_header, [], dparams, user_code=_user_code)
+        
+        # Determine cog output file name
+        source_obj.cog_out_file = self.get_cog_out_name(source_obj)
+        
+        # Update sources dictionary
+        cog_sources.sources.update({cog_id: source_obj})
         
         if relations is not None:
             for relation in relations:
                 relation_obj = cg.CogSources.CogSrcRel(relation[0],relation[1])
                 cog_sources.sources[cog_id].relations.append(relation_obj)
     
+    #===============================================================================================
+    def update_cog_out_sources_names(self, cog_sources, wildcards):
+        """ Update cog sources names replacing found wildcards. 
+        
+        Parameters
+        ----------
+            cog_sources, CogSources
+            wildcards, dict
+                Named wildcards to be replaced, e.g., { "NWID" : "NetworkName", "NODEID" : nodeName}
+        """
+        
+        #TODO: Optimize this function so that it only updates a selected list of source_ids
+        for source_id, source_obj in cog_sources.sources.items():
+            cog_out_file = self.get_cog_out_name(source_obj, wildcards)
+            cog_sources.sources[source_id].cog_out_file = cog_out_file      
+        
     #===============================================================================================    
-    def get_cog_out_name(self, cog_in_file, network_name = None, node_name = None): 
+    def get_cog_out_name(self, source_obj, wildcards = {}): 
         """ Generates cog output file name as per a given input file name. """
         #remove "cog_" prefix to output file names
-        if cog_in_file.find("cog_") == 0:  
-            cog_output_file = cog_in_file[4:]  
-        #substitute network id if found (NWID)
-        if network_name is not None:
-            cog_output_file = cog_output_file.replace('NWID',network_name)
-        else:
-            cog_output_file = cog_output_file.replace('NWID_','')
-        #substitute node name if found (NODENAME)
-        if node_name is not None:
-            cog_output_file = cog_output_file.replace('NODENAME','node')
-        else:
-            cog_output_file = cog_output_file.replace('NODENAME_','')
+        if source_obj.cog_in_file.find("cog_") == 0:  
+            cog_output_file = source_obj.cog_in_file[4:]
+  
+        # Replace wildcards
+        for wildcard, value in wildcards.items():
+            if value is not None:
+                cog_output_file = cog_output_file.replace(wildcard,value)
+            else:
+                cog_output_file = cog_output_file.replace(wildcard+'_','')
         
         return cog_output_file
         
     #===============================================================================================    
-    def cog_generator(self, input_file, cog_output_file, \
-                             out_dir, work_dir, gen_path, pickle, \
-                             variables = None):
+    def cog_generator(self, source_obj, project_pickle_file, \
+                             comp_pickle_file = None, variables = None):
         """ Invoke cog generator for the specified file.
         """
         # Setup input and output files
-        # ----------------------------  
-        input_file = str(input_file) 
+        # ----------------------------
+        out_dir = self.project_obj.get_simple_param_val("common.project", "project_path_out")
+        work_dir = self.project_obj.get_simple_param_val("common.project", "project_path_working")
+        gen_path = self.gen_path
+        
+        input_file = str(source_obj.cog_in_file)
         comgen_CAN_cog_input_file = gen_path / input_file
                 
         # Set output file with path
+        if source_obj.user_code is True:
+            # Prepend string 'USER_'
+            cog_output_file = "USER_" + source_obj.cog_out_file
+        else:
+            cog_output_file = source_obj.cog_out_file
+            
         comgen_CAN_cog_output_file = out_dir / cog_output_file
                 
         # Invoke code generation
@@ -1960,7 +2065,8 @@ class Network_CAN:
                    '-d', \
                    '-D', 'input_worksheet=' + self.metadata_gen_source_file, \
                    '-D', 'project_working_dir=' + str(work_dir), \
-                   '-D', 'cog_pickle_file=' + str(pickle), \
+                   '-D', 'cog_proj_pickle_file=' + str(project_pickle_file), \
+                   '-D', 'cog_pickle_file=' + str(comp_pickle_file), \
                    '-D', 'cog_output_file=' + str(cog_output_file)]
         
         # Append additional variables if required
@@ -1981,70 +2087,203 @@ class Network_CAN:
             log_info("Code generation successful: '%s'" % comgen_CAN_cog_output_file)
             print("INFO: code generation successful: ",comgen_CAN_cog_output_file)
         else:
-            log_warn("Code generation error for '%s'. Cogapp return code: '%s'" \
+            log_error("Code generation error for '%s'. Cogapp return code: '%s'" \
                  % (comgen_CAN_cog_output_file, str(cog_return)))
             print("INFO: code generation return value: ",cog_return)
         
     #===============================================================================================   
-    def gen_code(self, out_dir, work_dir, gen_path, node_names = None, \
-                 single_network = False):
+    def gen_code(self):
         """ Generates C code for the given network.
         """
 
         global cog_sources
         
-        if single_network is True:
-            network_name = None
+        # Determine node list and full_names value 
+        full_names = self.get_simple_param("CAN_gen_file_full_names")
+        
+        n_of_networks = 0
+        for component in self.project_obj.components:
+            if component.type == self.module:
+                n_of_networks += 1
+        if n_of_networks > 1 or full_names is True: 
+            NWID_wildcard = self.id_string
         else:
-            network_name = self.id_string
+            NWID_wildcard = None
+    
+        multiple_nodes = False
+        node_lst = self.get_simple_param("CAN_gen_nodes")
+        if len(node_lst) == 0:
+            # assume all network nodes will be generated
+            for node in self.nodes:
+                node_lst.append(node)
+            if len(node_lst) > 1:
+                multiple_nodes = True
+        elif len(node_lst) > 1:
+            multiple_nodes = True
+  
+        # Get project pickle full file name  
+        project_pickle = self.project_obj.get_work_file_path("common.project", \
+                                                                         "project_pickle")
+         
+        # Create subnetwork will all involved nodes    
+        subnetwork = self.get_subnetwork(node_lst)
         
-        # Create temporal file with network object pickle.
-        # ------------------------------------------------
-        cog_pickle_file_name = "comgen_CAN_network_obj.pickle"
-        cog_serialized_network_file = work_dir / cog_pickle_file_name
-        
-        try:
-            with open(cog_serialized_network_file, 'wb') as f:
-                pic.dump(self, f, pic.HIGHEST_PROTOCOL)
-        except Exception as e:
-                print('Failed to create pickle file %s. Reason: %s' \
-                      % (cog_serialized_network_file, e))
-        
-        #----------------------------------------------------------------------
-        # Generate source file(s)
-        #----------------------------------------------------------------------
-        for cog_source in cog_sources.sources.values():
-            # Generate includes variable if needed
-            variables = None
-            includes_lst = self.get_cog_includes(cog_source.source_id)
-            if len(includes_lst) > 0:
-                variables = {}
-                include_var = json.dumps(includes_lst)
-                variables.update({"include_var" : include_var})
-                 
-            self.cog_generator(cog_source.cog_in_file, cog_source.cog_out_file, out_dir, \
-                              work_dir, gen_path, cog_serialized_network_file, variables)
-        
-        # Delete pickle file
-        # ------------------
-        print("INFO: deleting pickle file")
-        cg.delete_file(cog_serialized_network_file)
-        
-        #TODO: Logic for ensuring the current network is meaningful, e.g., is no emtpy, etc.
-        if node_names == None:
-            # C code for all nodes will be generated.
-            pass
-        elif len(node_names) > 0:
-            # Generate C code for specified node each
-            for node in node_names:
-                #Check if node exists
-                if node in self.nodes:
-                    pass
+        if subnetwork is not None and len(subnetwork.nodes) > 0 and len(subnetwork.messages) > 0:
+            # Update cog output files names (replace network id wildcard)
+            wildcards = {"NWID" : NWID_wildcard}
+            self.update_cog_out_sources_names(cog_sources, wildcards)
+            # Create temporal file with subnetwork object pickle.
+            cog_pickle_file_name = "comgen_CAN_network_obj.pickle"
+            work_dir = self.project_obj.get_simple_param_val("common.project", \
+                                                             "project_path_working")
+            cog_serialized_network_file = work_dir / cog_pickle_file_name 
+            try:
+                with open(cog_serialized_network_file, 'wb') as f:
+                    pickle.dump(subnetwork, f, pickle.HIGHEST_PROTOCOL)
+            except Exception as e:
+                    print('Failed to create pickle file %s. Reason: %s' \
+                          % (cog_serialized_network_file, e))
+            
+            # Generate common source file(s)
+            # ------------------------------
+            for cog_source in cog_sources.sources.values():
+                if "category" in cog_source.dparams \
+                and cog_source.dparams["category"] == "common" \
+                and cog_source.generated == False:
+                    # Generate includes variable if needed
+                    log_debug("Generating common network file '%s'..." % cog_source.cog_out_file)
+                    variables = {}
+                    includes_lst = self.get_cog_includes(cog_source.source_id)
+                    if len(includes_lst) > 0:
+                        include_var = json.dumps(includes_lst)
+                        variables.update({"include_var" : include_var})
+                         
+                    self.cog_generator(cog_source, project_pickle, cog_serialized_network_file, \
+                                       variables)
+            
+            # Generate network source file(s)
+            # -------------------------------
+            for cog_source in cog_sources.sources.values():
+                if "category" in cog_source.dparams and cog_source.dparams["category"] == "network":
+                    # Generate includes variable if needed
+                    log_debug("Generating network specific file '%s'..." % cog_source.cog_out_file)
+                    variables = {}
+                    includes_lst = self.get_cog_includes(cog_source.source_id)
+                    if len(includes_lst) > 0:
+                        include_var = json.dumps(includes_lst)
+                        variables.update({"include_var" : include_var})
+                    
+                    # Add variable for NWID wildcard
+                    variables.update({"NWID_wildcard" : str(NWID_wildcard)})
+                         
+                    self.cog_generator(cog_source, project_pickle, cog_serialized_network_file, \
+                                       variables)
+            
+            # Generate Node specific source file(s)
+            # -------------------------------------
+            for node in subnetwork.nodes.values():
+                if len(self.get_messages_of_node(node.name)) > 0:
+                    # Update cog output files names (replace node id wildcard)
+                    if multiple_nodes is True or full_names is True: 
+                        NODEID_wildcard = node.name
+                    else:
+                        NODEID_wildcard = None
+                    wildcards = {"NWID" : NWID_wildcard, "NODEID" : NODEID_wildcard}
+                    self.update_cog_out_sources_names(cog_sources, wildcards)
+                    for cog_source in cog_sources.sources.values():
+                        if "category" in cog_source.dparams \
+                        and cog_source.dparams["category"] == "node":
+                            log_debug("Generating Node '%s' file '%s'..." \
+                                      % (node.name, cog_source.cog_out_file))
+                            # Generate includes variable if needed
+                            variables = {}
+                            includes_lst = self.get_cog_includes(cog_source.source_id)
+                            if len(includes_lst) > 0:
+                                include_var = json.dumps(includes_lst)
+                                variables.update({"include_var" : include_var})
+                            # Add variable for NWID wildcard
+                            variables.update({"NWID_wildcard" : str(NWID_wildcard)})
+                            # Add variable for NODEID wildcard
+                            variables.update({"NODEID_wildcard" : str(NODEID_wildcard)})
+                            # Add variable containing current's node name
+                            variables.update({"node_name" : str(node.name)})
+                                 
+                            self.cog_generator(cog_source, project_pickle, \
+                                               cog_serialized_network_file, variables)
                 else:
-                    pass
+                    log_warn("No messages found for node '%s'. No C-code generated for the node." \
+                             % node.name)
+            
+            # Delete pickle file
+            cg.delete_file(cog_serialized_network_file)
         else:
-            log_warn(("Invalid input. No C-Code will be generated for " 
-                          + "network: " + self.name + "."))
+            log_warn(("No nodes/messages found for the selected subnetwork '%s', node list: '%s'."
+                     + " No C-code generated.") % (self.id_string, str(node_lst)))
+        
+    #===============================================================================================
+    def get_simple_param(self, param_id):
+        """ Returns local parameter if defined otherwise returns the default one. """
+        if param_id in self.simple_params:
+            return_value = self.simple_params[param_id].param_value
+        else:
+            return_value = self.project_obj.get_simple_param_val(self.module, param_id, None)
+        
+        return return_value
+    
+    #===============================================================================================
+    def get_subnetwork(self, nodes_list):
+        """ Returns a network only with data of the passed nodes. """
+        
+        if type(nodes_list) is list and len(nodes_list) > 0:
+            subnetwork = copy.deepcopy(self)
+    
+            # Clean nodes
+            subnetwork.nodes.clear()
+            for node_str in nodes_list:
+                # Only keep valid nodes
+                if node_str in self.nodes:
+                    subnetwork.nodes.update({node_str : self.nodes[node_str]})
+                else:
+                    log_warn("Node '%s' not found in Network '%s'." % (node_str, self.id_string))
+                    
+            # Clean messages
+            subnetwork.messages.clear()
+            for message in self.messages.values():
+                # Only keep messages related to the specified nodes
+                keep_message = False
+                # See if message is subscribed or published by any of the specified nodes
+                for subnet_node in subnetwork.nodes.values():
+                    if message.name in subnet_node.subscribed_messages:
+                        keep_message = True
+                        break
+                    elif message.publisher == subnet_node.name:
+                        keep_message = True
+                        break
+                
+                if keep_message is True:
+                    subnetwork.messages.update({message.name : message})
+    
+            # Clean signals
+            subnetwork.signals.clear()
+            for signal in self.signals.values():
+                if signal.message in subnetwork.messages:
+                    subnetwork.signals.update({signal.name : signal})
+            
+            # Clean types
+            subnetwork.enum_types.clear()
+            for enum_type in self.enum_types.values():
+                keep_type = False
+                for signal in subnetwork.signals.values():
+                    if enum_type.name == signal.data_type:
+                        keep_type = True
+                        break;
+                if keep_type is True:
+                    subnetwork.enum_types.update({enum_type.name : enum_type})
+        else:
+            log_warn("Provided nodes shall be a list greater than zero. Returned 'None'.")
+            subnetwork = None
+            
+        return subnetwork
         
     #===============================================================================================    
     def parse_spreadsheet_ods(self,input_file):
@@ -2054,9 +2293,73 @@ class Network_CAN:
         
         self.input_file = cg.string_to_path(input_file)
         
+        log_debug("Loading CAN information from file: '%s'..." % input_file)
+        
+        # -----------------------
+        # Parse Parameters
+        # -----------------------
+        log_debug("Parsing parameters data.")
+        CONFIG_TITLE_ROW = 1 # Row number with titles
+        working_sheet = book["Config"]
+        working_sheet.name_columns_by_row(CONFIG_TITLE_ROW)
+        
+        for idx, row in enumerate(working_sheet):
+            # Ignore rows that are before the "config's" title row
+            if idx >= CONFIG_TITLE_ROW:
+                param_id = row[working_sheet.colnames.index("Parameter")]
+                param_value = row[working_sheet.colnames.index("User Value")]
+                if param_id != "" \
+                and self.project_obj.simple_param_exists(self.module, param_id) is True:
+                    read_only = self.project_obj.simple_param_is_read_only(self.module, param_id)
+                    if read_only is False and param_value != "":
+                        # Add parameter user's value to this object
+                        param_type = self.project_obj.get_simple_param_type(self.module, param_id)
+                        # Force read value from ODS to be a string and substitute quotes characters
+                        # out of utf-8 if present.
+                        param_value = str(param_value)
+                        param_value = param_value.encode(encoding='utf-8')
+                        param_value = param_value.replace(b'\xe2\x80\x9c', b'\"')
+                        param_value = param_value.replace(b'\xe2\x80\x9d', b'\"')
+                        param_value = param_value.decode('utf-8')
+                        log_debug("Processing parameter '%s' with value '%s'..." \
+                                  % (param_id, param_value))
+                        param_value = grl.process_simple_param(param_type, param_value)
+                        
+                        # Check if validation is required
+                        validator = \
+                            self.project_obj.get_simple_param_validator(self.module, param_id)
+                        if validator is not None:
+                            # Validate parameter
+                            valid = self.project_obj.validate_simple_param(self.module, param_id, \
+                                                                           validator[0], \
+                                                                           validator[1])
+                        else:
+                            # If no validator is defined assume data is valid.
+                            valid = True
+                        
+                        if valid is True:
+                            param_obj = grl.SimpleParam(param_id, param_type, param_value)
+                            self.simple_params.update({param_id: param_obj})
+                            log_debug("Added CAN user parameter '%s', type '%s' with value '%s'" \
+                                      % (param_id, param_type, param_value))
+                        else:
+                            log_warn(("Parameter '%s:%s' is invalid as per its " \
+                                     + "validator '%s:%s''. Parameter ignored.") \
+                                     % (self.module, param_id, validator[0], validator[1]))
+                    elif param_value != "":
+                        log_warn("Parameter '%s' is read-only. Ignored user value." % param_id)
+                    else:
+                        pass
+                elif param_id != "":
+                    log_warn("Parameter '%s' is meaningless for component '%s'. Parameter ignored." \
+                             % (param_id, self.module))
+                else:
+                    pass
+                
         # -----------------------
         # Parse Network Data
         # -----------------------
+        log_debug("Parsing network data.")
         working_sheet = book["Network_and_Nodes"]
                 
         self.name = working_sheet[0,1]
@@ -2068,6 +2371,7 @@ class Network_CAN:
         # -----------------------
         # Parse Network Nodes
         # -----------------------
+        log_debug("Parsing nodes data.")
         NODES_TITLE_ROW = 6 # Row where the node's titles are located
         working_sheet.name_columns_by_row(NODES_TITLE_ROW)
         
@@ -2083,7 +2387,8 @@ class Network_CAN:
         # -----------------------
         # Parse Enum Types
         # -----------------------
-        working_sheet = book["Data Types"]
+        log_debug("Parsing enums type data.")
+        working_sheet = book["Data_Types"]
         working_sheet.name_columns_by_row(0)
         
         for row in working_sheet:
@@ -2096,6 +2401,7 @@ class Network_CAN:
         # -----------------------
         # Parse Messages
         # -----------------------
+        log_debug("Parsing messages data.")
         working_sheet = book["Messages"]
         working_sheet.name_columns_by_row(0)
         
@@ -2133,6 +2439,7 @@ class Network_CAN:
         # -----------------------
         # Parse Signals
         # -----------------------
+        log_debug("Parsing signals data.")
         working_sheet = book["Signals"]
         working_sheet.name_columns_by_row(0)
         
@@ -2157,7 +2464,7 @@ class Network_CAN:
                 if signal_type != "":
                     self.set_signal_data_type(signal_name, signal_type)
                 else:
-                    log_warn(("Signal \"" + signal_name 
+                    log_info(("Signal \"" + signal_name 
                               + "\" doesn't have a defined data type."))
                 # Add signal to the specified message if any
                 if signal_conv_msg != "":
@@ -2186,7 +2493,7 @@ class Network_CAN:
                 
                 if str(signal_unit) != "":
                     self.signals[signal_name].fail_value = signal_unit
-    
+
     #===============================================================================================        
     class EnumType:
         """ Class to model an enumerated data type. """
@@ -2217,7 +2524,7 @@ class Network_CAN:
 
             self.description = description
     
-            self.subscribed_messages = {} # {message name, message timeout}
+            self.subscribed_messages = {} # {message name : message timeout}
         
         def add_subscriber(self, message_name, timeout_ms):
             """ Adds an RX message for this node """
@@ -2249,8 +2556,8 @@ class Network_CAN:
                 log_warn(("Wrong lenght value: \"" + length \
                               + "\" of message \"" + self.name \
                               + "\". Assumed lenght of 8 bytes."))
-
-            if extended_id is False:
+            
+            if extended_id is False or extended_id == "no":
                 self.extended_id = False
             else:
                 self.extended_id = True
@@ -2448,10 +2755,10 @@ class CodeGen():
     PRFX_DEFAULT = 0
 
 
-input_file_name = None # Used for determining name of output network xml file.
+#input_file_name = None # Used for determining name of output network xml file.
 
 #===================================================================================================
-def load_input(input_file, input_type, params):
+def load_input(input_file, input_type, params, project_obj):
     """ Loads input file and returns the corresponding object.
     
     This function is invoked from the project handler.
@@ -2474,15 +2781,15 @@ def load_input(input_file, input_type, params):
     """
     del input_type, params # Unused parameters
     try:
-        return_object = Network_CAN() 
+        return_object = Network_CAN(project_obj)
+#        return_object.load_default_gen_params()
         return_object.parse_spreadsheet_ods(input_file)
-        
         try:
             return_object.update_cog_sources()
         except Exception as e:
             log_error('Failed to update cog sources. Reason: %s' % (e))
         
-        input_file_name = input_file.stem
+#        input_file_name = input_file.stem
     except Exception as e:
         return_object = None
         log_error('Failed to process input file "%s". Reason: %s' % (input_file, e))
@@ -2517,8 +2824,9 @@ def generate(input_object, out_path, working_path, calvos_path, params = {}):
     del params # Unused parameter
     #TODO: Check for required parameters
 #     try:
-    cog_files_path = calvos_path / "comgen" / "gen" / "CAN"
-    input_object.gen_code(out_path, working_path, cog_files_path)
+    #cog_files_path = calvos_path / "comgen" / "gen" / "CAN"
+    
+    input_object.gen_code()
     # Generate XML
     xml_output_file = out_path / (str(input_object.input_file.stem) + ".xml")
     input_object.gen_XML(xml_output_file)

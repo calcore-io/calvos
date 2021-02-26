@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CalvosProject xmlns:clv="calvos"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:noNamespaceSchemaLocation="../schemas/_calvos_project.xsd">
+  <Name>Demo Calvos Project</Name>
+  <Desc>Demo Calvos Project generated from found components with templates.</Desc>
+  <Version>Version</Version>
+  <Date>Date</Date>
+  <Components>
+    <Component type="somecomponent">
+      <Name>Name</Name>
+      <Desc>Desc</Desc>
+      <Input type="ods">"input/path"</Input>
+    </Component>
+  </Components>
+  <Params/>
+  <Metadata>
+  	<!-- Do NOT modify these elements -->
+    <clv:TemplateId>calvos_project</clv:TemplateId>
+    <clv:TemplateVer>0.1.0</clv:TemplateVer>
+    <clv:TemplateTitle>Calvos Project</clv:TemplateTitle>
+    <clv:TemplateDesc>Template for modeling a Calvos Project</clv:TemplateDesc>
+    <clv:TemplateDate>2021-02-24</clv:TemplateDate>
+  </Metadata>
+</CalvosProject>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<clv:ComponentDefinition module="common.codegen" instances="[1]" xmlns:clv="calvos" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cg="common.codegen" xsi:schemaLocation="calvos schemas/_component_defs.xsd common.codegen schemas/codegen.xsd ">
+	<clv:Title>Code-generation</clv:Title>
+	<clv:Desc>Component for controlling common aspects of the C-code generation.</clv:Desc>
+	<clv:ParamsDefinitions>
+		<clv:Categories>
+			<clv:Category id="catcodegen_general">
+				<clv:Title>General</clv:Title>
+			</clv:Category>
+			<clv:Category id="catcodegen_compiler">
+				<clv:Title>Compiler and Micro-architecture</clv:Title>
+			</clv:Category>
+			<clv:Category id="catcodegen_data_types"
+				is_subcategory_of="catcodegen_compiler">
+				<clv:Title>Data Types</clv:Title>
+			</clv:Category>
+			<clv:Category id="catcodegen_os">
+				<clv:Title>OS settings</clv:Title>
+			</clv:Category>
+		</clv:Categories>
+		<clv:ParamDefinition id="codegen_word_size" type="int" category="catcodegen_compiler">
+			<clv:Title>MCU word size</clv:Title>
+			<clv:Desc>Bits-lenght of a native word in the target MCU. E.g., 32 for a 33-bit architecture. </clv:Desc>
+			<clv:Default>32</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition id="codegen_is_big_endian" type="boolean" category="catcodegen_compiler">
+			<clv:Title>MCU is big-endian</clv:Title>
+			<clv:Desc>Set to "True" if the MCU is big-endian, set to "False" if it is little-endian.</clv:Desc>
+			<clv:Default>True</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition id="codegen_pack_struct_str" type="str"
+			category="catcodegen_compiler">
+			<clv:Title>Pack structs string</clv:Title>
+			<clv:Desc>
+				String to use for indicating the compiler that a
+				_struct_ needs to be packed in its smaller size as
+				possible. E.g., for arm gcc compiler this string is
+				typically "__attribute__((packed))".
+			</clv:Desc>
+			<clv:Default>__attribute__((packed))</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition id="codegen_pack_struct_str_pos" type="str"
+			category="catcodegen_compiler">
+			<clv:Title>Pack structs string position</clv:Title>
+			<clv:Desc>
+				Position where to locate the pack struct string. E.g.,
+				before type, after type, after struct keyword, etc.
+			</clv:Desc>
+			<clv:Default>clv:Default</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition id="codegen_uint32_t" type="str">
+			<clv:Title>Unsigned int 32-bits</clv:Title>
+			<clv:Desc>C-type for an unsigned int of 32 bits. E.g., unsigned int</clv:Desc>
+			<clv:Default>{"hola" : 1, "quiubo" : ["jeje", 1, 2]}</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="float" id="codegen_os_fastest_task_ms" category="catcodegen_os">
+			<clv:Title>Fastest OS task</clv:Title>
+			<clv:Desc>Period of fastest OS defined task in ms.</clv:Desc>
+			<clv:Default>10</clv:Default>
+		</clv:ParamDefinition></clv:ParamsDefinitions>
+</clv:ComponentDefinition>

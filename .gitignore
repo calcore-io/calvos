@@ -1,8 +1,14 @@
 
 __pycache__/
+calvos-engine/calvos/doc/doxygen/
 calvos-engine/calvos/rwsd.py
 calvos-engine/calvos/test.py
+calvos-engine/build
+calvos-engine/dist
+calvos-engine/calvos.egg-info
 project_example/log.log
 project_example/out/
 .~lock*
 ~$*
+*.md.html
+doxygen/

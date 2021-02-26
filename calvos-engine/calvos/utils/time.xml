@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<clv:ComponentDefinition xmlns:clv="calvos"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="calvos ../common/schemas/_component_defs.xsd "
+	module="utils.time" instances="[0,1]">
+	<clv:Title>Time Utilities</clv:Title>
+	<clv:Desc>
+		Provides utilities for time management like slow timers, fast
+		timers, timer wheels, etc.
+	</clv:Desc>
+	<clv:ParamsDefinitions>
+		<clv:Categories>
+			<clv:Category id="cattime_general">
+				<clv:Title>General</clv:Title>
+			</clv:Category>
+			<clv:Category id="cattime_timers">
+				<clv:Title>Timers</clv:Title>
+			</clv:Category>
+		</clv:Categories>
+		<clv:ParamDefinition type="list" id="time_tasks"
+			category="cattime_timers" is_advanced="true" subtype="int">
+			<clv:Title>Time Tasks Periods</clv:Title>
+			<clv:Desc>
+				List of tasks (periods in ms) used for processing
+				timers.
+			</clv:Desc>
+			<clv:Default>[5,10,20,100,1000]</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="list" id="time_types" category="cattime_timers"
+			is_read_only="true" is_advanced="true">
+			<clv:Title>Timer Types</clv:Title>
+			<clv:Desc>Timer Types.</clv:Desc>
+			<clv:Default>["auto","simple","simple_periodic","full"]</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="str" id="time_types_default"
+			category="cattime_timers" is_read_only="true" is_advanced="true"
+			validator='["utils.time", "time_types"]'>
+			<clv:Title>Timer default type</clv:Title>
+			<clv:Desc>Timer default type.</clv:Desc>
+			<clv:Default>auto</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="list" id="time_timer_mechanisms" category="cattime_timers"
+			is_read_only="true" is_advanced="true">
+			<clv:Title>Timer tasks mechanisms</clv:Title>
+			<clv:Desc>Timer tasks mechanism to use: linear, time wheel, auto determine.</clv:Desc>
+			<clv:Default>["auto","linear","wheel"]</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="str" id="time_timer_mechanism"
+			category="cattime_timers"
+			validator='["utils.time", "time_timer_mechanisms"]'
+			is_advanced="true">
+			<clv:Title>Selected timer mechanism</clv:Title>
+			<clv:Desc>Selected timer mechanism.</clv:Desc>
+			<clv:Default>auto</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="int" id="time_mechanism_param1" category="cattime_timers"
+			is_advanced="true">
+			<clv:Title>Timer mechanism parameter 1</clv:Title>
+			<clv:Desc>Timer mechanism parameter 1.</clv:Desc>
+			<clv:Default>16</clv:Default>
+		</clv:ParamDefinition>
+	</clv:ParamsDefinitions>
+</clv:ComponentDefinition>

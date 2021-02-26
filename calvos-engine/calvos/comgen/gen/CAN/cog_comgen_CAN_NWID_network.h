@@ -17,6 +17,12 @@ try:
 		network = pic.load(f)
 except Exception as e:
         print('Failed to access pickle file %s. Reason: %s' % (cog_pickle_file, e))
+
+try:
+	with open(cog_proj_pickle_file, 'rb') as f:
+		project = pic.load(f)
+except Exception as e:
+        print('Failed to access pickle file %s. Reason: %s' % (cog_pickle_file, e))
 ]]] */
 // [[[end]]]
 /*============================================================================*/
@@ -32,9 +38,9 @@ if padding > 1:
 cog.outl("/"+chr(42)+chr(42)+" \\file\t\t"+file_name+" "+padding_str+chr(42)+"/")
 ]]] */
 // [[[end]]]
-/** \brief     	Header file CAN Signals definitions.
+/** \brief     	Header file CAN Signals/messages definitions.
  *  \details   	Contains data structures to ease the handling of the CAN
- *				signals.
+ *				signals/messages for a given network.
  *  \author    	Carlos Calvillo
  *  \version   	1.0
  *  \date      	2020-11-15
@@ -63,7 +69,13 @@ cog.outl("#define "+guard_symbol)
 // [[[end]]]
 /* [[[cog
 
-# Definition of Functions
+TAB_SPACE = 4
+network_name = network.id_string
+if NWID_wildcard != "None":
+	net_name_str = network_name + "_"
+else:
+	net_name_str = ""
+
  ]]] */
 // [[[end]]]
 
@@ -72,16 +84,35 @@ cog.outl("#define "+guard_symbol)
 /* -------------------------------------------------------------------------- */
 // 		Network Messages
 /* -------------------------------------------------------------------------- */
-
-/* Macros for message(s) length */
+/* Message(s) IDs */
 /* [[[cog
 
-TAB_SPACE = 4
+# Calculate padding spaces
+macro_prefix = "kCAN_" + net_name_str + "msgId_"
+macro_names = []
+macro_values = []
+for message in network.messages.values():
+	macro_name = macro_prefix + message.name
+	macro_value = "(" + str(hex(message.id)) + "u)"
+	macro_names.append(macro_name)
+	macro_values.append(macro_value)
 
-# Code for individual CAN msgs lenght
+max_len = cg.get_str_max_len(macro_names)
+max_len += TAB_SPACE
+
+for i, macro_name in enumerate(macro_names):
+	code_string = "#define " + macro_name \
+				+ cg.gen_padding(max_len, len(macro_name)) + macro_values[i]
+	cog.outl(code_string)
+
+]]] */
+// [[[end]]]
+
+/* Message(s) length */
+/* [[[cog
 
 # Calculate padding spaces
-macro_prefix = "CAN_" + network.id_string + "_MSG_DLEN_"
+macro_prefix = "kCAN_" + net_name_str + "msgLen_"
 macro_names = []
 macro_values = []
 for message in network.messages.values():
@@ -101,22 +132,67 @@ for i, macro_name in enumerate(macro_names):
 ]]] */
 // [[[end]]]
 
-/* Macro for getting the sum of the CAN msgs lenght. */
-/* This to be used for defining the unified CAN data buffer. */
-
+/* Message(s) Transmission types */
 /* [[[cog
-macro_name = "CAN_" + network.id_string + "_MSGS_TOTAL_LEN"
 
-code_string = "#define " + macro_name + cg.gen_padding(TAB_SPACE)
-padding_str = cg.gen_padding(len(code_string))
-code_string += "("
-for i, macro_name in enumerate(macro_names):
-	if i < len(macro_names) - 1:
-		code_string += macro_name + " \\\n" + padding_str + "+ "
+# Calculate padding spaces
+macro_prefix = "kCAN_" + net_name_str + "msgTxType_"
+macro_names = []
+macro_values = []
+for message in network.messages.values():
+	macro_name = macro_prefix + message.name
+	if message.tx_type == nw.tx_type_list[nw.SPONTAN]:
+		macro_value = "(kTxSpontan)"
+	elif message.tx_type == nw.tx_type_list[nw.CYCLIC]:
+		macro_value = "(kTxCyclic)"
+	elif message.tx_type == nw.tx_type_list[nw.CYCLIC_SPONTAN]:
+		macro_value = "(kTxCyclicSpontan)"
+	elif message.tx_type == nw.tx_type_list[nw.BAF]:
+		macro_value = "(kTxBAF)"
 	else:
-		code_string += macro_name + ")"
+		macro_value = "(kTxSpontan)"
+		log_warn("Unknown TX type for message '%s'. Assumed 'SPONTAN'" \
+			% message.name)
+	macro_names.append(macro_name)
+	macro_values.append(macro_value)
 
-cog.outl(code_string)
+max_len = cg.get_str_max_len(macro_names)
+max_len += TAB_SPACE
+
+for i, macro_name in enumerate(macro_names):
+	code_string = "#define " + macro_name \
+				+ cg.gen_padding(max_len, len(macro_name)) + macro_values[i]
+	cog.outl(code_string)
+
+]]] */
+// [[[end]]]
+
+/* Message(s) Transmission Period (in ticks of task) */
+/* [[[cog
+
+# Calculate padding spaces
+tx_proc_task = project.get_simple_param_val(network.module,"CAN_tx_task_period")
+macro_prefix = "kCAN_" + net_name_str + "msgTxPeriod_"
+macro_names = []
+macro_values = []
+for message in network.messages.values():
+	macro_name = macro_prefix + message.name
+	macro_value = message.tx_period
+	if macro_value is None or macro_value == "":
+		macro_value = "(0u)"
+	else:
+		macro_value = "(" + str(round(int(message.tx_period)/tx_proc_task)) + "u)"
+	macro_names.append(macro_name)
+	macro_values.append(macro_value)
+
+max_len = cg.get_str_max_len(macro_names)
+max_len += TAB_SPACE
+
+for i, macro_name in enumerate(macro_names):
+	code_string = "#define " + macro_name \
+				+ cg.gen_padding(max_len, len(macro_name)) + macro_values[i]
+	cog.outl(code_string)
+
 ]]] */
 // [[[end]]]
 
@@ -125,20 +201,38 @@ cog.outl(code_string)
 /* -------------------------------------------------------------------------- */
 
 /* [[[cog
+
+# Resolve enum symbols wildcards
+datat_symb_prfx = network.get_simple_param("CAN_enum_sym_prefix")
+if datat_symb_prfx == "$":
+	datat_symb_prfx = ""
+else:
+	datat_symb_prfx = \
+		cg.resolve_wildcards(datat_symb_prfx, {"NWID":network.id_string})
+
+datat_type_name = network.get_simple_param("CAN_enum_type_prefix")
+
 for enum_type in network.enum_types.values():
 	cog.out("typedef enum{\n\t")
 	counter = 0
 	code_string = ""
 	for enum_entry in enum_type.enum_entries:
 		counter += 1
-		code_string += enum_entry
+		code_string += datat_symb_prfx + enum_entry
 		if enum_type.enum_entries[enum_entry] is not None:
 			code_string += " = " + str(enum_type.enum_entries[enum_entry])
 		if counter < len(enum_type.enum_entries):
 			#Append a comma, new line and tab for all entries except the last one
 			code_string += ",\n\t"
 	cog.outl(code_string)
-	cog.outl("}t_" + enum_type.name + ";\n")
+	# Resolve type name
+	if datat_type_name == "" or  datat_type_name is None:
+		type_name = enum_type.name
+	else:
+		type_name = \
+			cg.resolve_wildcards(datat_type_name, {"DATATYPE":enum_type.name})
+
+	cog.outl("}" + type_name + ";\n")
 ]]] */
 // [[[end]]]
 
@@ -156,7 +250,7 @@ for message in messages_layouts:
 	# Message structures
 	# ------------------
 	# Print structure comment
-	cog.outl("\n/"+chr(42)+" Structure for network \""+ network.id_string
+	cog.outl("\n/"+chr(42)+" Structure for network \""+ network_name
 			+ "\" message \"" + message.name + "\"." + chr(42) + "/")
 
 	# Print structure "header"
@@ -165,71 +259,85 @@ for message in messages_layouts:
 	# If message is cannonical, don't use bitfields
 	if message.is_cannonical:
 		for signal in message.signals:
-			signal_container_len = cg.calculate_base_type_len(signal.fragments[1])
-			remaining_bits = signal.fragments[1]
-
-
-			if signal_container_len > remaining_bits:
-				prefix_number = 0
-				prefix = cg.gen_part_prefixes[cg.PRFX_DEFAULT]
-
-				msg_signals_temp = network.get_signals_of_message(message.name)
-				msg_signals = []
-				for msg_signal in msg_signals_temp:
-					msg_signals.append(msg_signal.name)
-
-				# Signal needs to be partitioned
-				# TODO: This fragmentation logic of cannonican messages with
-				# length of bytes not fitting exactly a data type can be moved
-				# to function get_messages_structures.
-				while signal_container_len > 8 \
-				and signal_container_len > remaining_bits:
-					signal_container_len = int(signal_container_len / 2)
-					remaining_bits -= signal_container_len
-
-					# Set fragment name
-					fragment_name = str(signal.fragments[0]) + "_" \
-						+ prefix + str(prefix_number)
-					# Check if fragment name doesn't duplicate a signal
-					# name, if so, try different part prefixes.
-					prefix_idx = 0
-					while fragment_name in msg_signals:
-						# Fragment name duplicates an existing signal name
-						# try different part prefix
-						prefix_idx += 1
-						if prefix_idx > (len(cg.gen_part_prefixes) - 1):
-							# All prefixes exhausted. Use a disruptive
-							# one so that it is evident and user can
-							# manually name the signal parts in the C code.
-							log_warn(("Can't generate unique name" \
-							   + " for part "+ fragment_name \
-							   + "\" of signal \"" + signal_name \
-							   + "\" since it duplicates with existing" \
-							   + "signal in same message."))
-
-							prefix = "#"
-							fragment_name = str(signal.fragments[0]) + "_" \
-								+ prefix + str(prefix_number)
-							break;
-						else:
-							log_warn(("Signal part \"" + fragment_name \
-							   + "\" of signal \"" + signal_name \
-							   + "\" duplicates with name of existing " \
-							   + "signal in same message." \
-							   + " Attempting with prefix \"" \
-							   + cg.gen_part_prefixes[prefix_idx] + "\""))
-
-							# Try new prefix
-							prefix = cg.gen_part_prefixes[prefix_idx]
-							fragment_name = str(signal.fragments[0]) + "_" \
-								+ prefix + str(prefix_number)
-
-					prefix_number += 1
-					cog.outl("\t\t" + cg.get_dtv(signal_container_len) \
-						+ " " + str(fragment_name) + ";")
+			# Check if signal is not a reserved one and if it is an array
+			last_array_signal = None
+			if signal.fragments[2] is False \
+			and network.signals[signal.name].is_array() is True:
+				# Only print signal array the first time a fragment of it appears
+				if last_array_signal != signal.name:
+					last_array_signal = signal.name
+					cog.outl("\t\t" + cg.get_dtv(8) + " " + str(signal.name) \
+						+ "[" + str(math.floor(network.signals[signal.name].len/8)) + "];")
 			else:
-				cog.outl("\t\t" + cg.get_dtv(signal.fragments[1]) \
-						+ " " + str(signal.fragments[0]) + ";")
+				signal_container_len = cg.calculate_base_type_len(signal.fragments[1])
+				remaining_bits = signal.fragments[1]
+
+				if signal_container_len > remaining_bits:
+					prefix_number = 0
+					prefix = cg.gen_part_prefixes[cg.PRFX_DEFAULT]
+
+					msg_signals_temp = network.get_signals_of_message(message.name)
+					msg_signals = []
+					for msg_signal in msg_signals_temp:
+						msg_signals.append(msg_signal.name)
+
+					# Signal needs to be partitioned
+					# TODO: This fragmentation logic of cannonical messages with
+					# length of bytes not fitting exactly a data type can be moved
+					# to function get_messages_structures.
+					while signal_container_len >= 8 and remaining_bits > 0:
+						if signal_container_len > remaining_bits:
+							signal_container_len = int(signal_container_len / 2)
+							remaining_bits -= signal_container_len
+						else:
+							remaining_bits -= signal_container_len
+
+						# Set fragment name
+						fragment_name = str(signal.fragments[0]) + "_" \
+							+ prefix + str(prefix_number)
+						# Check if fragment name doesn't duplicate a signal
+						# name, if so, try different part prefixes.
+						prefix_idx = 0
+						while fragment_name in msg_signals:
+							# Fragment name duplicates an existing signal name
+							# try different part prefix
+							prefix_idx += 1
+							if prefix_idx > (len(cg.gen_part_prefixes) - 1):
+								# All prefixes exhausted. Use a disruptive
+								# one so that it is evident and user can
+								# manually name the signal parts in the C code.
+								log_warn(("Can't generate unique name" \
+								   + " for part "+ fragment_name \
+								   + "\" of signal \"" + signal_name \
+								   + "\" since it duplicates with existing" \
+								   + "signal in same message."))
+
+								prefix = "#"
+								fragment_name = str(signal.fragments[0]) + "_" \
+									+ prefix + str(prefix_number)
+								break;
+							else:
+								log_warn(("Signal part \"" + fragment_name \
+								   + "\" of signal \"" + signal_name \
+								   + "\" duplicates with name of existing " \
+								   + "signal in same message." \
+								   + " Attempting with prefix \"" \
+								   + cg.gen_part_prefixes[prefix_idx] + "\""))
+
+								# Try new prefix
+								prefix = cg.gen_part_prefixes[prefix_idx]
+								fragment_name = str(signal.fragments[0]) + "_" \
+									+ prefix + str(prefix_number)
+
+						prefix_number += 1
+						cog.outl("\t\t" + cg.get_dtv(signal_container_len) \
+							+ " " + str(fragment_name) + ";")
+
+						if remaining_bits > 0 and signal_container_len > remaining_bits:
+							signal_container_len = cg.calculate_base_type_len(remaining_bits)
+				else:
+					cog.outl("\t\t" + cg.get_dtv(signal.fragments[1]) \
+							+ " " + str(signal.fragments[0]) + ";")
 	else:
 		# Bitfield is required for non-cannonical messages
 		for signal in message.signals:
@@ -239,8 +347,8 @@ for message in messages_layouts:
 	
 	# Print structure "tail"
 	cog.outl("\t} s;")
-	cog.outl("\t"+cg.get_dtv(8)+" all[CAN_" + network.id_string \
-			+ "_MSG_DLEN_" + message.name + "];")
+	cog.outl("\t"+cg.get_dtv(8)+" all[kCAN_" + net_name_str \
+			+ "msgLen_" + message.name + "];")
 	cog.outl("}S_" + message.name + ";\n")
 
 	# Signal read / write macros
@@ -249,7 +357,7 @@ for message in messages_layouts:
 	
 	# Print read macro comment
 	cog.outl("/"+chr(42)+" Macros for reading/writing signals of network \"" \
-			+ network.id_string + "\" message \"" + message.name \
+			+ network_name + "\" message \"" + message.name \
 			+ "\". " + chr(42) + "/")
 	cog.outl("")
 
@@ -257,28 +365,23 @@ for message in messages_layouts:
 	data_in_str = "data"
 
 	for signal in message_signals:
-		def_read_array = "CAN_" + network.id_string + "_get_ptr_" \
+		def_read_array = "CAN_" + net_name_str + "get_ptr_" \
 						+ signal.name + "(" + array_str + ")"
-		def_read = "CAN_"+network.id_string+"_extract_" \
+		def_read = "CAN_"+net_name_str+"extract_" \
 						+ signal.name + "(" + array_str + ")"
-		def_get = "CAN_"+network.id_string+"_get_" \
+		def_get = "CAN_"+net_name_str+"get_" \
 						+ signal.name + "(" + array_str + ")"
-		def_get_direct = "CAN_"+network.id_string+"_get_direct_" \
-						+ signal.name + "()"
 
-		def_write_array = "CAN_" + network.id_string + "_update_" \
+		def_write_array = "CAN_" + net_name_str + "update_ptr_" \
 						+ signal.name + "(" + array_str + "," + data_in_str + ")"
-		def_write = "CAN_"+network.id_string+"_write_" \
+		def_write = "CAN_"+net_name_str+"write_" \
 						+ signal.name + "(" + array_str + "," + data_in_str + ")"
-		def_update = "CAN_"+network.id_string+"_update_" \
+		def_update = "CAN_"+net_name_str+"update_" \
 						+ signal.name + "(" + array_str + "," + data_in_str + ")"
-		def_update_direct = "CAN_"+network.id_string+"_update_direct_" \
-						+ signal.name + "(" + data_in_str + ")"
 
 		max_len = cg.get_str_max_len([def_read_array, def_read, \
-									def_get, def_get_direct, \
-									def_write_array, def_write, def_update, \
-									def_update_direct])
+									def_get, \
+									def_write_array, def_write, def_update])
 		# From longest string add TAB_SPACE spaces for padding
 		max_len += TAB_SPACE
 
@@ -286,12 +389,10 @@ for message in messages_layouts:
 		pad_read_array = cg.gen_padding(max_len, len(def_read_array))
 		pad_read = cg.gen_padding(max_len, len(def_read))
 		pad_get = cg.gen_padding(max_len, len(def_get))
-		pad_get_direct = cg.gen_padding(max_len, len(def_get_direct))
 
 		pad_write_array = cg.gen_padding(max_len, len(def_write_array))
 		pad_write = cg.gen_padding(max_len, len(def_write))
 		pad_update = cg.gen_padding(max_len, len(def_update))
-		pad_update_direct = cg.gen_padding(max_len, len(def_update_direct))
 
 		# Print read macro comment
 		cog.outl("/"+chr(42)+" Macros for reading signal \"" \
@@ -302,7 +403,7 @@ for message in messages_layouts:
 		if signal.is_array():
 			cog.outl("#define "+ def_read_array \
 					+ pad_read_array \
-					+ "( &"+array_str+"[" + str(signal.start_byte) + "] )" )
+					+ "( &"+array_str+".all[" + str(signal.start_byte) + "] )" )
 		else:
 			signal_access = network.get_signal_abstract_read(signal.name)
 
@@ -359,9 +460,6 @@ for message in messages_layouts:
 
 			cog.outl("#define " + def_get + pad_get \
 				+ "(" + def_read.replace("("+array_str+")","("+array_str+".all)") + ")" )
-
-			cog.outl("#define "+def_get_direct + pad_get_direct \
-				+ "(" + def_read.replace("("+array_str+")","(unified_buffer)") + ")" )
 	
 		# Signal write macros
 		# -------------------
@@ -370,9 +468,9 @@ for message in messages_layouts:
 			+ signal.name + "\". " + chr(42) + "/")
 		if signal.is_array():
 			cog.outl("#define " + def_write_array + pad_write_array \
-					+"( memcpy(&"+array_str+"["+str(signal.start_byte) \
-					+ "],&values, CAN_" + network.id_string \
-					+ "_MSG_DLEN_" + message.name + ")" )
+					+"( memcpy(&"+array_str+".all["+str(signal.start_byte) \
+					+ "],&"+data_in_str+", kCAN_" + net_name_str \
+					+ "msgLen_" + message.name + ")" )
 		else:
 			pass
 
@@ -451,8 +549,6 @@ for message in messages_layouts:
 			cog.outl("#define " + def_write + pad_write + macro_str)
 			cog.outl("#define " + def_update + pad_update \
 				+ def_write.replace("("+array_str+",","("+array_str+".all,"))
-			cog.outl("#define " + def_update_direct + pad_update_direct \
-				+ def_write.replace("("+array_str+",","(unified_buffer"))
 		
 		cog.outl("")
 ]]] */

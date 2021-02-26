@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<clv:ComponentDefinition xmlns:clv="calvos"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="calvos ../common/schemas/_component_defs.xsd "
+	module="comgen.CAN" instances="[0]">
+	<clv:Title>CAN Network</clv:Title>
+	<clv:Desc>Models a network for Controller Area Network (CAN) protocol.</clv:Desc>
+	<clv:Inputs>
+		<clv:Input type="ods">template - CAN Network Definition.ods</clv:Input></clv:Inputs>
+	<clv:ParamsDefinitions>
+		<clv:Categories>
+			<clv:Category id="catCAN_general">
+				<clv:Title>General</clv:Title>
+			</clv:Category>
+			<clv:Category id="catCAN_network">
+				<clv:Title>Network</clv:Title>
+			</clv:Category>
+			<clv:Category id="catCAN_messages">
+				<clv:Title>Messages</clv:Title>
+			</clv:Category>
+		</clv:Categories>
+		<clv:ParamDefinition id="CAN_gen_nodes" type="list"
+			category="catCAN_network" subtype="str">
+			<clv:Title>Nodes to generate</clv:Title>
+			<clv:Desc>List of nodes to generate C-code for.</clv:Desc>
+			<clv:Default>[]</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition id="CAN_gen_file_full_names" type="boolean"
+			category="catCAN_general">
+			<clv:Title>Generate files full name</clv:Title>
+			<clv:Desc>
+				If set to "True" always uses full name for CAN generated
+				C-code. Full name includes network and node name in the
+				file in most of the cases. If set to "False"
+				automatically determine if full names are required
+				(generating more than one node in a given network or
+				multiple networks) or not.
+			</clv:Desc>
+			<clv:Default>False</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="str" id="CAN_enum_sym_prefix"
+			category="catCAN_general">
+			<clv:Title>
+				Prefix for data types enumerated symbols
+			</clv:Title>
+			<clv:Desc>
+				Prefix for data types enumerated symbols.
+				Use $ to indicate an empty string.
+Use ${NWID} to indicate the network ID.
+			</clv:Desc>
+			<clv:Default>kCAN_${NWID}_</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="str" id="CAN_enum_type_prefix"
+			category="catCAN_general">
+			<clv:Title>
+				Prefix for type names of signal enumerations
+			</clv:Title>
+			<clv:Desc>
+				Prefix for type names of signal enumerations.
+Leave empty to name the generated types exactly as the source data_type.
+Use ${DATATYPE} to indicate the Data_Type name.
+			</clv:Desc>
+			<clv:Default>t_${DATATYPE}</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="list" id="CAN_msg_search_algorithms"
+			category="catCAN_general" is_read_only="true" is_advanced="false">
+			<clv:Title>Msg search algorithms</clv:Title>
+			<clv:Desc>Type of search algorithms to implement for processing RX
+				can messages.</clv:Desc>
+			<clv:Default>["auto", "linear", "search_tree", "multi_search_tree", "hash"]</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="str" id="CAN_msg_search_algorithm"
+			category="catCAN_general" is_advanced="false" validator='["comgen.CAN", "CAN_msg_search_algorithms"]'>
+			<clv:Title>Msg search algorithm</clv:Title>
+			<clv:Desc>
+				Type of search algorithms to use for processing RX can
+				messages.
+			</clv:Desc>
+			<clv:Default>auto</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="int"
+			id="CAN_msg_search_algorithm_param1" category="catCAN_general"
+			is_optional="true" is_advanced="true">
+			<clv:Title>Msg search algorithm - Parameter 1</clv:Title>
+			<clv:Desc>
+				Parameter 1 of the selected search algorithm.
+			</clv:Desc>
+			<clv:Default>32</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="int"
+			id="CAN_msg_search_algorithm_param2" category="catCAN_general"
+			is_optional="true" is_advanced="true">
+			<clv:Title>Msg search algorithm - Parameter 2</clv:Title>
+			<clv:Desc>
+				Parameter 2 of the selected search algorithm.
+			</clv:Desc>
+			<clv:Default>0</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="boolean" id="CAN_start_timeouts_at_init">
+			<clv:Title>Msgs timeout starts at init</clv:Title>
+			<clv:Desc>If set to true timeout of rx CAN messages will start counting down from init. If set to false, user will need to start the timeout manually.</clv:Desc>
+			<clv:Default>True</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="int" id="CAN_tx_task_period"
+			category="catCAN_network" is_advanced="true">
+			<clv:Title>Period of TX task</clv:Title>
+			<clv:Desc>Period of TX task for transmission of spontaneous messages.</clv:Desc>
+			<clv:Default>10</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="int" id="CAN_rx_task_period"
+			category="catCAN_network" is_advanced="true">
+			<clv:Title>Period of RX task</clv:Title>
+			<clv:Desc>Period of task for polling spontaneous RX messages.</clv:Desc>
+			<clv:Default>10</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="int" id="CAN_tx_queue_len"
+			category="catCAN_network" is_advanced="true">
+			<clv:Title>Length of queue for TX messages</clv:Title>
+			<clv:Desc>
+				Length of queue of messages waiting for transmission.
+			</clv:Desc>
+			<clv:Default>5</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="int" id="CAN_tx_queue_task_ms"
+			category="catCAN_network" is_advanced="true">
+			<clv:Title>Time in ms of TX queue task</clv:Title>
+			<clv:Desc>
+				Time in ms of TX queue task.
+			</clv:Desc>
+			<clv:Default>10</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="boolean" id="CAN_tx_confirm_msg_id"
+			category="catCAN_network">
+			<clv:Title>TX confirm mesage ID</clv:Title>
+			<clv:Desc>
+				If True, TX confirmation will check for transmitted ID.
+			</clv:Desc>
+			<clv:Default>True</clv:Default>
+		</clv:ParamDefinition></clv:ParamsDefinitions>
+</clv:ComponentDefinition>
