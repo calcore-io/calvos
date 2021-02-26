@@ -119,7 +119,7 @@ typedef enum{
 	kCANtxState_requested,
 	kCANtxState_queued,
 	kCANtxState_transmitting,
-	kCANtxState_transmited
+	kCANtxState_transmitted
 }CANtxState;
 
 /* Message direction definitions */

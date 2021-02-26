@@ -426,6 +426,16 @@ if len(subnet.messages) > 0:
 			cog.outl(code_str)
 			cog.outl()
 
+			# Get TX Message state macro
+			cog.outl("/"+chr(42)+" Get message transmission state macro "+chr(42)+"/")
+			macro_name = "CAN_" + net_name_str + node_name_str+"get_tx_state_"+message_name
+			macro_args = "()"
+			macro_vals = "("+msg_stat_data+".dyn->state)"
+
+			code_str = "#define "+macro_name+macro_args+"\t\t"+macro_vals
+			cog.outl(code_str)
+			cog.outl()
+
 		if msg_is_tx is False:
 			# Message get available flags macro.
 			cog.outl("/"+chr(42)+" Get message available flags "+chr(42)+"/")

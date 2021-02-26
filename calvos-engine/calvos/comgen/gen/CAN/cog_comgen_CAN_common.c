@@ -332,7 +332,7 @@ void can_commonConfirmTxMsg(const CANtxMsgStaticData* transmitting_msg, \
 		// Confirm message only if the transmitted ID matches in case
 		// check_msg_id is set true. If check_msg_id is false
 		if(!check_msg_id || txd_msg_id == transmitting_msg->id){
-			transmitting_msg->dyn->state = kCANtxState_transmited;
+			transmitting_msg->dyn->state = kCANtxState_transmitted;
 			// Clears transmitting message pointer
 			transmitting_msg = NULL;
 		}

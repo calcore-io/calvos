@@ -2,6 +2,10 @@
 
 This document describes how to define a CAN network within the calvos system, how to generate the corresponding source code, integrate it and use it in the user’s target project.
 
+# Demonstration Project
+
+
+
 # CAN Network definition
 
 The CAN network to generate needs to be defined first using the "CAN Network Definition.ods" template. Currently only ODS format is supported, however, it is possible to edit the template in MS Excel and then save it as ODS.
@@ -392,7 +396,7 @@ For example, if the defined network has an ID equal to 'C', then a file referred
 
 Code that needs to be generated per each defined node within a network that has been selected for code generation (selected in parameter `CAN_gen_nodes`). A set of these files will be generated for each selected node in each defined network. These source code files will contain the corresponding node's name in the file names and symbols within them.
 
-When referring to a file in this category, the wildcard NODEID (node name) will be used in this documentation to represent the corresponding node. For example, if the generated node name is 'NODE_1', then a file referred as `comgen_CAN_NWID_NODEID_node_network.h` corresponds to a generated file with name`comgen_CAN_C_NODE_1_node_network.h`.
+When referring to a file in this category, the wildcard NODEID (node name) will be used in this documentation to represent the corresponding node. For example, if the generated node name is 'NODE_1', then a file referred as `comgen_CAN_NWID_NODEID_node_network.h` corresponds to a generated file with name `comgen_CAN_C_NODE_1_node_network.h`.
 
 | File                                    | File contents                                                |
 | --------------------------------------- | ------------------------------------------------------------ |
@@ -412,10 +416,9 @@ If only one network is defined in the project then the NWID wildcard will be rep
 
 If only one node is generated in a given network, the corresponding NODEID wildcard will be replaced by an empty string rather than the node's name. Similar logic as in the NWID optimization is applied (no need to distinguish symbols for several nodes).
 
-For example, if only one network (network id: "CT") is defined in the project and only a single node ["NODE_1"] is selected for generation, the file `comgen_CAN_NWID_NODEID_node_network.h`will be generated with the name `comgen_CAN_network.h`. However, if parameter `CAN_gen_file_full_names` is set to TRUE, the optimization won't take place and the generated file will have its full name: `comgen_CAN_NWID_NODEID_node_network.h`.
+For example, if only one network (network id: "CT") is defined in the project and only a single node ["NODE_1"] is selected for generation, the file `comgen_CAN_NWID_NODEID_node_network.h`will be generated with the name `comgen_CAN_network.h`. However, if parameter `CAN_gen_file_full_names` is set to TRUE, the optimization won't take place and the generated file will have its full name: `comgen_CAN_CT_NODE_1_node_network.h`.
 
-**Note:** Optimization is also applied to the defined symbols within the generated files as
-required.
+**Note:** Optimization is also applied to the defined symbols within the generated files as required.
 
 # Integration into Target Project
 
@@ -455,7 +458,7 @@ This function will first perform a search in order to determine if the received 
 
 2. Write user-defined code within the reception message callback `can_NWID_NODEID_MESSAGEID_rx_callback()` as needed. MESSAGEID corresponds to the received message name. These callbacks are defined in file `comgen_CAN_NWID_NODEID_callbacks.c`.
    
-   **Note:** If function `can_NWID_NODEID_HALreceiveMsg()`is called within ISR context, then the callbacks will be also called within ISR context so the user code shall be as small as possible.
+   **Note:** If function `can_NWID_NODEID_HALreceiveMsg()` is called within ISR context, then the callbacks will be also called within ISR context so the user code shall be as small as possible.
    
    Is also possible to poll for the reception of messages based on their available flags (in case user doesn't want to use the callbacks directly).
 
@@ -465,7 +468,7 @@ This function will first perform a search in order to determine if the received 
 
 Following tasks are required in order to integrate the transmission of CAN messages with the MCU's HAL:
 
-1. Implement CAN HAL transmission. This means instrumenting code within function `can_NWID_NODE_1_HALtransmitMsg`.
+1. Implement CAN HAL transmission. This means instrumenting code within function `can_NWID_NODEID_HALtransmitMsg`.
    
    HAL code to trigger a CAN message transmission by the associated CAN peripheral shall be put inside the body of this function. Data regarding the message to be transmitted can be taken from the provided argument `msg_info` as follows.
    
@@ -500,21 +503,351 @@ Which option to use (or even another one) is up-to the user to decide.
 
 # Application Usage
 
+## Transmitting messages
+
+Task function `can_task_<time>ms_NWID_NODEID_txProcess` takes care of the transmission of *cyclic* messages as well as of the transmission of the cyclic instances of a *cyclic_spontan* message according to their defined periods.
+
+For the transmission of spontaneous instances, user needs to call function `can_NWID_NODEID_transmitMsg` passing as argument the index of the message to be sent. Those indexes are named `kCAN_NWID_NODEID_txMsgIdx_MESSAGENAME` and are elements of an enumeration called `CAN_NWID_NODEID_txMsgs` declared in header file `comgen_CAN_NWID_NODEID_node_network.h`.
+
+The data to be transmitted either by task function `can_task_<time>ms_NWID_NODEID_txProcess` or by function `can_NWID_NODEID_transmitMsg` is directly taken from the TX unified buffer (`can_NWID_NODEID_TxDataBuffer`) so user needs to first update such data to be transmitted. Refer to section "[Accessing Data of Messages](#Accessing-Data-of-Messages)" for details on how to update TX data.
+
+### Getting Transmission State
+
+Transmission messages can be in any of the following states:
+
+- **Idle** (`kCANtxState_idle`): This is the initial value and represents that the message has never been requested for transmission.
+- **Requested** (`kCANtxState_requested`): A TX message gets into this state if during a transmission request, the CAN HAL didn't accept the request and also it was not possible to queue the message for later retransmission (e.g., queue was full). In this state is recommended that the application manually performs a new transmission request.
+- **Queued** (`kCANtxState_queued`): Message was requested for transmission but was not accepted by the CAN HAL and the message got queued for later retransmission (automatic re-transmission).
+- **Transmitting** (`kCANtxState_transmitting`): Message was accepted by the CAN HAL for transmission. Message will remain in this state until its transmission is confirmed by the CAN HAL.
+- **Transmitted** (`kCANtxState_transmited`): CAN HAL confirmed the successful transmission of the message in the bus.
+
+This states are modeled with enumeration data type `CANtxState` defined in header file *comgen_CAN_common.h*. 
+
+Application can read the state of a transmission message with generated macro `CAN_NWID_NODEID_get_tx_state_MESSAGENAME`. The variable receiving the macro value shall be of type `CANtxState` as in the example below.
+
+```c
+void some_app_function(void)
+{
+    CANtxState tx_msg_state; /* variable for containing the tx message state */
+    
+    /* Get tx state of message "TX_MESSAGE" */
+    tx_msg_state = CAN_NWID_NODEID_get_tx_state_TX_MESSAGE();
+    /* Do something with the tx state if required, for example... */
+    if(tx_msg_state == kCANtxState_requested)
+    {
+        /* Message was neither accepted by CAN HAL nor queued,
+         * manually trigger another transmission of it. */
+        can_NWID_NODEID_transmitMsg(kCAN_NWID_NODEID_txMsgIdx_TX_MESSAGE);
+    }
+}
+```
+
 ## Receiving Messages
+
+The processing of received messages is performed by function `can_NWID_NODEID_HALreceiveMsg`. That function will identify if the received message matches the expected ID and data length of a subscribed message by the node. If so, this function also copies the received data from the HAL into a unified reception buffer called `can_NWID_NODEID_RxDataBuffer`, sets the *available flags* (more information about available flags in following sections) for the received message/signals and invokes the corresponding reception callback.
+
+The application can decide to use the reception callbacks directly (typically within ISR context) or to do a polling for the reception of the messages by polling its available flags (polling is done at task level and hence out of ISR context).
+
+The received data is available from the data buffer  `can_NWID_NODEID_RxDataBuffer` and can be accessed by means of generated data structures (refer to section "[CAN Data Structures](#CAN-Data-Structures)" for more details) or by means of access macros (refer to section "[CAN Access Macros](#CAN-Access-Macros)" for more details)
 
 ### Using the reception callbacks
 
+Upon reception of  a valid subscribed message, a callback with the name `can_NWID_NODEID_MESSAGENAME_rx_callback` will be invoked. If function `can_NWID_NODEID_HALreceiveMsg` is called within an ISR then the reception callbacks will be also called within that ISR context.
+
+Inside the callback, data can be accessed via the CAN Data Structures or the CAN Access Macros.
+
 ### Using the available flags (polling for received messages)
 
-### Using the received data
+A set of available flags is generated per each message and per each signal inside each message. User can decide which one to use as needed.
 
-## Transmitting Messages
+#### Message-Level available flags
 
-### Setting data to be transmitted
+Per each subscribed message a set of message-level available flags are generated. The quantity of flags is determined by the word-size of the target MCU. For example, for a 32-bit MCU, 32 available flags will be generated per message. Those available flags are 1-bit each and will be all set to `1` upon reception of the message.
 
-### Transmission of periodic messages
+These message-level available flags can be used by the application to identify the reception of a given message. The application is responsible of consuming (clearing, setting to `0`) those available flags as needed.
 
-### Transmission of spontaneous messages
+To read the message-level available flags, macros with name `CAN_NWID_NODEID_get_msg_avlbl_flags_MESSAGENAME` are generated. The returned value is a union of type `FlagsNative`. Once the macro is used, then each flag can be individually accessed (read, write) using the bitfield `flags` within the `FlagsNative` variable. Also the flags can be accessed as an array of bytes by means of the `all` element of the `FlagsNative` variable.
+
+It is possible to clear all message available flags at once using macro `CAN_NWID_NODEID_clr_msg_avlbl_flags_MESSAGENAME`.
+
+See example below for the usage of message-level available flags using all the available flags at once.
+
+```c
+/* Call this some_app_function in a periodic tasks so that the message reception
+ * is propperly polled. */
+void some_app_function(void)
+{
+    FlagsNative msg_avlbl_flags; /* variable for containing msg-available flags */
+    
+    /* poll for the reception of message "RX_MESSAGE" */
+    /* ---------------------------------------------- */
+    /* Get msg-available flags */
+    msg_avlbl_flags = CAN_NWID_NODEID_get_msg_avlbl_flags_RX_MESSAGE();
+    if(msg_avlbl_flags.all[0]) /* Checking against the first byte of the 'all' element */
+    {
+        /* Message has been received! */
+        /* Consume (clear) all message-available flags */
+        CAN_NWID_NODEID_clr_msg_avlbl_flags_RX_MESSAGE();
+        
+        /* Code for getting the received data and doing something 
+         * with it goes here... */
+    }
+    /* else --> Message has not been received. Do nothing */
+}
+```
+
+This other example shows the usage of the message-available flags as individual flags.
+
+```c
+/* Call this some_app_function in a periodic tasks so that the message reception
+ * is propperly polled. */
+void some_app_function(void)
+{
+    FlagsNative msg_avlbl_flags; /* variable for containing msg-available flags */
+    
+    /* poll for the reception of message "RX_MESSAGE" */
+    /* ---------------------------------------------- */
+    /* Get msg-available flags */
+    msg_avlbl_flags = CAN_NWID_NODEID_get_msg_avlbl_flags_RX_MESSAGE();
+    /* This function uses only one of the flags (flag0) so the other ones can be 
+     * used by other 'clients' of the same message. */
+    if(msg_avlbl_flags.flags.flag0) /* Checking for flag0 */
+    {
+        /* Message has been received! */
+        /* Consume (clear) only flag0 message-available flag */
+        msg_avlbl_flags.flags.flag0 = 0;
+        
+        /* Code for getting the received data and doing something 
+         * with it goes here... */
+    }
+    /* else --> Message has not been received. Do nothing */
+}
+```
+
+#### Signal-Level available flags
+
+In addition to the message-available flags, a set of signal-available flags is generated per each subscribed message. In this case one signal-available flag will be generated per each signal defined for the message (if message has 3 signals, then 3 signal-available flags will be generated). Those signal-available flags can be read/cleared by a pair of generated macros:  `CAN_NWID_get_avlbl_SIGNALNAME` and `CAN_NWID_clr_avlbl_SIGNALNAME` respectively.
+
+Example of usage for signal-available flags.
+
+```c
+/* Call this some_app_function in a periodic tasks so that the message reception
+ * is propperly polled. */
+void some_app_function(void)
+{
+    uint8_t signal_avlbl_flag; /* variable for containing a signal-available flag */
+    
+    /* poll for the reception of signal "Signal_RX" of message "RX_MESSAGE" */
+    /* -------------------------------------------------------------------- */
+    /* Get signal-available flag */
+    signal_avlbl_flag = CAN_NWID_get_avlbl_Signal_RX();
+    if(signal_avlbl_flag) /* Checking for arrival of signal "Signal_RX" */
+    {
+        /* Signal "Signal_RX" has been received! */
+        /* Consume (clear) the signal-available flag */
+        CAN_NWID_clr_avlbl_Signal_RX();
+        
+        /* Code for getting the received data of signal "Signal_RX" 
+         * and doing something with it goes here... */
+    }
+    /* else --> Signal has not been received. Do nothing */
+}
+```
+
+## Accessing Data of Messages
+
+### Unified Data Buffers
+
+Calvos CAN IL generates two data buffers, one used for the received data and another one for the data to be transmitted. Since a single buffer is used for all received data and another one for all transmitted data they will be referred to as the "unified reception (RX) buffer" and the "unified transmission (TX) buffer".
+
+The RX unified buffer is generated with the name `can_NWID_NODEID_RxDataBuffer` and its length is equal to the sum of the individual lengths of all the subscribed messages of *NODEID*. This in order to be able to contain all the subscribed data of interest.  
+
+Data received by the HAL is automatically copied to the RX unified buffer on its corresponding place. As such this buffer is very likely to be written within ISR context so that special care shall be taken when accessing this buffer directly by the app (access needs to be protected by critical sections to avoid data corruptions). Suggested procedure to read data from this RX buffer is explained in following sections.
+
+The TX unified buffer is generated with the name  `can_NWID_NODEID_TxDataBuffer`. Its length is equal to the sum of the individual lengths of all the published messages of *NODEID*.
+
+When a message is to be transmitted the data to transmit is directly taken from this TX unified buffer.  Hence, the data needs to be firstly updated in the TX unified buffer. Suggested procedure to read/write data from/to this TX buffer is explained in following sections.
+
+### Accessing Received Data
+
+Data received by the CAN HAL is automatically copied to the RX unified buffer. As such, this buffer is very likely to be written within ISR context and, hence,  special care shall be taken by the application when accessing this buffer.
+
+The suggested procedure for accessing the received data is as follows:
+
+1. Confirm the reception of the message of interest. If reception callback is used then this is given as a fact. If polling method is used then confirm that the available flag(s) is set. Refer to section "[Receiving Messages](#Receiving-Messages)" for more details on this.
+
+2. *Safely* copy the data of the received message from the RX unified buffer into a temporal local CAN data structure from application side. This can be accomplished by using the generated "get message" macros that are named  `CAN_NWID_NODEID_get_msg_MESSAGENAME`.
+
+   A pointer to the CAN Data Structure for the given message shall be provided as argument to the "get message" macro. This CAN Data Structure can be defined locally using a generated data type with name `S_MESSAGENAME`. Refer to section "[CAN Data Structures](#CAN-Data-Structures)" for more information about the generated CAN data structures.
+
+   The "get message" macro will enter a critical section, copy the data from the RX unified buffer to the provided CAN data structure and then exit the critical section. **Note:** Macros `CALVOS_CRITICAL_ENTER` and `CALVOS_CRITICAL_EXIT` defined in file `USER_general_defs.h` shall be properly instrumented by the user for this to work.
+
+3. Use the data from the **local** CAN data structure for the application purposes. Refer to below sections "[CAN Data Structures](#CAN-Data-Structures)" and "[CAN Access Macros](#CAN-Access-Macros)" for details and examples on how to read the individual signal's data from the CAN data structure.
+
+An example of accessing received data by *polling* for message reception is shown below:
+
+```c
+/* Call this some_app_function in a periodic tasks so that the message reception
+ * is propperly polled. */
+void some_app_function(void)
+{
+    FlagsNative msg_avlbl_flags; /* variable for containing msg-available flags */
+    S_RX_MESSAGE local_msg_data; /* Local CAN data structure for message RX_MESSAGE */
+    
+    /* poll for the reception of message "RX_MESSAGE" */
+    /* ---------------------------------------------- */
+    /* Get msg-available flags */
+    msg_avlbl_flags = CAN_NWID_NODEID_get_msg_avlbl_flags_RX_MESSAGE();
+    /* This function uses only one of the flags (flag0) so the other ones can be 
+     * used by other 'clients' of the same message. */
+    if(msg_avlbl_flags.flags.flag0) /* Checking for flag0 */
+    {
+        /* Message has been received! */
+        /* Consume (clear) only flag0 message-available flag */
+        msg_avlbl_flags.flags.flag0 = 0;
+        
+        /* Get the data from the RX unified buffer */
+        /* Data will be copied from RX unified buffer into the local
+         * CAN data structure. */
+        CAN_NWID_NODEID_get_msg_RX_MESSAGE(&local_msg_data);
+        
+        /* Now individual signals can be accessed from the
+         * local CAN data structure. */
+        if(local_msg_data.s.Signal_RX == 0xAA)
+        {
+            /* Do something if received data for Signal_RX is
+             * 0xAA .... */
+        }
+        
+        /* More code for doing something with received data 
+         * goes in here... */
+    }
+    /* else --> Message has not been received. Do nothing */
+}
+```
+
+An example of accessing received data by using the reception *callback* is shown below:
+
+```c
+/* ===========================================================================*/
+/** Callback for RX_MESSAGE reception.
+ *
+ * Invoked within ISR context whenever RX_MESSAGE is received by node NODEID
+ *  of network NWID.
+ * ===========================================================================*/
+void can_NWID_NODEID_RX_MESSAGE_rx_callback(void)
+{
+	S_RX_MESSAGE local_msg_data; /* Local CAN data structure for message RX_MESSAGE */
+    
+    /* There is no need to check for available flags since this
+     * callback invocation means that there is already newly 
+     * received data available. */
+    
+    /* Get the data from the RX unified buffer */
+    /* Data will be copied from RX unified buffer into the local
+     * CAN data structure. */
+    CAN_NWID_NODEID_get_msg_RX_MESSAGE(&local_msg_data);
+
+    /* Now individual signals can be accessed from the
+     * local CAN data structure. */
+    if(local_msg_data.s.Signal_RX == 0xAA)
+    {
+        /* Do something if received data for Signal_RX is
+         * 0xAA .... */
+    }
+
+    /* More code for doing something with received data 
+     * goes in here but keep it short since this is called
+     * within ISR context... */
+}
+```
+
+If for some reason, the application needs to directly read from the RX unified buffer "get direct" macros are also generated for each signal. Those macros follow the go by the name CAN_NWID_get_direct_SIGNALNAME.
+
+The "get direct" macros do operate directly over the RX unified buffer and do not have any protection related to *critical sections*, etc. Hence, is responsibility of the application to properly make use of these macros in order to avoid data corruption. More details and examples for these macros can be found in section "[Signals Direct Access Macros](###Signals-Direct-Access-Macros)".
+
+### Accessing Transmission Data
+
+When a message is to be transmitted the data to transmit is directly taken from the TX unified buffer.  Hence the data needs to be firstly updated in the TX unified buffer.
+
+The suggested procedure for updating the data to be transmitted is as follows:
+
+1. *Safely* get a "local copy" of the data currently present in the TX unified buffer for the message that needs to be transmitted. This can be accomplished by using the generated "get message" macros that are named  `CAN_NWID_NODEID_get_msg_MESSAGENAME`.
+
+   A pointer to the CAN Data Structure for the given message shall be provided as argument to the "get message" macro. This CAN Data Structure can be defined locally using a generated data type with name `S_MESSAGENAME`. Refer to section "[CAN Data Structures](#CAN-Data-Structures)" for more information about the generated CAN data structures.
+
+   The "get message" macro will enter a critical section, copy the data from the TX unified buffer to the provided CAN data structure and then exit the critical section.
+
+2. Update the required data to be transmitted in the *local* CAN data structure. Do any required update to the data that needs to be transmitted operating over the local CAN data structure. Refer to below sections "[CAN Data Structures](#CAN-Data-Structures)" and "[CAN Access Macros](#CAN-Access-Macros)" for details and examples on how to write the individual signal's in the CAN data structure.
+
+3. Synchronize the updated transmission data in the local CAN data structure with the TX unified buffer. This is done by using the generated "update" macro named `CAN_NWID_NODEID_update_msg_MESSAGENAME`.
+
+   The argument of macro `CAN_NWID_NODEID_update_msg_MESSAGENAME` is the pointer to the local CAN Data Structure with the data to be transmitted.
+
+   The macro will enter a critical section, copy the data from the local CAN data structure to the TX unified buffer and then exit the critical section.
+
+4. If the conveyor message is cyclic, then the message transmission will be triggered automatically sending the data available in the TX unified buffer. If an spontaneous transmission is required of the newly updated data then trigger such transmission by calling function `can_NWID_NODEID_transmitMsg`.
+
+5. Check if TX message transmission is confirmed by the CAN HAL. For example, if TX message state is `kCANtxState_transmited`. Refer to section "[Getting Transmission State](#Getting Transmission State)" for more information about transmission states.
+
+See following example of updating some signals for transmission based on above's procedure.
+
+- Message:
+
+  - Name: TX_MESSAGE
+  - Length: 4 bytes
+  - Transmission type: *spontan*
+
+- TX_MESSAGE signals: 
+
+  - Signal_TX_1: (start bit = 0, start byte = 0, length = 8)
+
+  - Signal_TX_2: (start bit = 0, start byte = 1, length = 8)
+
+  - Signal_TX_3: (start bit = 0, start byte = 2, length = 8)
+
+  - Signal_TX_4: (start bit = 0, start byte = 3, length = 8)
+
+```c
+void some_app_function(void)
+{
+    S_TX_MESSAGE local_msg_data; /* Local CAN data structure for message TX_MESSAGE */
+    CANtxState tx_msg_state; /* variable for containing the tx message state */
+    
+    /* Step 1: Get local copy from TX unified buffer */
+    CAN_NWID_NODEID_get_msg_TX_MESSAGE(&local_msg_data);
+    
+    /* Step 2: Modify signals as required by application... */
+    local_msg_data.s.Signal_TX_1 = 25;
+    local_msg_data.s.Signal_TX_3 = 6;
+    /* In this example signals "Signal_TX_2" and "Signal_TX_4" don't need to
+     * be modified so then they will be transmited with their previous values. */
+    
+    /* Step 3: Synchronize local data with the TX unified buffer */
+    CAN_NWID_NODEID_update_msg_TX_MESSAGE(&local_msg_data);
+    
+    /* Step 4: Request spontaneous transmission of TX_MESSAGE */
+    /* If TX_MESSAGE was cyclic, then it will be automatically
+     * transmitted in its next period. In this example assuming
+     * that message is spontan */
+    can_NWID_NODEID_transmitMsg(kCAN_NWID_NODEID_txMsgIdx_TX_MESSAGE);
+    
+    /* Step 5: Confirm that message was successfuly transmited */
+    /* In this example, wait 10ms then check if message tx state
+     * indicates a successful transmission, if not keep polling...*/
+    do
+    {
+        /* Blocking API to wait for some time (OS specific), in
+         * this example this "some_app_function" function gets 
+         * blocked for 10ms and then it continues its execution. */
+        wait_blocking_ms(10);
+        /* Get message TX state */
+        tx_msg_state = CAN_NWID_NODEID_get_tx_state_TX_MESSAGE();
+    }while(tx_msg_state != kCANtxState_transmited);
+    
+    /* Message transmission succeeded */
+}
+```
 
 ## CAN Data Structures
 
@@ -745,17 +1078,19 @@ Signal_62 is non-canonical, hence message is non-canonical. A bitfield will be g
 
 The other element of the message's `union` is just a simple array of bytes  named `all`. This is generated so that the user can modify the signals in a raw manner if desired.
 
-## Signals Access Macros
+## CAN Access Macros
+
+### Signals Access Macros
 
 A set of access macros are generated for each signal in the network within file `cog_comgen_CAN_NWID_network.h`. These macros provide alternative means of accessing the signals (reading and writing) of the messages directly from their raw data instead of using the `s` structures defined in previous section.
 
-If for some reason, the generated `s` structure fields don't get properly packed then the macros can be used as alternatives since they do not depend on compiler's struct logic. Instead, the macros use type casting, masking and shiftings in order to access the signals.
+If for some reason, the generated `s` structure fields don't get properly packed then the macros can be used as alternatives since they do not depend on compiler's struct logic. Instead, the macros use type casting, masking and shifting's in order to access the signals.
 
 Another advantage of using these macros is that they do not face signal fragmentation situation. Meaning that regardless of the type of signal (except for array signals) a single macro can fully access it.
 
-At the end is users decission to choose which means of accessing the signals fits better its needs either by using the `s` structure, the `all` array or the access macros.
+At the end is users decision to choose which means of accessing the signals fits better its needs either by using the `s` structure, the `all` array or the access macros.
 
-### "Extract" signal macros (read from any provided array)
+#### "Extract" signal macros (read from any provided array)
 
 Extract macros are generated for all non-array signals. These macros have the following naming convention:
 
@@ -794,7 +1129,7 @@ A typical usage will imply defining a byte array representing the received MESSA
 This array `MESSAGE7_data[3]` is expected to be updated with the raw received data. Once this is done, the extract macros can be used to read the individual signals from this array.
 
 ```c
-void some_app_function()
+void some_app_function(void)
 {
   uint8_t MESSAGE7_data[3]; /* Local array for raw data of MESSAGE7 */
   uint8_t my_Signal_71; /* Local variable for signal Signal_71 */
@@ -816,7 +1151,7 @@ void some_app_function()
 }
 ```
 
-### "Get" signal macros (read from message's `union`)
+#### "Get" signal macros (read from message's `union`)
 
 Get macros are generated for all non-array signals. These "get" macros are similar to the "extract" macros but instead of providing an arbitrary array, they expect the message's union as argument and they operate over the `all` array.
 
@@ -855,7 +1190,7 @@ Three get macros will be generated:
 A message's `S_MESSAGENAME` `union` is expected to be defined in this case. The raw received data needs to get updated into the `union` and then the get macros can be used over it.
 
 ```c
-void some_app_function()
+void some_app_function(void)
 {
   S_MESSAGE7 MESSAGE7_union; /* Local union for the data of MESSAGE7 */
   uint8_t my_Signal_71; /* Local variable for signal Signal_71 */
@@ -880,7 +1215,7 @@ Regardless of the signal type, a single macro is generated which will provide al
 
 Gcc compiler provides basic data up-to 64-bits (`long long int`) so then any CAN signal (which can't never exceed 64-bits) can be accessed with a single macro statement.
 
-### "Get Pointer" macros for array-signals (read)
+#### "Get Pointer" macros for array-signals (read)
 
 For array-signals, "get pointer" macros are generated. These macros have the following naming convention:
 
@@ -911,7 +1246,7 @@ Following get pointer macro will be generated for the array-signal Signal_82:
 A message's `S_MESSAGENAME` `union` is expected to be defined in this case. The raw received data needs to get updated into the `union` and then the get pointer macro can be used over it.
 
 ```c
-void some_app_function()
+void some_app_function(void)
 {
   S_MESSAGE8 MESSAGE8_union; /* Local union for the data of MESSAGE8 */
   uint8_t my_Signal_81; /* Local variable for signal Signal_81 */
@@ -933,13 +1268,13 @@ void some_app_function()
 }
 ```
 
-### "Write" signal macros (write to any provided array)
+#### "Write" signal macros (write to any provided array)
 
 Write macros are generated for all non-array signals. These macros have the following naming convention:
 
 `#define CAN_NWID_write_SIGNALNAME(msg_buffer,data)`
 
-The macro argument `msg_buffer` is a pointer to an arbitrary array of bytes. The intention, however, is that this array corresponds to the message data containg the signal to be written. Hence, the array is expected to have the same length as the conveyor message and the provided macro argument `msg_buffer` shall always point to the byte 'zero' of such array regardless of the signal's starting byte (the macro will accomodate for this).
+The macro argument `msg_buffer` is a pointer to an arbitrary array of bytes. The intention, however, is that this array corresponds to the message data containing the signal to be written. Hence, the array is expected to have the same length as the conveyor message and the provided macro argument `msg_buffer` shall always point to the byte 'zero' of such array regardless of the signal's starting byte (the macro will accommodate for this).
 
 The macro argument `data` shall be the value of the signal to be written. The variable or constant provided in the `data` argument shall be long enough to contain all the desired value to be written.
 
@@ -967,14 +1302,14 @@ Three write macros will be generated:
 
 `#define CAN_NWID_write_Signal_93(msg_buffer, data)`
 
-A typical usage will imply defining a byte array representing the MESSAGE9 raw data to be written (and transmitted since writting signals is only allowed for transmitted data):
+A typical usage will imply defining a byte array representing the MESSAGE9 raw data to be written (and transmitted since writing signals is only allowed for transmitted data):
 
 `uint8_t MESSAGE9_data[8];`
 
 This array `MESSAGE9_data[8]` is expected to be updated with the user's desired signal values and then this data needs to be synchronized to the transmission buffer so that it can be transmitted in a CAN message.
 
 ```c
-void some_app_function()
+void some_app_function(void)
 {
   uint8_t MESSAGE9_data; /* Local array for the data of MESSAGE9 */
   uint8_t my_Signal_91; /* Local variable for signal Signal_91 */
@@ -1003,9 +1338,9 @@ void some_app_function()
 }
 ```
 
-### "Update" signal macros (write to a message's `union`)
+#### "Update" signal macros (write to a message's `union`)
 
-Update macros are generated for all non-array signals. These "update" macros are similar to the "write" macros but instead of writting to an arbitrary array, they will write into a message's union `all` array.
+Update macros are generated for all non-array signals. These "update" macros are similar to the "write" macros but instead of writing to an arbitrary array, they will write into a message's union `all` array.
 
 These macros have the following naming convention:
 
@@ -1050,7 +1385,7 @@ A typical usage will imply defining a local S_MESSAGE9 union for containing the 
 This union `MESSAGE9_union` is expected to be updated with the user's desired signal values and then this data needs to be synchronized to the transmission buffer so that it can be transmitted in a CAN message.
 
 ```c
-void some_app_function()
+void some_app_function(void)
 {
   S_MESSAGE9 MESSAGE9_union; /* Local array for the data of MESSAGE9 */
   uint8_t my_Signal_91; /* Local variable for signal Signal_91 */
@@ -1079,7 +1414,7 @@ void some_app_function()
 }
 ```
 
-### "Update Pointer" macros for array-signals (write)
+#### "Update Pointer" macros for array-signals (write)
 
 For array-signals, "get pointer" macros are generated. These macros have the following naming convention:
 
@@ -1110,7 +1445,7 @@ Following get pointer macro will be generated for the array-signal Signal_82:
 A message's `S_MESSAGENAME` `union` is expected to be defined in this case. The raw received data needs to get updated into the `union` and then the get pointer macro can be used over it.
 
 ```c
-void some_app_function()
+void some_app_function(void)
 {
   S_MESSAGE8 MESSAGE8_union; /* Local union for the data of MESSAGE8 */
   uint8_t my_Signal_81; /* Local variable for signal Signal_81 */
@@ -1132,10 +1467,5 @@ void some_app_function()
 }
 ```
 
-## Accesing signals within a message
+### Signals Direct Access Macros
 
-### Accesing signals as local data
-
-### Acessing signals directly from buffers
-
-# Functions References
