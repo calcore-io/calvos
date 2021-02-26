@@ -17,12 +17,12 @@ DESCRIPTION = 'SW utilities for embedded systems'
 URL = 'https://github.com/calcore-io/calvos'
 EMAIL = 'carlos.f.calvillo@gmail.com'
 AUTHOR = 'Carlos Francisco Calvillo Cortes'
-REQUIRES_PYTHON = '>=3.6.0'
+REQUIRES_PYTHON = '>=3.7.0'
 VERSION = '0.0.1'
 
 # What packages are required for this module to be executed?
 REQUIRED = [
-    'cogapp', 'lxml', 'pyexcel', 'pyexcel-ods'
+    'cogapp', 'lxml', 'pyexcel','pyexcel-ods'
 ]
 
 # What packages are optional?
@@ -82,12 +82,12 @@ class UploadCommand(Command):
         self.status('Building Source and Wheel (universal) distribution…')
         os.system('{0} setup.py sdist bdist_wheel --universal'.format(sys.executable))
 
-        self.status('Uploading the package to PyPI via Twine…')
-        os.system('twine upload dist/*')
+        #self.status('Uploading the package to PyPI via Twine…')
+        #os.system('twine upload dist/*')
 
-        self.status('Pushing git tags…')
-        os.system('git tag v{0}'.format(about['__version__']))
-        os.system('git push --tags')
+        #self.status('Pushing git tags…')
+        #os.system('git tag v{0}'.format(about['__version__']))
+        #os.system('git push --tags')
 
         sys.exit()
 
@@ -104,12 +104,6 @@ setup(
     python_requires=REQUIRES_PYTHON,
     url=URL,
     packages=find_packages(exclude=["tests", "*.tests", "*.tests.*", "tests.*"]),
-    # If your package is a single module, use this instead of 'packages':
-    # py_modules=['mypackage'],
-
-    # entry_points={
-    #     'console_scripts': ['mycli=mymodule:cli'],
-    # },
     install_requires=REQUIRED,
     extras_require=EXTRAS,
     include_package_data=True,
@@ -120,7 +114,7 @@ setup(
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: Implementation :: CPython',
         'Programming Language :: Python :: Implementation :: PyPy'
     ],

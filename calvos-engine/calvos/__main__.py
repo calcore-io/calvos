@@ -115,63 +115,52 @@ USAGE
         # Setup argument parser
         parser = ArgumentParser(description=program_license, \
                                 formatter_class=RawDescriptionHelpFormatter)
-        parser.add_argument("-p","--project", dest="project", required=True, \
-            help="Mandatory. Full path with file name of the calvos project to be processed")
-        parser.add_argument("-c","--calvos", dest="calvos", required=False, \
-            help=("Optional. Full path where the calvos python package is located. " \
-                  +"If not provided, will look from installed python packages."))
-        parser.add_argument("-l","--log", dest="log_level", required=False, \
-            help=("Usage: -l logging_level. Optional. Logging_level: 0 - Debug, 1 - Info, "\
-                  + "2 - Warning, 3 - Error. Default is 1 - Info."))
-        parser.add_argument("-e","--export", dest="export", required=False, \
-            help="Optional. -e PATH: Generated C-code will be exported (copied) into the provided PATH.")
-        parser.add_argument("-b","--backup", dest="backup", required=False, \
-            help=("Optional.-b PATH: Backups of the overwritten C-code during an export operatin " \
-                  + "will be placed in PATH. This is only used if -e argument is provided."))
-        parser.add_argument("-t","--templates", dest="templates", required=False, \
-            help=("-t PATH: Will provide an example calvos project with user input templates in " \
-                  + "the given PATH. No project will be processed if this argument is provided."))
+        parser.add_argument("-d","--demo", dest="demo", required=False, \
+            help=("Will provide an example calvos project with user input templates in " \
+                +"the given DEMO path. No project will be processed if this argument is provided."))
         parser.add_argument('-V', '--version', action='version', version=program_version_message)
         parser.add_argument('-v', '--ver', action='version', version=program_version_message)
+        parser.add_argument("-p","--project", dest="project", \
+            required=(('--demo' not in sys.argv) and ('-d' not in sys.argv)), \
+            help=("Required (if -d was not provided). Full path with file name of the calvos" \
+                  + "project to be processed."))
+        parser.add_argument("-l","--log", dest="log_level", required=False, \
+            help=("Optional. LOG_LEVEL: 0 - Debug, 1 - Info, "\
+                  + "2 - Warning, 3 - Error. Default is 1 - Info."))
+        parser.add_argument("-e","--export", dest="export", required=False, \
+            help="Optional. Generated C-code will be exported (copied) into the provided EXPORT path.")
+        parser.add_argument("-b","--backup", dest="backup", required=False, \
+            help=("Optional. Backups of the overwritten C-code during an export operation " \
+                  + "will be placed in the provided BACKUP path. " \
+                  + "This is only used if -e argument was provided."))
+        
 
         # Process arguments
         args = parser.parse_args()
         project = args.project
-        calvos = args.calvos
         log_level = args.log_level
         
         arguments_OK = True
-
-        # Add calvos python package
-        if calvos is not None:
-            calvos_path = string_to_path(calvos)
-            if folder_exists(calvos_path):
-                calvos_path_str = str(calvos_path)
-                print("INFO: Adding calvos to python sys.path...")
-                if calvos_path_str not in sys.path:
-                    sys.path.append(str(calvos_path))
-                    print("INFO: calvos path added")
-                else:
-                    
-                    print("INFO: calvos path already added")
-            else:
-                arguments_OK = False
-                print("Error: folder: ", calvos_path, " doesn't exists.")
-                return 2
-        else:
-            # Gather calvos package path. It will be needed later on for finding
-            # cog files, etc.
-            calvos_entry_found = False
-            for entry in sys.path:
-                if entry.find("calvos"):
-                    calvos_entry_found = True
-                    calvos_path = string_to_path(entry)
-                    break
-                    #TODO: Test that statements above work as expected to extract calvos path
-            if calvos_entry_found is False:
-                arguments_OK = False
-                print("Error: not finding calvos package path." \
-                      + "Consider using -c argument to manually specify calvos package location.")
+        
+        # Set calvos path which will be used for accessing package resources
+        calvos_path = pl.Path(__file__).parent.absolute()
+        # Check if calvos package is installed by trying to import the logging system
+        try:
+            import calvos.common.logsys as lg
+        except:
+            print("INFO: Setting up package...")
+            # Add package path to sys.path and attempt the importing again
+            calvos_pkg_path_str = str(calvos_path.parent)
+            if calvos_pkg_path_str not in sys.path:
+                sys.path.append(calvos_pkg_path_str)
+                print("INFO: calvos path added to sys.path.")
+            # Attempt the import
+            try:
+                import calvos.common.logsys as lg
+            except Exception as e:
+                print("ERROR: Couldn't load calvos package.")
+                print("Generated exception:\n")
+                print(str(e))
                 return 2
         
         if log_level is not None:
@@ -193,39 +182,34 @@ USAGE
         #==============================================================================
         # Generate demo project if argument -t is provided.
         #==============================================================================
-        if args.templates is not None:
+        if args.demo is not None:
             # Check if path exists
-            templates_path = string_to_path(args.templates)
-            if folder_exists(templates_path):
-                # Create a dummy project object
-                import calvos.common.logsys as lg
-             
-                log_output_file = templates_path / "log.log"
+            demo_path = string_to_path(args.demo)
+            if folder_exists(demo_path):
+                
+                # Setting up logging system
+                log_output_file = demo_path / "log.log"
                 if file_exists(log_output_file):
                     log_output_file.unlink()
-                 
                 lg.log_system = lg.Log(log_level, log_output_file)
                 log = lg.log_system
                 log.add_logger("main")
-            
+                
+                # Create project object
                 import calvos.common.project as pj
                 
                 log.info("main", \
                          "============== Generating Demo Project ==============")
                 print("INFO: ============== Generating Demo Project ==============")
                 calvos_project = pj.Project("Project Name", None, calvos_path)
-                
-                calvos_project.gen_demo_project(templates_path)
-
+                calvos_project.gen_demo_project(demo_path)
                 print("INFO: Done. Demo project generated. ")
                 log.info("main", "Done. Demo project generated. ")
             else:
-                print("ERROR: Provided folder '%s' doesn't exist." % templates_path)
-                log.error("main", \
-                         "Provided folder '%s' doesn't exist." % templates_path)
+                print("ERROR: Provided folder '%s' doesn't exist." % demo_path)
                 return 2
                 
-            print("INFO: Don't provide argument -t if a project needs to be processed.")
+            print("INFO: Don't provide argument -d if a project needs to be processed.")
             return 0    
         
         #==============================================================================
@@ -245,8 +229,6 @@ USAGE
             #==============================================================================
             # Setup logging system
             #==============================================================================
-            import calvos.common.logsys as lg
-             
             log_output_file = project_path / "log.log"
             if file_exists(log_output_file):
                 log_output_file.unlink()
@@ -255,6 +237,7 @@ USAGE
             log = lg.log_system
             log.add_logger("main")
             log.info("main","============== Started calvOS project processing. ==============")
+            print("INFO: ============== Started calvOS project processing. ==============")
              
             #==============================================================================
             # calvOS project folders
@@ -400,8 +383,11 @@ USAGE
                              % export_path)
                        
             log.info("main","============== Finished calvOS project processing. ==============")
+            print("INFO: ============== Finished calvOS project processing. ==============")
             for counter_name, counts in log.counters.items():
                 log.info("main", "\"" + counter_name + "\" messages : " + str(counts))
+                print("INFO: \"" + counter_name + "\" messages : " + str(counts))
+            print("INFO: See log file '%s' for details." % str(log_output_file))
               
             logging.shutdown()
    
@@ -419,7 +405,8 @@ USAGE
         sys.stderr.write(program_name + ": " + repr(e) + "\n")
         sys.stderr.write(indent + "  for help use --help")
         
-        log.critical("main",message)
+        if 'log' in locals():
+            log.critical("main",message)
         
         string_ms = traceback.print_exc()
         
