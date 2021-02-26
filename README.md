@@ -143,5 +143,5 @@ Information about the project processing and possible warnings/errors found duri
 
 # CAN Interaction Layer User Guide
 
-Refer to document "[comgen_CAN - Integration Manual.md](calvos-engine/calvos/comgen/doc/comgen_CAN - Integration Manual.md)" for user guide on the integration of a CAN IL with Calvos.
+Refer to document "[comgen_CAN - Integration Manual.md](calvos-engine/calvos/comgen/doc/comgen_CAN%20-%20Integration%20Manual.md)" for user guide on the integration of a CAN IL with Calvos.
 
