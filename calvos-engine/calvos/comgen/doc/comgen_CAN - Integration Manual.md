@@ -270,90 +270,82 @@ User-configurable parameters are listed below:
 
 Once the CAN network is defined it needs to be included in a calvos project for its processing and code generation.
 
-For the instructions here we will start with an empty project and include our CAN Network definition. Will assume a CAN network definition contained in a file named "*CAN_Network_Definition.ods*" (any other name can be used by the user).
+For the instructions here we will start with an empty project and include our CAN Network definition. Will assume a CAN network definition contained in a file named "*CAN Network Definition.ods*" (any other name can be used by the user).
 
 1. Define a location for the calvos project (referred as *root* folder in these instructions). For our example this project's *root* folder will be "*C:\my_calvos_project*".
 
-2. Create an empty project in the project's root folder named "*project.xml*":
+2. Create an empty project in the project's root folder named "*calvos_project.xml*":
    
-   *C:\my_calvos_project\project.xml*
+   *C:\my_calvos_project\calvos_project.xml*
    
    An empty project is an XML file with following contents:
 
 ```xml
-   <?xml version="1.0" ?>
-   <CalvosProject>
-       <Name>Any user defined project name</Name>
-       <Desc>Any user defined project description</Desc>
-       <Version>Any user defined project version</Version>
-       <Date>Any user defined project date</Date>
-       <AutoDate></AutoDate>
-       <AutoFile></AutoFile>
-       <Components>
-       </Components>
-       <Params>
-           <Param id="log_level">INFO</Param>
-       </Params>
-       <Metadata>
-           <TemplateName>calvOS Project</TemplateName>
-           <TemplateVersion>0.1.0</TemplateVersion>
-           <TemplateDesc/>
-       </Metadata>
-   </CalvosProject>
+<CalvosProject xmlns:clv="calvos" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../schemas/_calvos_project.xsd">
+  <Name>Demo Calvos Project</Name>
+  <Desc>Demo Calvos Project generated from found components with templates.</Desc>
+  <Version>Version</Version>
+  <Date>Date</Date>
+  <Components>
+  </Components>
+  <Params />
+  <Metadata>
+    <!-- Do NOT modify these metadata information. -->
+    <clv:TemplateId>calvos_project</clv:TemplateId>
+    <clv:TemplateVer>0.1.0</clv:TemplateVer>
+    <clv:TemplateTitle>Calvos Project</clv:TemplateTitle>
+    <clv:TemplateDesc>Template for modeling a Calvos Project</clv:TemplateDesc>
+    <clv:TemplateDate>2021-02-24</clv:TemplateDate>
+  </Metadata>
+</CalvosProject>
 ```
 
 3. Create a sub-folder named "*usr_in*" in the project's *root* folder:
    
    *C:\my_calvos_project\usr_in*
 
-4. Copy the network definition file *CAN_Network_Definition.ods* into the *usr_in* folder created above:
+4. Copy the network definition file *CAN Network Definition.ods* into the *usr_in* folder created above:
    
-   *C:\my_calvos_project\usr_in\CAN_Network_Definition.ods*
+   *C:\my_calvos_project\usr_in\CAN Network Definition.ods*
 
-5. Create the instance for the CAN network within the *project.xml* and set its input file information:
+5. Create the instance for the CAN network within the *calvos_project.xml* and set its input file information:
    
    - Create the following XML `Component` node within the `Components` node in
-     *project.xml*:
+     *calvos_project.xml*:
    
    - ```xml
      <Component type="comgen.CAN">
-        <Name></Name>
-        <Desc/>
-        <Input type="ods">"usr_in/CAN_Network_Definition.ods"</Input>
-        <Params>
-        </Params>
+       <Name>CAN Network</Name>
+       <Desc>Models a network for Controller Area Network (CAN) protocol.</Desc>
+       <Input type="ods">"usr_in/CAN Network Definition.ods"</Input>
      </Component>
      ```
-
-6. Save the updated *project.xml* file.
+   
+6. Save the updated *calvos_project.xml* file.
    The contents should look as follows:
    
    ```xml
-   <?xml version="1.0" ?>
-   <CalvosProject>
-       <Name>Any user defined project name</Name>
-       <Desc>Any user defined project description</Desc>
-       <Version>Any user defined project version</Version>
-       <Date>Any user defined project date</Date>
-       <AutoDate></AutoDate>
-       <AutoFile></AutoFile>
-       <Components>
-         <Component type="comgen.CAN">
-            <Name></Name>
-            <Desc/>
-            <Input type="ods">"usr_in/CAN_Network_Definition.ods"</Input>
-            <Params>
-            </Params>
-        </Component>
-       </Components>
-       <Params>
-           <Param id="log_level">INFO</Param>
-       </Params>
-       <Metadata>
-           <TemplateName>calvOS Project</TemplateName>
-           <TemplateVersion>1.0.0</TemplateVersion>
-           <TemplateDesc/>
-       </Metadata>
+   <CalvosProject xmlns:clv="calvos" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../schemas/_calvos_project.xsd">
+     <Name>Demo Calvos Project</Name>
+     <Desc>Demo Calvos Project generated from found components with templates.</Desc>
+     <Version>Version</Version>
+     <Date>Date</Date>
+     <Components>
+       <Component type="comgen.CAN">
+         <Name>CAN Network</Name>
+         <Desc>Models a network for Controller Area Network (CAN) protocol.</Desc>
+         <Input type="ods">"usr_in/CAN Network Definition.ods"</Input>
+       </Component>
+     </Components>
+     <Params />
+     <Metadata>
+       <!-- Do NOT modify these metadata information. -->
+       <clv:TemplateId>calvos_project</clv:TemplateId>
+       <clv:TemplateVer>0.1.0</clv:TemplateVer>
+       <clv:TemplateTitle>Calvos Project</clv:TemplateTitle>
+       <clv:TemplateDesc>Template for modeling a Calvos Project</clv:TemplateDesc>
+       <clv:TemplateDate>2021-02-24</clv:TemplateDate>
+     </Metadata>
    </CalvosProject>
    ```
 
@@ -361,9 +353,9 @@ Our project is now ready to be processed.
 
 # Processing Calvos Project
 
-In order to generate our project we need to run the following command from *C:\calvos\calvos-engine*:
+In order to generate our project we need to run the following command:
 
-`python -m calvos -c c:\calvos\calvos-engine\calvos -p c:\my_calvos_project\project.xml`
+`python -m calvos -p c:\my_calvos_project\calvos_project.xml`
 
 If everything went Ok then the generated source code shall be located in the default output folder:
 
@@ -1297,7 +1289,7 @@ void some_app_function(void)
   /* ... */
 
   /* Getting signal pointer for Signal_82 from MESSAGE8_union */
-  my_Signal_82 = CAN_NWID_get_Signal_82(MESSAGE8_union);
+  my_Signal_82 = CAN_NWID_get_ptr_Signal_82(MESSAGE8_union);
 
   /* Application code doing something with signal goes here */
   if(my_Signal_82[1] == 0xFF)
@@ -1456,56 +1448,57 @@ void some_app_function(void)
 
 #### "Update Pointer" macros for array-signals (write)
 
-For array-signals, "get pointer" macros are generated. These macros have the following naming convention:
+For array-signals, "update pointer" macros are generated. These macros have the following naming convention:
 
-`#define CAN_NWID_get_ptr_SIGNALNAME(msg_buffer)` 
+`#define CAN_NWID_update_ptr_SIGNALNAME(msg_buffer, data)` 
 
-The macro argument `msg_buffer` is a pointer to the conveyor's message union `S_MESSAGENAME`. These macros simply return the pointer to the corresponding starting byte of the signal in the `all` array of the union (taking into consideration the signal's defined start byte).
+The macro argument `msg_buffer` is a pointer to the message union `S_MESSAGENAME`.
 
-The user can then operate over the signal as if it was a normal byte-array.
+The macro argument `data` shall be the pointer to the array containing the data to be written.
+
+The "update pointer" macro does copy from the `data` array to the `S_MESSAGENAME.all` array.
 
 Example:
 
 - Message:
   
-  - Name: MESSAGE8
+  - Name: MESSAGE10
   
-  - Length: 5 bytes
+  - Length: 6 bytes
 
 - MESSAGE8 signals: 
   
-  - Signal_81: (start bit = 0, start byte = 0, length = 16, type = scalar)
-  
-  - Signal_82: (start bit = 0, start byte = 2, length = 24, **type = array**)
+  - Signal_101: (start bit = 0, start byte = 0, length = 8, type = scalar)
+  - Signal_102: (start bit = 0, start byte = 0, length = 40, **type = array**)
 
-Following get pointer macro will be generated for the array-signal Signal_82:
+Following update pointer macro will be generated for the array-signal Signal_102:
 
-`#define CAN_NWID_get_ptr_Signal_81(msg_buffer)`
+`#define CAN_NWID_update_ptr_Signal_102(msg_buffer, data)`
 
 A message's `S_MESSAGENAME` `union` is expected to be defined in this case. The raw received data needs to get updated into the `union` and then the get pointer macro can be used over it.
 
 ```c
 void some_app_function(void)
 {
-  S_MESSAGE8 MESSAGE8_union; /* Local union for the data of MESSAGE8 */
-  uint8_t my_Signal_81; /* Local variable for signal Signal_81 */
-  uint8_t * my_Signal_82; /* Local pointer variable for signal Signal_82 */
+  S_MESSAGE10 MESSAGE10_union; /* Local union for the data of MESSAGE10 */
+  uint8_t my_Signal_101[5]; /* Local variable for array signal Signal_101 */
 
   /* Code for updating MESSAGE8_union with the received data from CAN. */
   /* Refer to further sections for information about this operation. */
   /* ... */
+    
+  /* Assign some application values to the local signal */
+  my_Signal_101[0] = 0x00;
+  my_Signal_101[1] = 0x01;
+  my_Signal_101[2] = 0x02;
+  my_Signal_101[3] = 0x03;
+  my_Signal_101[4] = 0x04;
 
-  /* Getting signal pointer for Signal_82 from MESSAGE8_union */
-  my_Signal_82 = CAN_NWID_get_Signal_82(MESSAGE8_union);
-
-  /* Application code doing something with signal goes here */
-  if(my_Signal_82[1] == 0xFF)
-  {
-      /* Do something if the second byte of the array Signal_81 is 0xFF */
-    /* ... */
-  }
+  /* Updating to the message union */
+  CAN_NWID_update_ptr_Signal_101(&MESSAGE10_union, my_Signal_101);
 }
 ```
 
 ### Signals Direct Access Macros
 
+TBD

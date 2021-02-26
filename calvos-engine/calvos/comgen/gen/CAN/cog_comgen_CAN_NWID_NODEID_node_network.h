@@ -479,7 +479,7 @@ if len(subnet.messages) > 0:
 
 			# New macro names
 			def_read_array = "CAN_" + net_name_str + "get_ptr_direct_" \
-							+ signal.name + "(" + array_str + ")"
+							+ signal.name + "()"
 			def_get_direct = "CAN_"+net_name_str+"get_direct_" \
 							+ signal.name + "()"
 
