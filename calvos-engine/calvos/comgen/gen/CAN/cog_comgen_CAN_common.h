@@ -107,7 +107,7 @@ cog.outl("#define kDirRX\t\t" + str(nw.CAN_RX) + "u")
 /* [[[cog
 # Generate include statements if required
 sym_tx_queue_len_name = "kCANtxQueueLen"
-sym_tx_queue_len_value = str(project.get_simple_param_val("comgen.CAN", "CAN_tx_queue_len"))
+sym_tx_queue_len_value = str(network.get_simple_param("CAN_tx_queue_len"))
 code_str = "#define "+sym_tx_queue_len_name+"\t\t("+sym_tx_queue_len_value+"u)"
 cog.outl(code_str)
  ]]] */

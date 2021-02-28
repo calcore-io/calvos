@@ -64,11 +64,14 @@ def process_simple_param(param_type, param_value):
     error_msg = ""
     if param_type == "int":
         try:
-            param_value = int(json.loads(param_value))
+            if cg.is_hex_string(param_value):
+                param_value = int(str(param_value),0)
+            else:
+                param_value = int(json.loads(param_value))
         except Exception as e:
             param_value = None
             error_msg = "Expected int value for given parameter. Assumed 'None'.\n" \
-                + "JSON error: " + str(e)
+                + "Error: " + str(e)
     elif param_type == "float":
         try:
             param_value = float(json.loads(param_value))

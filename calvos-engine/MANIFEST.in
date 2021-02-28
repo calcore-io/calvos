@@ -1,2 +1,2 @@
 include README.md LICENSE
-global-include *.xml *.xsd *.c *.h *.py
+global-include *.xml *.xsd *.c *.h *.py *.ods *.md

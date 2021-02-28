@@ -107,6 +107,12 @@ Use ${DATATYPE} to indicate the Data_Type name.
 			<clv:Desc>Period of TX task for transmission of spontaneous messages.</clv:Desc>
 			<clv:Default>10</clv:Default>
 		</clv:ParamDefinition>
+		<clv:ParamDefinition type="int" id="CAN_tx_period_tolerance"
+			category="catCAN_network" is_advanced="true">
+			<clv:Title>Tolerance for TX period</clv:Title>
+			<clv:Desc>Tolerance in percentage to deviate from TX message period before throwing a warning message.</clv:Desc>
+			<clv:Default>10</clv:Default>
+		</clv:ParamDefinition>
 		<clv:ParamDefinition type="int" id="CAN_rx_task_period"
 			category="catCAN_network" is_advanced="true">
 			<clv:Title>Period of RX task</clv:Title>
@@ -136,5 +142,15 @@ Use ${DATATYPE} to indicate the Data_Type name.
 				If True, TX confirmation will check for transmitted ID.
 			</clv:Desc>
 			<clv:Default>True</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="int" id="CAN_tx_data_init_val" category="catCAN_messages">
+			<clv:Title>TX Data initial value</clv:Title>
+			<clv:Desc>TX Data initial value.</clv:Desc>
+			<clv:Default>0</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="int" id="CAN_rx_data_init_val" category="catCAN_messages">
+			<clv:Title>RX Data initial value</clv:Title>
+			<clv:Desc>RX Data initial value.</clv:Desc>
+			<clv:Default>0</clv:Default>
 		</clv:ParamDefinition></clv:ParamsDefinitions>
 </clv:ComponentDefinition>

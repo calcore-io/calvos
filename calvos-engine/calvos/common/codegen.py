@@ -410,8 +410,12 @@ def is_hex_string(input_string):
         Boolean: Returns True if input string is hexadecimal number,
             returns False otherwise.
     """
+    
+    return_value = False
     hex_number = re.compile(r"^(?:0x)[0-9a-fA-F]+\Z", re.UNICODE)
-    return re.match(hex_number, input_string)
+    if re.match(hex_number, input_string):
+        return_value = True
+    return return_value
 
 #==============================================================================
 def get_valid_number(input_string):

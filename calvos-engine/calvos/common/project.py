@@ -1121,6 +1121,17 @@ class Project:
                         dest_file = out_path / "usr_in" / str(input_file)
                         shutil.copy(in_file, dest_file)
                         
+                        # Export any found markdown document
+                        if cg.folder_exists(out_path / "doc") is False:
+                            cg.create_folder(out_path / "doc")
+                        doc_path = root_path / "doc"
+                        for doc_file in doc_path.glob('*.md'):
+                            if doc_file.is_file() is True:
+                                print("File: ", doc_file)
+                                dest_file = out_path / "doc" / doc_file.name
+                                # copy to demo project doc folder
+                                shutil.copy(doc_file, dest_file)
+                        
             # Add comment to do not modify metadata
             comment = ET.Comment(' Do NOT modify these metadata information. ')
             xml_metadata = XML_root.find("Metadata")
