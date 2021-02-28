@@ -494,6 +494,9 @@ class Project:
             except Exception as e:
                 log_error('Failed to generate code for component "%s". Reason: %s' \
                           % (component.name, e) )
+        
+        # Delete pickle file
+        cg.delete_file(pickle_full_file_name)
     
     #===============================================================================================
     def validate_given_simple_params(self, component, simple_params_list):
@@ -1127,7 +1130,6 @@ class Project:
                         doc_path = root_path / "doc"
                         for doc_file in doc_path.glob('*.md'):
                             if doc_file.is_file() is True:
-                                print("File: ", doc_file)
                                 dest_file = out_path / "doc" / doc_file.name
                                 # copy to demo project doc folder
                                 shutil.copy(doc_file, dest_file)

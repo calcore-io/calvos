@@ -179,8 +179,6 @@ if tx_period_tolerance < 0 or tx_period_tolerance > 100:
 	log_warn("Config parameter 'CAN_tx_period_tolerance' wrong value '%s'. Assumed 100 (\%)." \
 		% str(CAN_tx_period_tolerance))
 
-print("Task: ",tx_proc_task , " Tol: ",tx_period_tolerance )
-
 macro_prefix = "kCAN_" + net_name_str + "msgTxPeriod_"
 macro_names = []
 macro_values = []
@@ -196,8 +194,6 @@ for message in network.messages.values():
 		# Check if TX period tolerance is met
 		upper_tol_perc = (100 + tx_period_tolerance) / 100
 		lower_tol_perc = (100 - tx_period_tolerance) / 100
-
-		print("Period: ",message_period, " Up Tol: ",upper_tol_perc," Down Tol: ",lower_tol_perc )
 
 		if ((perioc_in_ticks * tx_proc_task) > (upper_tol_perc * message_period)) or \
 		((perioc_in_ticks * tx_proc_task) < (lower_tol_perc * message_period)):

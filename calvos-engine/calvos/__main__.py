@@ -186,7 +186,7 @@ USAGE
             log_level = logging.INFO
             
         #==============================================================================
-        # Generate demo project if argument -t is provided.
+        # Generate demo project if argument -d is provided.
         #==============================================================================
         if args.demo is not None:
             # Check if path exists
@@ -219,7 +219,7 @@ USAGE
             return 0    
         
         #==============================================================================
-        # Start project processing if argument -t was not provided
+        # Start project processing if argument -d was not provided
         #==============================================================================
         if project is not None:
             project_file = string_to_path(project)
@@ -387,7 +387,7 @@ USAGE
                 else:
                     log.warning("main", "Export folder '%s' doesn't exist. No export performed." \
                              % export_path)
-                       
+            
             log.info("main","============== Finished calvOS project processing. ==============")
             print("INFO: ============== Finished calvOS project processing. ==============")
             for counter_name, counts in log.counters.items():
