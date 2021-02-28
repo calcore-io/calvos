@@ -508,7 +508,7 @@ if len(list_of_tx_msgs) > 0:
 /* [[[cog
 if len(list_of_tx_msgs) > 0:
 	sym_tx_msg_idx_prefix = "kCAN_" + net_name_str + node_name_str + "txMsgIdx_"
-	tx_proc_task = project.get_simple_param_val("comgen.CAN","CAN_tx_task_period")
+	tx_proc_task = network.get_simple_param("CAN_tx_task_period")
 
 	sym_tx_proc_func_name = "can_task_"+str(tx_proc_task)+"ms_"+net_name_str+node_name_str+"txProcess"
 	code_str = "void "+sym_tx_proc_func_name+"(void){"
@@ -612,17 +612,20 @@ cog.outl(function_body+"}")
  * ===========================================================================*/
 /* [[[cog
 if len(list_of_tx_msgs) > 0:
+	sym_tx_init_val = "kCAN_" + net_name_str + "TxDataInitVal"
+	sym_rx_init_val = "kCAN_" + net_name_str + "RxDataInitVal"
+
 	sym_core_init_name = "can_"+net_name_str+node_name_str+"coreInit"
 	code_str = "void "+sym_core_init_name+"(void){"
 	cog.outl(code_str)
 
 	function_body = """
 	// Clear RX data buffer
-	memset(&"""+sym_rx_data_name+",0u,"+sym_rx_data_len+""");
+	memset(&"""+sym_rx_data_name+","+sym_rx_init_val+","+sym_rx_data_len+""");
 	// Clear RX available flags buffer
 	memset(&"""+sym_avlbl_buffer_name+",0u,"+sym_avlbl_buff_len+""");
 	// Clear TX data buffer
-	memset(&"""+sym_tx_data_name+",0u,"+sym_tx_data_len+""");
+	memset(&"""+sym_tx_data_name+","+sym_tx_init_val+","+sym_tx_data_len+""");
 	// Clear RX dynamic data
 	memset(&"""+sym_rx_dyn_data_name+",0u,sizeof("+sym_rx_dyn_data_type+")*("+sym_rx_msgs+"""));
 	// Clear TX dynamic data

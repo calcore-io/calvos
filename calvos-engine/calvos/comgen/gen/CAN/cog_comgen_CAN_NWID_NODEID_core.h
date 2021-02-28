@@ -190,7 +190,7 @@ if len(list_of_tx_msgs) > 0:
 
 	# TX Processing Function
 	# ----------------------
-	tx_proc_task = project.get_simple_param_val("comgen.CAN","CAN_tx_task_period")
+	tx_proc_task = network.get_simple_param("CAN_tx_task_period")
 
 	sym_tx_proc_func_name = "can_task_"+str(tx_proc_task)+"ms_"+net_name_str+node_name_str+"txProcess"
 
@@ -199,14 +199,12 @@ if len(list_of_tx_msgs) > 0:
 
 	# TX Retry Function
 	# ----------------------
-	tx_proc_task = project.get_simple_param_val("comgen.CAN","CAN_tx_queue_task_ms")
-
 	sym_tx_retry_func_name = "can_"+net_name_str+node_name_str+"txRetry"
 
 	code_str = "extern void "+sym_tx_retry_func_name+"(void);"
 	cog.outl(code_str)
 
-# Initi signals function
+# Init signals function
 sym_init_sigs_ret = "void"
 sym_init_sigs_name = "can_"+net_name_str+node_name_str+"signalsInit"
 sym_init_sigs_args = "(void)"

@@ -6,13 +6,15 @@ This document describes how to define a CAN network within the calvos system, ho
 
 ## Installing Calvos
 
-Here we'll exemplify the installation of a calvos in folder "*c:\calvos*" under MS Windows. It can be installed in any other user folder.
+Here we'll exemplify the installation of a calvos under MS Windows.
 
-1. Ensure python v3.7 or greater is installed
+1. Ensure python v3.7 or greater is installed.
 
-2. Get source code from https://github.com/calcore-io/calvos
+2. Create a temporal folder *c:\calvos* (you can use any drive letter and folder name as desired).
 
-3. Unzip (if zip was downloaded) and copy the downloaded files to *c:\calvos*.
+3. Get source code from https://github.com/calcore-io/calvos
+
+4. Unzip (if zip was downloaded) and copy the downloaded files to the temporal folder *c:\calvos*.
 
    Folder structure should look as follows (not all contents are shown, just an example)...
 
@@ -34,15 +36,15 @@ Here we'll exemplify the installation of a calvos in folder "*c:\calvos*" under 
    +-- README.md
    ```
 
-4. Get into the *calvos/calvos-engine* folder
+5. Get into the *calvos/calvos-engine* folder
 
    `c:\>cd calvos/calvos-engine`
 
-5. Run python setup.py install command:
+6. Run python setup.py install command:
 
    `c:\calvos\calvos-engine>python setup.py install`
 
-6. Verify calvos was installed properly by getting the calvos version.
+7. Verify calvos was installed properly by getting the calvos version.
 
    `c:\>python -m calvos -v`
 
@@ -83,7 +85,7 @@ This will create the following files:
 
   location: *c:\demo_project\log.log*
 
-It is useful to generate this demo project since by doing so, also the template for the CAN network definition is exported. In the guide below, this exported CAN network definition template is used.
+It is useful to generate this demo project since by doing so, also the **template** for the CAN network definition is exported. In the guide below, this exported CAN network definition template is used.
 
 # CAN Network definition
 
@@ -258,11 +260,20 @@ User-configurable parameters are listed below:
 
 - `CAN_gen_file_full_names`: If set to TRUE will force full-names for generated source code and symbols. Refer to section [Source Code Names Optimization](#Source-Code-Names-Optimization) for more details on this parameter.
 
-- `CAN_tx_confirm_msg_id` 
+- `CAN_tx_confirm_msg_id`:  If True, TX confirmation will need to check for transmitted ID, otherwise confirmation will be done without confirming the transmitted msg ID from CAN HAL.
 
-- `CAN_tx_task_period`
+- `CAN_tx_task_period`: Period in milliseconds of the Task for transmitting *cyclic* and *cyclic_spontan* messages.
 
-- `CAN_tx_queue_len`
+- `CAN_tx_period_tolerance`: Tolerance in percentage to deviate from TX message period before throwing a warning message.
+  Shall be between 0 and 100.
+
+- `CAN_rx_data_init_val`: Integer value to be used for initializing all data in the RX unified data buffer. Can be decimal or hex number (with 0x prefix). Shall be between 0 and 255 (1 byte).
+
+- `CAN_tx_data_init_val`: Integer value to be used for initializing all data in the TX unified data buffer. Can be decimal or hex number (with 0x prefix). Shall be between 0 and 255 (1 byte).
+
+- `CAN_enum_sym_prefix`: Prefix for generated symbols of the signal enumerations for custom data types. Use $ to indicate an empty string (meaning no prefix will be added). Use wildcard ${NWID} to indicate the network ID. By default a prefix "`kCAN_`" plus the network name is added to each symbol. This means that by default, this parameter has the value: `kCAN_${NWID}_` .
+
+- `CAN_enum_sym_prefix`: Prefix for generated type names of signal enumerations. Leave empty to name the generated types exactly as the source data_type. Use wildcard ${DATATYPE} to indicate the Data_Type name. By default prefix "`t_`" will be added to the source data_ type name. This means that by default, this parameter has the value: `t_${DATATYPE}`.
 
 **Note:** The rest of parameters are not expected to be defined by the user or are currently not implemented so then do not modify the "User Value" for them.
 
@@ -421,8 +432,6 @@ For example, if the defined network has an ID equal to 'C', then a file referred
 | File                            | File contents                                                |
 | ------------------------------- | ------------------------------------------------------------ |
 | `cog_comgen_CAN_NWID_network.h` | Defines network-wide symbols and data structures for messages information (lengths, ids, data structures, etc.), signals (APIs to access signals) and user-defined enumerated data types. |
-|                                 |                                                              |
-|                                 |                                                              |
 
 ### Node-specific Code
 

@@ -26,7 +26,6 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__version__ = '0.0.1'
 __date__ = '2020-12-18'
 __updated__ = '2020-12-18'
 
@@ -81,6 +80,15 @@ def file_exists(path):
 
 def main(argv=None): # IGNORE:C0111
     '''Command line options.'''
+    # Import version from __version__.py file
+    # Set calvos path which will be used for accessing package resources
+    calvos_path = pl.Path(__file__).parent.absolute()
+    version_path = calvos_path / "__version__.py"
+        
+    about = {}
+    with open(version_path) as f:
+        exec(f.read(), about)
+    __version__ = about["__version__"]
 
     if argv is None:
         argv = sys.argv
@@ -142,8 +150,6 @@ USAGE
         
         arguments_OK = True
         
-        # Set calvos path which will be used for accessing package resources
-        calvos_path = pl.Path(__file__).parent.absolute()
         # Check if calvos package is installed by trying to import the logging system
         try:
             import calvos.common.logsys as lg

@@ -168,10 +168,19 @@ for i, macro_name in enumerate(macro_names):
 // [[[end]]]
 
 /* Message(s) Transmission Period (in ticks of task) */
+/* Task period is defined in config parameter 'CAN_tx_task_period' */
 /* [[[cog
 
 # Calculate padding spaces
-tx_proc_task = project.get_simple_param_val(network.module,"CAN_tx_task_period")
+tx_proc_task = network.get_simple_param("CAN_tx_task_period")
+tx_period_tolerance = network.get_simple_param("CAN_tx_period_tolerance")
+if tx_period_tolerance < 0 or tx_period_tolerance > 100:
+	tx_period_tolerance = 100
+	log_warn("Config parameter 'CAN_tx_period_tolerance' wrong value '%s'. Assumed 100 (\%)." \
+		% str(CAN_tx_period_tolerance))
+
+print("Task: ",tx_proc_task , " Tol: ",tx_period_tolerance )
+
 macro_prefix = "kCAN_" + net_name_str + "msgTxPeriod_"
 macro_names = []
 macro_values = []
@@ -181,7 +190,21 @@ for message in network.messages.values():
 	if macro_value is None or macro_value == "":
 		macro_value = "(0u)"
 	else:
-		macro_value = "(" + str(round(int(message.tx_period)/tx_proc_task)) + "u)"
+		message_period = int(message.tx_period)
+		perioc_in_ticks = round(int(message_period)/tx_proc_task)
+		macro_value = "(" + str(perioc_in_ticks) + "u)"
+		# Check if TX period tolerance is met
+		upper_tol_perc = (100 + tx_period_tolerance) / 100
+		lower_tol_perc = (100 - tx_period_tolerance) / 100
+
+		print("Period: ",message_period, " Up Tol: ",upper_tol_perc," Down Tol: ",lower_tol_perc )
+
+		if ((perioc_in_ticks * tx_proc_task) > (upper_tol_perc * message_period)) or \
+		((perioc_in_ticks * tx_proc_task) < (lower_tol_perc * message_period)):
+			log_warn(("Generated period of '%sms' for message '%s' doesn't met tolerance of +/-'%s' percent. " \
+					 + "Consider changing period of Tx task in config parameter 'CAN_tx_task_period' " \
+					 + "or the tolerance for TX periods in parameter 'CAN_tx_period_tolerance'.") \
+					 % ((perioc_in_ticks * tx_proc_task), message.name, str(tx_period_tolerance)))
 	macro_names.append(macro_name)
 	macro_values.append(macro_value)
 
@@ -193,6 +216,20 @@ for i, macro_name in enumerate(macro_names):
 				+ cg.gen_padding(max_len, len(macro_name)) + macro_values[i]
 	cog.outl(code_string)
 
+]]] */
+// [[[end]]]
+
+/* Message(s) Raw Data Initial Values */
+/* [[[cog
+tx_data_init_val = network.get_simple_param("CAN_tx_data_init_val")
+tx_data_init_val = cg.to_hex_string_with_suffix(tx_data_init_val)
+macro_name = "kCAN_" + net_name_str + "TxDataInitVal"
+cog.outl("#define "+macro_name+"()\t\t("+tx_data_init_val+")")
+
+rx_data_init_val = network.get_simple_param("CAN_rx_data_init_val")
+rx_data_init_val = cg.to_hex_string_with_suffix(rx_data_init_val)
+macro_name = "kCAN_" + net_name_str + "RxDataInitVal"
+cog.outl("#define "+macro_name+"()\t\t("+rx_data_init_val+")\n")
 ]]] */
 // [[[end]]]
 

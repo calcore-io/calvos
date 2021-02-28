@@ -1941,7 +1941,8 @@ class Network_CAN:
                             {"category" : "node"})
         self.add_cog_source("core", "cog_comgen_CAN_NWID_NODEID_core.c", False, \
                             [["comgen.CAN", "core_h"], \
-                             ["comgen.CAN", "callbacks_h"],
+                             ["comgen.CAN", "network_h"], \
+                             ["comgen.CAN", "callbacks_h"], \
                              ["comgen.CAN","can_node_hal_h"]], \
                             {"category" : "node"})
         self.add_cog_source("callbacks_h", "cog_comgen_CAN_NWID_NODEID_callbacks.h", True, \
@@ -2557,10 +2558,20 @@ class Network_CAN:
                               + "\" of message \"" + self.name \
                               + "\". Assumed lenght of 8 bytes."))
             
-            if extended_id is False or extended_id == "no":
+            if extended_id is False or extended_id == "no" \
+            or extended_id == "No" or extended_id == "NO" \
+            or extended_id == "False" or extended_id == "false" \
+            or extended_id == "FALSE":
                 self.extended_id = False
+            elif extended_id is True or extended_id == "yes" \
+            or extended_id == "Yes" or extended_id == "YES" \
+            or extended_id == "True" or extended_id == "true" \
+            or extended_id == "TRUE":
+                self.extended_id = True
             else:
                 self.extended_id = True
+                log_warn(("Wrong value '%s' for extended frame indication of message '%s'. " \
+                          "Assumed frame IS extended.") % (str(extended_id),self.name))
                 
             if tx_type == None:
                 #If no tx type was given, assume default one

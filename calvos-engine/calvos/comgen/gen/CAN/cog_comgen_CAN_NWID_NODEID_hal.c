@@ -108,7 +108,7 @@ for message in subnet.messages.values():
 #  TX confirm Msg ID
 # ------------------
 sym_tx_id_needed_name = "CAN_" + net_name_str + node_name_str + "CONFIRM_MSG_ID"
-tx_confirm_msg_id = project_obj.get_simple_param_val("comgen.CAN","CAN_tx_confirm_msg_id")
+tx_confirm_msg_id = network.get_simple_param("CAN_tx_confirm_msg_id")
 if tx_confirm_msg_id is True:
 	sym_tx_id_needed_val = "kTrue"
 else:
@@ -118,6 +118,20 @@ cog.outl("#define "+sym_tx_id_needed_name+"\t\t"+sym_tx_id_needed_val)
  ]]] */
 // [[[end]]]
 
+/* [[[cog
+# HAL get transmitted ID function prototype
+cog.outl("#if "+sym_tx_id_needed_name+"==kTrue")
+
+sym_get_tx_id_return = "uint32_t"
+sym_get_tx_id_name = "can_"+net_name_str+node_name_str+"HALgetTxdMsgId"
+sym_get_tx_id_args = "(void)"
+
+code_str = sym_get_tx_id_return+" "+sym_get_tx_id_name+sym_get_tx_id_args+";"
+cog.outl(code_str)
+
+cog.outl("#endif")
+ ]]] */
+// [[[end]]]
 
 /* =============================================================================
  * 	Function definitions
@@ -163,10 +177,6 @@ cog.outl(sym_can_transmit_body)
 /* [[[cog
 # This function has a conditional compilation directive
 cog.outl("#if "+sym_tx_id_needed_name+"==kTrue")
-
-sym_get_tx_id_return = "uint32_t"
-sym_get_tx_id_name = "can_"+net_name_str+node_name_str+"HALgetTxdMsgId"
-sym_get_tx_id_args = "(void)"
 
 code_str = sym_get_tx_id_return+" "+sym_get_tx_id_name+sym_get_tx_id_args+"{\n"
 cog.outl(code_str)
