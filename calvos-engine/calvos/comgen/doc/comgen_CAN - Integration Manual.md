@@ -6,9 +6,19 @@ This document describes how to define a CAN network within the calvos system, ho
 
 ## Installing Calvos
 
+### From PyPi
+
+Calvos engine python package is indexed at PyPi and, therefore, can be installed with a `pip` command from python:
+
+`python -m pip install calvos`
+
+Alternatively, it can be installed "manually" by downloading the code and installing it locally. See section below.
+
+### Manual Installation
+
 Here we'll exemplify the installation of a calvos under MS Windows.
 
-1. Ensure python v3.7 or greater is installed.
+1. Ensure python v3.7 or greater is installed
 
 2. Create a temporal folder *c:\calvos* (you can use any drive letter and folder name as desired).
 
@@ -38,7 +48,7 @@ Here we'll exemplify the installation of a calvos under MS Windows.
 
 5. Get into the *calvos/calvos-engine* folder
 
-   `c:\>cd calvos/calvos-engine`
+   `c:\>cd calvos\calvos-engine`
 
 6. Run python setup.py install command:
 
@@ -85,11 +95,11 @@ This will create the following files:
 
   location: *c:\demo_project\log.log*
 
-It is useful to generate this demo project since by doing so, also the **template** for the CAN network definition is exported. In the guide below, this exported CAN network definition template is used.
+It is useful to create this demo project since by doing so, also the **template** for the CAN network definition "template - CAN Network Definition.ods" is exported. In the guide below, this exported template is used.
 
 # CAN Network definition
 
-The CAN network to generate needs to be defined first using the "CAN Network Definition.ods" template. Currently only ODS format is supported, however, it is possible to edit the template in MS Excel and then save it as ODS.
+The CAN network to generate needs to be defined first using the "template - CAN Network Definition.ods" template. Currently only ODS format is supported, however, it is possible to edit the template in MS Excel and then save it as ODS.
 
 Different tabs within the template need to be filled-up in order to fully define the network. A file based on this template shall be created per each required network. These files defining the networks can be freely named.
 

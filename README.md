@@ -56,7 +56,7 @@ CalvOS system will be composed by two main components: calvOS Engine and calvOS 
 
 Calvos engine python package is indexed at PyPi and, therefore, can be installed with a `pip` command from python:
 
-`python -m install calvos`
+`python -m pip install calvos`
 
 Alternatively, it can be installed "manually" by downloading the code and installing it locally. See section below.
 

@@ -51,9 +51,7 @@ cog.outl(C_gen_info("File Name"))
 // [[[end]]]
 #ifndef CALVOS_TYPES_H
 #define CALVOS_TYPES_H
-/* TODO: Remove include for S32 Studio (uint32_t and int32_t) to make this generic*/
-#include <stddef.h>
-#include "S32K144.h"
+/* TODO: Un-comment definitions for uint32_t and int32_t temporarily done for compatibility with NXP S32 SDK */
 
 #define kTrue 	1u
 #define kFalse 	0u
