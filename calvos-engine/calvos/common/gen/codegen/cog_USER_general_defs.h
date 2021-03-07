@@ -52,8 +52,16 @@ cog.outl(C_gen_info("File Name"))
 #ifndef GENERAL_DEFS_H
 #define GENERAL_DEFS_H
 
+#include <stdint.h>
+#include <stddef.h>
+
 /* Macros for critical sections */
 #warning "Insert user code to enter and exit critical section. Remove this directive when done."
+/* IMPORTANT: macro CALVOS_CRITICAL_ENTER() shall store the current state of
+ * "global" interrupt state and then disable them. CALVOS_CRITICAL_EXIT() shall
+ * restore the "global" interrupt state that was stored before entering the
+ * critical section. CALVOS_CRITICAL_EXIT() shall NOT always just enable
+ * all the "global" interrupts, but rather restore previous state. */
 #define CALVOS_CRITICAL_ENTER()
 #define CALVOS_CRITICAL_EXIT()
 

@@ -19,7 +19,7 @@ This interaction layer automatically generates C-code with APIs and functions to
 
 The generated code is aimed to be easily ported by providing a set of APIs where the user needs to instrument code for the integration of the interaction layer into the target's MCU HAL. Also, the generated code provides APIs for direct interaction with CAN signals of the defined network by the application layers.
 
-Initial version of the CAN IL is available. 
+Initial version of the CAN IL is available (beta version). 
 
 Future developments will follow in this intended order:
 
@@ -64,7 +64,7 @@ Here we'll exemplify the installation of a calvos under MS Windows.
 
 1. Ensure python v3.7 or greater is installed
 
-2. Create a temporal folder *c:\calvos* (you can use any drive letter and folder name as desired).
+2. Create a temporal folder *c:\\calvos* (you can use any drive letter and folder name as desired).
 
 3. Get source code from https://github.com/calcore-io/calvos
 
@@ -129,15 +129,15 @@ This will create the following files:
 
 - **calvos_project.xml**: XML project file
 
-  location: *c:\demo_project\calvos_project.xml*
+  location: *c:\\demo_project\\calvos_project.xml*
 
 - **template - CAN Network Definition.ods**: Template for CAN Network definition
 
-  location: *c:\demo_project\usr_in\template - CAN Network Definition.ods*
+  location: *c:\\demo_project\\usr_in\\template - CAN Network Definition.ods*
 
 - **log.log**: Log file
 
-  location: *c:\demo_project\log.log*
+  location: *c:\\demo_project\\log.log*
 
 It is useful to get this demo project since by doing so, also the template for the CAN network definition is exported.
 
@@ -147,11 +147,11 @@ In order to generate the code of the demo project, run the following command:
 
 If everything went Ok then the generated source code shall be located in the default output folder:
 
-- *c:\demo_project\out*
+- *c:\\demo_project\\out*
 
 Information about the project processing and possible warnings/errors found during the processing can be consulted in the generated log file located in the project's *root* folder:
 
-- *c:\demo_project\log.log*
+- *c:\\demo_project\\log.log*
 
 ## CAN Interaction Layer User Guide
 

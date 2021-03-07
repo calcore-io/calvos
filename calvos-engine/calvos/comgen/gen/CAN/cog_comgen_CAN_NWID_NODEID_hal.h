@@ -139,6 +139,15 @@ sym_hal_rx_args = "(uint32_t msg_id, uint8_t* data_in, uint8_t data_len)"
 
 code_str = "extern "+sym_hal_rx_return+" "+sym_hal_rx_name+sym_hal_rx_args+";"
 cog.outl(code_str)
+
+# HAL Init Function
+# --------------------
+sym_hal_init_return = "void"
+sym_hal_init_name = "can_"+net_name_str+node_name_str+"HALinit"
+sym_hal_init_args = "(void)"
+
+code_str = "extern "+sym_hal_init_return+" "+sym_hal_init_name+sym_hal_init_args+";"
+cog.outl(code_str)
 ]]] */
 // [[[end]]]
 

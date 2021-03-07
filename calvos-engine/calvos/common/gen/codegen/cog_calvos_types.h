@@ -51,11 +51,13 @@ cog.outl(C_gen_info("File Name"))
 // [[[end]]]
 #ifndef CALVOS_TYPES_H
 #define CALVOS_TYPES_H
-/* TODO: Un-comment definitions for uint32_t and int32_t temporarily done for compatibility with NXP S32 SDK */
+
+#include "general_defs.h"
 
 #define kTrue 	1u
 #define kFalse 	0u
 
+/* TODO: Un-comment definitions for uint32_t and int32_t temporarily done for compatibility with NXP S32 SDK */
 /* [[[cog
 
 # Definition of basic data types

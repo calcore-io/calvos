@@ -22,7 +22,7 @@ REQUIRES_PYTHON = '>=3.7.0'
 
 # What packages are required for this module to be executed?
 REQUIRED = [
-    'cogapp', 'lxml', 'pyexcel','pyexcel-ods'
+    'cogapp', 'lxml', 'pyexcel-ods', 'pyexcel'
 ]
 
 # What packages are optional?
