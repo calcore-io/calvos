@@ -4,6 +4,10 @@ This document describes how to define a CAN network within the calvos system, ho
 
 This document applies for calvos version 0.0.2.
 
+## Table of Contents
+
+[TOC]
+
 # Preparing Calvos Engine
 
 ## Installing Calvos
@@ -398,7 +402,7 @@ It is possible to automatically export the generated source code into an user-de
 
 If the export argument `-e` is used then the files in the exporting folder will be overwritten without user prompt. This should normally not be a problem since the generated source code that requires user instrumentation is generated with prefix "USER\_" and hence user instrumentation shouldn't be overwritten (user shall remove the prefix "USER\_" once instrumentation is done). Nevertheless, it may be many reasons why a backup of the code that the export overwrites is desired. For this, a "backup" command line argument `-b` is in place. If `-b` is provided it shall indicate the path where the backup of the files to be replaced during the export operation is to be located.
 
-The backup strategy produces multiple sets of backed-up files. Up-to 10 sets will be created if the calvos-engine is invoked multiple times with the export `-e` argument. These sets will be located in the path specified in the backup argument `-b`. 
+The backup strategy produces multiple sets of backed-up files. Up-to 10 sets will be created if the calvos-engine is invoked multiple times with the export `-e`  and the `-b` arguments. These backup sets will be located in the path specified in the backup argument `-b`. The backup mechanism is "circular". If already 10 backup sets have been done then mechanism will circle back and write set 0 next, then set 1, etc. A history of the written backup sets is maintained in the generated file "backup_history.csv" within the backup folder. 
 
 ## Instrumenting User Code
 
@@ -415,10 +419,11 @@ Couple of generated files are general ones not tied to the CAN network but requi
 
 Those global files are:
 
-| File Name        | File Contents                                                                                                                                                                                                                                                                        |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| File Name        | File Contents                                                |
+| ---------------- | ------------------------------------------------------------ |
 | `calvos_types.h` | Typedefs used across generated source code. If a type re-definition error is found when integrating this code into the target project then comment out the re-defined types in this file ensuring that the original definition in the target project matches the ones commented out. |
-| `calvos.h`       | Header file for including global headers like `calvos_types.h` across all calvos generated source code.                                                                                                                                                                              |
+| `calvos.h`       | Header file for including global headers like `calvos_types.h` across all calvos generated source code. This is not expected to be modified by the user. |
+| `general_defs.h` | General definitions that will be available across all generated source code. This file is expected to be modified by the user as needed. This file is included by `calvos_types.h`. |
 
 ## CAN Generated Source Code
 
@@ -441,9 +446,9 @@ When referring to a file in this category or symbols within those files, the wil
 
 For example, if the defined network has an ID equal to 'C', then a file referred as `comgen_CAN_NWID_network.h` corresponds to a generated file with name`comgen_CAN_C_network.h`.
 
-| File                            | File contents                                                |
-| ------------------------------- | ------------------------------------------------------------ |
-| `cog_comgen_CAN_NWID_network.h` | Defines network-wide symbols and data structures for messages information (lengths, ids, data structures, etc.), signals (APIs to access signals) and user-defined enumerated data types. |
+| File                        | File contents                                                |
+| --------------------------- | ------------------------------------------------------------ |
+| `comgen_CAN_NWID_network.h` | Defines network-wide symbols and data structures for messages information (lengths, ids, data structures, etc.), signals (APIs to access signals) and user-defined enumerated data types. |
 
 ### Node-specific Code
 
@@ -456,8 +461,8 @@ When referring to a file in this category, the wildcard NODEID (node name) will 
 | `comgen_CAN_NWID_NODEID_node_network.h` | Defines symbols for node specific message information (message directions, timeouts, etc.), direct signal access macros (directly accessing from node's data buffers), etc. |
 | `comgen_CAN_NWID_NODEID_hal.h`          | Header for node's interfaces with CAN hardware abstraction layer in the target MCU. |
 | `comgen_CAN_NWID_NODEID_hal.c`          | Implementation of node's interfaces with CAN hardware abstraction layer in the target MCU. |
-| `cog_comgen_CAN_NWID_NODEID_core.h`     | Header for the node's CAN core functionality.                |
-| `cog_comgen_CAN_NWID_NODEID_core.c`     | Implementation of the node's CAN core functionality.         |
+| `comgen_CAN_NWID_NODEID_core.h`         | Header for the node's CAN core functionality.                |
+| `comgen_CAN_NWID_NODEID_core.c`         | Implementation of the node's CAN core functionality.         |
 | `comgen_CAN_NWID_NODEID_callbacks.h`    | Header for the node's callbacks                              |
 | `comgen_CAN_NWID_NODEID_callbacks.c`    | Implementation of the node's callbacks                       |
 
@@ -469,9 +474,9 @@ If only one network is defined in the project then the NWID wildcard will be rep
 
 If only one node is generated in a given network, the corresponding NODEID wildcard will be replaced by an empty string rather than the node's name. Similar logic as in the NWID optimization is applied (no need to distinguish symbols for several nodes).
 
-For example, if only one network (network id: "CT") is defined in the project and only a single node ["NODE\_1"] is selected for generation, the file `comgen_CAN_NWID_NODEID_node_network.h`will be generated with the name `comgen_CAN_network.h`. However, if parameter `CAN_gen_file_full_names` is set to TRUE, the optimization won't take place and the generated file will have its full name: `comgen_CAN_CT_NODE_1_node_network.h`.
+For example, if only one network (network id: "CT") is defined in the project and only a single node ["NODE\_1"] is selected for generation, the file `comgen_CAN_NWID_NODEID_node_network.h`will be generated with the name `comgen_CAN_node_network.h`. However, if parameter `CAN_gen_file_full_names` is set to TRUE, the optimization won't take place and the generated file will have its full name: `comgen_CAN_CT_NODE_1_node_network.h`.
 
-**Note:** Optimization is also applied to the defined symbols within the generated files as required.
+**Note:** Optimization is also applied to the defined symbols within the generated source files as required.
 
 # Integration into Target Project
 
@@ -481,23 +486,25 @@ It is assumed that a single node will own/use a single CAN peripheral in the tar
 
 ## Initialization
 
-Function `can_NWID_NODEID_coreInit()` needs to be called during initialization phase of the SW. Header `comgen_CAN_NWID_NODEID_core.h` needs to be included in order to import this function.
+Function `can_NWID_NODEID_coreInit` needs to be called during initialization phase of the SW in the user's target project. Header `comgen_CAN_NWID_NODEID_core.h` needs to be included in order to import this function. This function performs initialization for the RX and TX unified data, message states, etc. It also calls the CAN HAL init function `can_NWID_NODEID_HALinit`.
 
 ## HAL Integration
 
 For each node, a HAL integration is required for the CAN reception and transmission by the target's MCU CAN peripheral.
 
+### CAN HAL initialization
+
+User shall instrument the necessary code to initialize the CAN HAL per each node within the generated function `can_NWID_NODEID_HALinit`. This function is called from `can_NWID_NODEID_coreInit` . Desirable characteristics for the initialized CAN HAL peripheral:
+
+- CAN reception shall allow all the defined node RX messages (set acceptance filters appropriately).
+- Preferably an ISR shall be configured and instrumented corresponding to a successful reception of a CAN msg.
+- Preferably an ISR shall be configured and instrumented corresponding to a successful transmission of a CAN msg.
+
 ### HAL integration for reception
 
 Following tasks are required in order to integrate the reception of CAN messages with the MCU's HAL (these steps need to be performed for each generated node):
 
-1. Initialize CAN HAL. User shall instrument during SW initialization phase, code for initializing the CAN peripheral with following characteristics:
-   
-   - CAN reception shall allow all the defined node RX messages (set acceptance filters appropriately).
-   - Preferably an ISR shall be configured and instrumented corresponding to a successful reception of a CAN msg.
-   - Preferably an ISR shall be configured and instrumented corresponding to a successful transmission of a CAN msg.
-   
-2. Function `can_NWID_NODEID_HALreceiveMsg()` needs to be invoked within the HAL function that signals the reception of a CAN message by the CAN peripheral (typically within ISR context). If multiple nodes are generated, each of the generated functions need to be invoked from the corresponding CAN peripherals.
+2. Function `can_NWID_NODEID_HALreceiveMsg` needs to be invoked within the HAL function that signals the reception of a CAN message by the CAN peripheral (typically within ISR context). If multiple nodes are generated, each of the generated functions need to be invoked from the corresponding CAN peripherals.
 
    Following arguments need to be provided:
 
@@ -505,17 +512,17 @@ Following tasks are required in order to integrate the reception of CAN messages
      
    - `data_in`: a byte-pointer pointing to the place where the received data resides from the HAL layer. Data will be copied from this pointer into the generated reception data buffer `can_NWID_NODEID_RxDataBuffer`.
      
-   - `data_len`: Length (number of bytes) of the received data. The data copy operation from the HAL to the reception buffer will be done for this amount of bytes in the case that the message is a valid rx message for the node.
+   - `data_len`: Length (number of bytes) of the received data. The data copy operation from the HAL to the reception buffer will be done for this amount of bytes in the case that the message is a valid RX message for the node.
 
-This function will first perform a search in order to determine if the received message id belongs to the node (its a subscribed message for the node). If it is then the received data will be copied to the reception buffer, corresponding message available flags will be set and the message reception callback will be invoked.
+This function will first perform a search in order to determine if the received message id belongs to the node (its a subscribed message for the node). If it is then the received data will be copied to the reception buffer, corresponding message/signals available flags will be set and the message reception callback will be invoked.
 
-2. Write user-defined code within the reception message callback `can_NWID_NODEID_MESSAGEID_rx_callback()` as needed. MESSAGEID corresponds to the received message name. These callbacks are defined in file `comgen_CAN_NWID_NODEID_callbacks.c`.
-   
-   **Note:** If function `can_NWID_NODEID_HALreceiveMsg()` is called within ISR context, then the callbacks will be also called within ISR context so the user code shall be as small as possible.
-   
-   Is also possible to poll for the reception of messages based on their available flags (in case user doesn't want to use the callbacks directly).
+2. Process the received message by instrumenting code in the reception callback or by polling for the received message available flags:
 
-3. Consume message's available flags (polling for received messages) if required.
+   - Write user-defined code within the reception message callback `can_NWID_NODEID_MESSAGEID_rx_callback` as needed. MESSAGEID corresponds to the received message name. These callbacks are defined in file `comgen_CAN_NWID_NODEID_callbacks.c`.
+
+     **Note:** If function `can_NWID_NODEID_HALreceiveMsg` is called within ISR context, then the callbacks will be also called within ISR context so the user code shall be as small as possible.
+
+   - If polling for RX message is desired rather than the using a callback, then consume the available flags that indicate a valid reception of a message. Refer to section "[Using the available flags (polling for received messages)](#Using-the-available-flags-(polling-for-received-messages))" for more details on available flags.
 
 ### HAL integration for transmission
 
@@ -526,24 +533,22 @@ Following tasks are required in order to integrate the transmission of CAN messa
    HAL code to trigger a CAN message transmission by the associated CAN peripheral shall be put inside the body of this function. Data regarding the message to be transmitted can be taken from the provided argument `msg_info` as follows.
    
    - Message id to be transmitted can be extracted from `msg_info->id`.
-   
    - Message length to be transmitted can be extracted from `msg_info->fields.len`.
-   
    - Message data to be transmitted can be taken from `msg_info->data`. `msg_info->data` is a pointer to a byte array. Hence, individual bytes can be accessed using `msg_info->data[i]` (where `i` is the desired byte index) or simply use `msg_info->data` to point to the beginning of the array containing the transmission data.
-   
    - Indication of extended id can be taken from `msg_info->fields.is_extended_id`. This is a boolean value with `1` indicating that the message has an extended id and `0` if it has an standard id.
-
+   - Function `can_NWID_NODEID_HALtransmitMsg` shall return `kNoError` if message was accepted for transmission by the CAN HAL, otherwise it shall return `kError`.
+   
 2. Implement function for getting the ID of the message just transmitted by the HAL. If generation parameter `CAN_tx_confirm_msg_id` is set to `True` then function `can_NWID_NODEID_HALgetTxdMsgId` needs to be instrumented with code to return the ID of the CAN message just transmitted by the HAL. This function will be used by the CAN TX confirmation function `can_NWID_NODEID_HALconfirmTxMsg`. If generation parameter `CAN_tx_confirm_msg_id` is False then this function won't get generated. In this case, message confirmation will be done as long as `can_NWID_NODEID_HALconfirmTxMsg` is invoked regardless of the ID of the message transmitted by HAL.
 
-3. Invoke callback for message transmission confirmation from HAL. Function `can_NWID_NODEID_HALconfirmTxMsg()` needs to be called within the HAL function that signals the confirmation of the latest CAN message transmission (typically within ISR context). This function doesn't require any argument.
+3. Invoke callback for message transmission confirmation from HAL. Function `can_NWID_NODEID_HALconfirmTxMsg` needs to be called within the HAL function that signals the confirmation of the latest CAN message transmission (typically within ISR context). This function doesn't require any argument.
 
 ## Transmission Task integration
 
-Function  `can_task_<time>ms_NWID_NODEID_txProcess`  is generated and is in charge of triggering the transmission of the messages defined as `cyclic` or `cyclic_spontan` with their defined periods. This function needs to be invoked from a periodic task of the target OS with a period equal to parameter `CAN_tx_task_period` in milliseconds. The function name will indicate the required periodicity. For example, if `CAN_tx_task_period` is set to 10ms, then generated function will be named `can_task_10ms_NWID_NODEID_txProcess` and shall be called with such periodicity. Default value of `CAN_tx_task_period` is indeed 10ms.
+Function  `can_task_<time>ms_NWID_NODEID_txProcess`  is generated and is in charge of triggering the transmission of the messages defined as `cyclic` or `cyclic_spontan` with their defined periods. This function needs to be invoked from a periodic task of the target OS with a period equal to parameter `CAN_tx_task_period` in milliseconds. The function name will indicate the required periodicity. For example, if `CAN_tx_task_period` is set to 10ms, then the generated function will be named `can_task_10ms_NWID_NODEID_txProcess` and shall be called with such periodicity. Default value of `CAN_tx_task_period` is indeed 10ms.
 
 ### Transmission of non-cyclic messages
 
-Function `can_task_<time>ms_NWID_NODEID_txProcess` only deals with cyclic transmissions of messages. If spontaneous transmissions are required then user can invoke function `can_NWID_NODEID_transmitMsg` as required. Refer to section [Transmitting Messages](#Transmitting-Messages) for more information. 
+Function `can_task_<time>ms_NWID_NODEID_txProcess` only deals with cyclic transmissions of messages. If spontaneous transmissions are required then user shall invoke function `can_NWID_NODEID_transmitMsg` as required. Refer to section [Transmitting Messages](#Transmitting-Messages) for more information. 
 
 ## Transmission Retry Mechanism
 
@@ -552,7 +557,7 @@ Calvos CAN IL implements a queueing and retry mechanism for transmission message
 1. Invoke  `can_NWID_NODEID_txRetry` at a task level. For example, invoking this function in a 5ms periodic task will attempt a transmission retry every 5ms until all queued messages are transmitted. If it is up-to the user to define how fast to invoke this function. It can even be invoked in the same task where `CAN_tx_task_period` is called. In this last case, it is recommended to first call `can_NWID_NODEID_txRetry` and then `CAN_tx_task_period` in order to give priority to the retries.
 2. Invoke  `can_NWID_NODEID_txRetry` on event after a transmission of a CAN message by the HAL. In this option function `can_NWID_NODEID_txRetry`  can be invoked right after a CAN transmission confirmation from the HAL. For example within the TX ISR. This will lead to a retry of a queued transmission as soon as possible most likely creating a back-to-back transmission of a queued message.
 
-Which option to use (or even another one) is up-to the user to decide.
+Which option to use (or even another one) is up-to the user to decide as per its project performance needs.
 
 # Application Usage
 
@@ -576,7 +581,7 @@ Transmission messages can be in any of the following states:
 
 This states are modeled with enumeration data type `CANtxState` defined in header file *comgen\_CAN\_common.h*. 
 
-Application can read the state of a transmission message with generated macro `CAN_NWID_NODEID_get_tx_state_MESSAGENAME`. The variable receiving the macro value shall be of type `CANtxState`.
+Application can read the state of a transmission message with generated macro `CAN_NWID_NODEID_get_tx_state_MESSAGENAME`. The variable receiving the macro returned value shall be of type `CANtxState`.
 
 Example of a message transmission:
 
@@ -587,7 +592,7 @@ Example of a message transmission:
   - Message transmission type: spontan
   - Length: 5 bytes
 
-- MESSAGE12 signals: 
+- MESSAGEX signals: 
 
   - Signal\_X1: (start bit = 0, start byte = 0, length = 8)
 
@@ -616,14 +621,15 @@ void some_app_function(void)
     /* Request message 'MESSAGEX' transmission. If this message was of type
      * 'cyclic' then it will be automatically transmitted when its
      * period expires. */
-    tx_return = can_NWID_NODEID_transmitMsg(kCAN_NWID_NODEID_txMsgIdx_MESSAGEX);
+    tx_return = \
+        can_NWID_NODEID_transmitMsg(kCAN_NWID_NODEID_txMsgIdx_MESSAGEX);
 	/* Check if transmission request was taken */
     if(tx_return == kError)
     {
         /* Message was not accepted for transmission by the CAN HAL and was
          * neither queued for automatic retransmission. Application needs
-         * to manually trigger its transmission again. Probably some milliseconds
-         * later...*/
+         * to manually trigger its transmission again. Probably some 
+         * milliseconds later...*/
         do
         {
             /* Blocking API to wait for some time (OS specific), in
@@ -641,6 +647,7 @@ void some_app_function(void)
         
         /* Reaching here means message transmission was accepted. */
     }
+    /* Reaching here means message transmission was accepted. */
 }
 ```
 
@@ -648,7 +655,7 @@ void some_app_function(void)
 
 The processing of received messages is performed by function `can_NWID_NODEID_HALreceiveMsg`. That function will identify if the received message matches the expected ID and data length of a subscribed message by the node. If so, this function also copies the received data from the HAL into a unified reception buffer called `can_NWID_NODEID_RxDataBuffer`, sets the *available flags* (more information about available flags in following sections) for the received message/signals and invokes the corresponding reception callback.
 
-The application can decide to use the reception callbacks directly (typically within ISR context) or to do a polling for the reception of the messages by polling its available flags (polling is done at task level and hence out of ISR context).
+The application can decide to use the reception callbacks directly (typically within ISR context) or to do a polling for the reception of the messages by polling for its available flags (polling is done at task level and hence out of ISR context).
 
 The received data is available from the data buffer  `can_NWID_NODEID_RxDataBuffer` and can be accessed by means of generated data structures (refer to section "[CAN Data Structures](#CAN-Data-Structures)" for more details) or by means of access macros (refer to section "[CAN Access Macros](#CAN-Access-Macros)" for more details)
 
@@ -668,7 +675,7 @@ Per each subscribed message a set of message-level available flags are generated
 
 These message-level available flags can be used by the application to identify the reception of a given message. The application is responsible of consuming (clearing, setting to `0`) those available flags as needed.
 
-To read the message-level available flags, macros with name `CAN_NWID_NODEID_get_msg_avlbl_flags_MESSAGENAME` are generated. The returned value is a union of type `FlagsNative`. Once the macro is used, then each flag can be individually accessed (read, write) using the bitfield `flags` within the `FlagsNative` variable. Also the flags can be accessed as an array of bytes by means of the `all` element of the `FlagsNative` variable.
+To read the message-level available flags, macros with name `CAN_NWID_NODEID_get_msg_avlbl_flags_MESSAGENAME` are generated. The returned value is a union of type `FlagsNative`. Once the macro is used, then each flag can be individually accessed (read, write) using the bitfield `flags` within the `FlagsNative` variable. Also the flags can be accessed as a single data by means of the `all` element of the `FlagsNative` variable.
 
 It is possible to clear all message available flags at once using macro `CAN_NWID_NODEID_clr_msg_avlbl_flags_MESSAGENAME`.
 
@@ -685,7 +692,7 @@ void some_app_function(void)
     /* ---------------------------------------------- */
     /* Get msg-available flags */
     msg_avlbl_flags = CAN_NWID_NODEID_get_msg_avlbl_flags_RX_MESSAGE();
-    if(msg_avlbl_flags.all[0]) /* Checking against the first byte of the 'all' element */
+    if(msg_avlbl_flags.all) /* Checking against the 'all' element */
     {
         /* Message has been received! */
         /* Consume (clear) all message-available flags */
@@ -799,7 +806,7 @@ void some_app_function(void)
     
     /* poll for the reception of message "RX_MESSAGE" */
     /* ---------------------------------------------- */
-    /* Get msg-available flags */
+    /* Step 1: Get msg-available flags */
     msg_avlbl_flags = CAN_NWID_NODEID_get_msg_avlbl_flags_RX_MESSAGE();
     /* This function uses only one of the flags (flag0) so the other ones can be 
      * used by other 'clients' of the same message. */
@@ -809,12 +816,12 @@ void some_app_function(void)
         /* Consume (clear) only flag0 message-available flag */
         msg_avlbl_flags.flags.flag0 = 0;
         
-        /* Get the data from the RX unified buffer */
+        /* Step 2: Get the data from the RX unified buffer */
         /* Data will be copied from RX unified buffer into the local
          * CAN data structure. */
         CAN_NWID_NODEID_get_msg_RX_MESSAGE(&local_msg_data);
         
-        /* Now individual signals can be accessed from the
+        /* Step 3: Now individual signals can be accessed from the
          * local CAN data structure. */
         if(local_msg_data.s.Signal_RX == 0xAA)
         {
@@ -840,20 +847,19 @@ An example of accessing received data by using the reception *callback* is shown
  * ===========================================================================*/
 void can_NWID_NODEID_RX_MESSAGE_rx_callback(void)
 {
-	S_RX_MESSAGE local_msg_data; /* Local CAN data structure for message RX_MESSAGE */
+	uint8_t local_signal; /* Local variable for signal Signal_RX */
     
     /* There is no need to check for available flags since this
      * callback invocation means that there is already newly 
      * received data available. */
     
-    /* Get the data from the RX unified buffer */
-    /* Data will be copied from RX unified buffer into the local
-     * CAN data structure. */
-    CAN_NWID_NODEID_get_msg_RX_MESSAGE(&local_msg_data);
+    /* Direct access macros can be used in here since callback 
+     * is invoked within ISR context */
+    local_signal = CAN_NWID_NODEID_get_direct_Signal_RX();
 
     /* Now individual signals can be accessed from the
-     * local CAN data structure. */
-    if(local_msg_data.s.Signal_RX == 0xAA)
+     * local variable. */
+    if(local_signal == 0xAA)
     {
         /* Do something if received data for Signal_RX is
          * 0xAA .... */
@@ -865,7 +871,7 @@ void can_NWID_NODEID_RX_MESSAGE_rx_callback(void)
 }
 ```
 
-If for some reason, the application needs to directly read from the RX unified buffer "get direct" macros are also generated for each signal. Those macros follow the go by the name CAN\_NWID\_get\_direct\_SIGNALNAME.
+If for some reason, the application needs to directly read from the RX unified buffer "get direct" macros are also generated for each signal. Those macros follow the go by the name CAN\_NWID\_NODEID\_get\_direct\_SIGNALNAME.
 
 The "get direct" macros do operate directly over the RX unified buffer and do not have any protection related to *critical sections*, etc. Hence, is responsibility of the application to properly make use of these macros in order to avoid data corruption. More details and examples for these macros can be found in section "[Signals Direct Access Macros](#Signals-Direct-Access-Macros)".
 
@@ -949,6 +955,8 @@ void some_app_function(void)
     }
 }
 ```
+
+Transmission data can also be written directly to the TX unified buffer by means of the "update direct" macros. Refer to section "[Signals Direct Access Macros](#Signals-Direct-Access-Macros)" for more information.
 
 ## CAN Data Structures
 
@@ -1601,7 +1609,7 @@ Usage Example:
   - Signal\_112: (start bit = 0, start byte = 1, length = 32)
 
 
-Three get macros will be generated:
+Two "get direct" macros will be generated:
 
 `#define CAN_NWID_NODEID_get_direct_Signal_111()`
 
@@ -1667,7 +1675,7 @@ Usage Example:
 
   - Signal\_122: (start bit = 0, start byte = 1, length = 32)
 
-Three get macros will be generated:
+Two "update direct" macros will be generated:
 
 `#define CAN_NWID_update_direct_Signal_121()`
 
