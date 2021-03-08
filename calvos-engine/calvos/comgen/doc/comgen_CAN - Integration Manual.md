@@ -2,6 +2,8 @@
 
 This document describes how to define a CAN network within the calvos system, how to generate the corresponding source code, integrate it and use it in the user’s target project.
 
+This document applies for calvos version 0.0.2.
+
 # Preparing Calvos Engine
 
 ## Installing Calvos
@@ -58,7 +60,7 @@ Here we'll exemplify the installation of a calvos under MS Windows.
 
    `c:\>python -m calvos -v`
 
-   Version should like like: `calvos v0.0.1`
+   Version should like like: `calvos v0.0.2`
 
 ## Command Line Arguments
 
@@ -570,25 +572,74 @@ Transmission messages can be in any of the following states:
 - **Requested** (`kCANtxState_requested`): A TX message gets into this state if during a transmission request, the CAN HAL didn't accept the request and also it was not possible to queue the message for later retransmission (e.g., queue was full). In this state is recommended that the application manually performs a new transmission request.
 - **Queued** (`kCANtxState_queued`): Message was requested for transmission but was not accepted by the CAN HAL and the message got queued for later retransmission (automatic re-transmission).
 - **Transmitting** (`kCANtxState_transmitting`): Message was accepted by the CAN HAL for transmission. Message will remain in this state until its transmission is confirmed by the CAN HAL.
-- **Transmitted** (`kCANtxState_transmited`): CAN HAL confirmed the successful transmission of the message in the bus.
+- **Transmitted** (`kCANtxState_transmitted`): CAN HAL confirmed the successful transmission of the message in the bus.
 
 This states are modeled with enumeration data type `CANtxState` defined in header file *comgen\_CAN\_common.h*. 
 
-Application can read the state of a transmission message with generated macro `CAN_NWID_NODEID_get_tx_state_MESSAGENAME`. The variable receiving the macro value shall be of type `CANtxState` as in the example below.
+Application can read the state of a transmission message with generated macro `CAN_NWID_NODEID_get_tx_state_MESSAGENAME`. The variable receiving the macro value shall be of type `CANtxState`.
+
+Example of a message transmission:
+
+- Message:
+
+  - Name: MESSAGEX
+  - Message direction: transmission
+  - Message transmission type: spontan
+  - Length: 5 bytes
+
+- MESSAGE12 signals: 
+
+  - Signal\_X1: (start bit = 0, start byte = 0, length = 8)
+
+  - Signal\_X2: (start bit = 0, start byte = 1, length = 32)
 
 ```c
 void some_app_function(void)
 {
-    CANtxState tx_msg_state; /* variable for containing the tx message state */
-    
-    /* Get tx state of message "TX_MESSAGE" */
-    tx_msg_state = CAN_NWID_NODEID_get_tx_state_TX_MESSAGE();
-    /* Do something with the tx state if required, for example... */
-    if(tx_msg_state == kCANtxState_requested)
+    CalvosError tx_return; /* Hold the TX request returned value */ 
+    uint8_t my_Signal_X1; /* Local variable for signal Signal_X1 */
+    uint32_t my_Signal_X2; /* Local variable for signal Signal_X2 */ 
+
+    /* Application code to determine local values for Signals Signal_X1
+       * and Signal_X2 */
+    my_Signal_X1 = 0xDE;
+    my_Signal_X2 = 0xFE00AABB;
+
+    /* Directly update TX unified buffer with local data */
+    /* Data can also be written using S_MESSAGEX structure. Refer
+     * to section "Accessing Data of Messages" for more information. */
+    CALVOS_CRITICAL_ENTER();
+    CAN_NWID_NODEID_update_direct_Signal_X1(my_Signal_X1);
+    CAN_NWID_NODEID_update_direct_Signal_X2(my_Signal_X2);
+    CALVOS_CRITICAL_EXIT();
+
+    /* Request message 'MESSAGEX' transmission. If this message was of type
+     * 'cyclic' then it will be automatically transmitted when its
+     * period expires. */
+    tx_return = can_NWID_NODEID_transmitMsg(kCAN_NWID_NODEID_txMsgIdx_MESSAGEX);
+	/* Check if transmission request was taken */
+    if(tx_return == kError)
     {
-        /* Message was neither accepted by CAN HAL nor queued,
-         * manually trigger another transmission of it. */
-        can_NWID_NODEID_transmitMsg(kCAN_NWID_NODEID_txMsgIdx_TX_MESSAGE);
+        /* Message was not accepted for transmission by the CAN HAL and was
+         * neither queued for automatic retransmission. Application needs
+         * to manually trigger its transmission again. Probably some milliseconds
+         * later...*/
+        do
+        {
+            /* Blocking API to wait for some time (OS specific), in
+             * this example this "some_app_function" function gets 
+             * blocked for 10ms and then it continues its execution.
+             * This logic doesn't apply if task was set as periodic!!
+             * since it is not convenient to block the task by itself.
+             * This 'wait_blocking_ms' function is just illustrative,
+             * proper one from the target OS needs to be used. */
+            wait_blocking_ms(10);
+            /* Manually request message transmission again */
+            tx_return = \
+                can_NWID_NODEID_transmitMsg(kCAN_NWID_NODEID_txMsgIdx_MESSAGEX);
+        }while(tx_return == kError);
+        
+        /* Reaching here means message transmission was accepted. */
     }
 }
 ```
@@ -641,7 +692,8 @@ void some_app_function(void)
         CAN_NWID_NODEID_clr_msg_avlbl_flags_RX_MESSAGE();
         
         /* Code for getting the received data and doing something 
-         * with it goes here... */
+         * with it goes here... Refer to section 'Accessing Data of Messages'
+         * for more information. */
     }
     /* else --> Message has not been received. Do nothing */
 }
@@ -677,7 +729,7 @@ void some_app_function(void)
 
 #### Signal-Level available flags
 
-In addition to the message-available flags, a set of signal-available flags is generated per each subscribed message. In this case one signal-available flag will be generated per each signal defined for the message (if message has 3 signals, then 3 signal-available flags will be generated). Those signal-available flags can be read/cleared by a pair of generated macros:  `CAN_NWID_get_avlbl_SIGNALNAME` and `CAN_NWID_clr_avlbl_SIGNALNAME` respectively.
+In addition to the message-available flags, a set of signal-available flags is generated per each subscribed message. In this case one signal-available flag will be generated per each signal defined for the message (if message has 3 signals, then 3 signal-available flags will be generated). Those signal-available flags can be read/cleared by a pair of generated macros:  `CAN_NWID_NODEID_get_avlbl_SIGNALNAME` and `CAN_NWID_NODEID_clr_avlbl_SIGNALNAME` respectively.
 
 Example of usage for signal-available flags.
 
@@ -691,12 +743,12 @@ void some_app_function(void)
     /* poll for the reception of signal "Signal_RX" of message "RX_MESSAGE" */
     /* -------------------------------------------------------------------- */
     /* Get signal-available flag */
-    signal_avlbl_flag = CAN_NWID_get_avlbl_Signal_RX();
+    signal_avlbl_flag = CAN_NWID_NODEID_get_avlbl_Signal_RX();
     if(signal_avlbl_flag) /* Checking for arrival of signal "Signal_RX" */
     {
         /* Signal "Signal_RX" has been received! */
         /* Consume (clear) the signal-available flag */
-        CAN_NWID_clr_avlbl_Signal_RX();
+        CAN_NWID_NODEID_clr_avlbl_Signal_RX();
         
         /* Code for getting the received data of signal "Signal_RX" 
          * and doing something with it goes here... */
@@ -839,7 +891,7 @@ The suggested procedure for updating the data to be transmitted is as follows:
 
 4. If the conveyor message is cyclic, then the message transmission will be triggered automatically sending the data available in the TX unified buffer. If an spontaneous transmission is required of the newly updated data then trigger such transmission by calling function `can_NWID_NODEID_transmitMsg`.
 
-5. Check if TX message transmission is confirmed by the CAN HAL. For example, if TX message state is `kCANtxState_transmited`. Refer to section "[Getting Transmission State](#Getting Transmission State)" for more information about transmission states.
+5. Check if TX message transmission is confirmed by the CAN HAL. For example, if TX message state is `kCANtxState_transmitted`. Refer to section "[Getting Transmission State](#Getting Transmission State)" for more information about transmission states, or if the return value of `can_NWID_NODEID_transmitMsg` is `kNoError`.
 
 See following example of updating some signals for transmission based on above's procedure.
 
@@ -864,6 +916,7 @@ void some_app_function(void)
 {
     S_TX_MESSAGE local_msg_data; /* Local CAN data structure for message TX_MESSAGE */
     CANtxState tx_msg_state; /* variable for containing the tx message state */
+    CalvosError tx_return; /* Holds the return value of the TX request */
     
     /* Step 1: Get local copy from TX unified buffer */
     CAN_NWID_NODEID_get_msg_TX_MESSAGE(&local_msg_data);
@@ -881,22 +934,19 @@ void some_app_function(void)
     /* If TX_MESSAGE was cyclic, then it will be automatically
      * transmitted in its next period. In this example assuming
      * that message is spontan */
-    can_NWID_NODEID_transmitMsg(kCAN_NWID_NODEID_txMsgIdx_TX_MESSAGE);
+    tx_return = can_NWID_NODEID_transmitMsg(kCAN_NWID_NODEID_txMsgIdx_TX_MESSAGE);
     
     /* Step 5: Confirm that message was successfuly transmited */
-    /* In this example, wait 10ms then check if message tx state
-     * indicates a successful transmission, if not keep polling...*/
-    do
+    if(tx_return == kNoError)
     {
-        /* Blocking API to wait for some time (OS specific), in
-         * this example this "some_app_function" function gets 
-         * blocked for 10ms and then it continues its execution. */
-        wait_blocking_ms(10);
-        /* Get message TX state */
-        tx_msg_state = CAN_NWID_NODEID_get_tx_state_TX_MESSAGE();
-    }while(tx_msg_state != kCANtxState_transmited);
-    
-    /* Message transmission succeeded */
+    	/* Message transmission accepted */    
+    }
+    else
+    {
+        /* Message transmission neither accepted by CAN HAL nor
+         * queued. Do manual retransmission attempt some time
+         * later...*/
+    }
 }
 ```
 
@@ -1522,11 +1572,135 @@ void some_app_function(void)
 
 Macros for having direct access to the data in the TX and RX unified buffer are also generated. As their name suggests, these macros do read/write data directly over the unified buffers without any critical section protection provided by default.
 
-These are useful for example for reading data directly from within the reception callbacks (via "get direct" macros). Since these callbacks are typically called within ISR context, accessing data from the RX unified buffer also occurs in that ISR context and, hence, will presumably is done with interrupts disabled avoiding data corruption problems.
+These are useful for example for reading data directly from within the reception callbacks (via "get direct" macros). Since these callbacks are typically called within ISR context, accessing data from the RX unified buffer also occurs in that ISR context and, hence, will be presumably done with interrupts disabled avoiding data corruption problems.
 
 Application can freely use these direct access macros provided that the proper care is taken to avoid data corruption (for example by using the direct access macros within critical sections).
 
 Another use case can be to quickly modify (via an "update direct" macro) a single signal to be transmitted without needing to perform all the suggested procedure in section "[Accessing Transmission Data](#Accessing-Transmission-Data)". Again, proper care shall be taken to perform this access within a critical section and also it shall be taken into account that directly writing to multiple signals in the same message could lead to the transmission of *partially* updated messages if those are *cyclic* or *cyclic_spontan*.
 
-"Get Direct" macros
+#### "Get Direct" macros (read directly from unified buffers)
 
+Get Direct macros are generated for all non-array signals both for received and transmitted signals. These "get direct" macros retrieve the data for the given signal directly from the respective RX or TX unified buffer. These macros have the following naming convention:
+
+`#define CAN_NWID_NODEID_get_direct_SIGNALNAME()`
+
+The macro returns the value of the signal from the corresponding unified buffer.  Hence, the variable data getting this returned signal's data shall be long enough to accommodate the full signal. Gcc compiler provides basic data up-to 64-bits (`long long int`) so then any CAN signal (which can't never exceed 64-bits in standard CAN) can be accessed with a single macro statement.
+
+Usage Example:
+
+- Message:
+
+  - Name: MESSAGE11
+
+  - Length: 5 bytes
+
+- MESSAGE11 signals: 
+
+  - Signal\_111: (start bit = 0, start byte = 0, length = 8)
+
+  - Signal\_112: (start bit = 0, start byte = 1, length = 32)
+
+
+Three get macros will be generated:
+
+`#define CAN_NWID_NODEID_get_direct_Signal_111()`
+
+`#define CAN_NWID_NODEID_get_direct_Signal_112()`
+
+```c
+void some_app_function(void)
+{
+  uint8_t my_Signal_111; /* Local variable for signal Signal_111 */
+  uint32_t my_Signal_112; /* Local variable for signal Signal_112 */
+  FlagsNative msg_avlbl_flags; /* variable for containing msg-available flags */
+    
+  /* poll for the reception of message "RX_MESSAGE" */
+  /* ---------------------------------------------- */
+  /* Get msg-available flags */
+  msg_avlbl_flags = CAN_NWID_NODEID_get_msg_avlbl_flags_MESSAGE11();
+  if(msg_avlbl_flags.all)
+  {
+      /* Message has been received! */
+      /* Consume (clear) only message-available flags */
+      CAN_NWID_NODEID_clr_msg_avlbl_flags_MESSAGE11();
+      
+      /* Read signals directly from RX unified buffer.
+       * Access is done within critical section. */
+      CALVOS_CRITICAL_ENTER();
+	  my_Signal_111 = CAN_NWID_NODEID_get_direct_Signal_111();
+      my_Signal_112 = CAN_NWID_NODEID_get_direct_Signal_112();
+      CALVOS_CRITICAL_EXIT();
+      
+      /* Do something with local signal's data */
+      if(my_Signal_111 > 3)
+      {
+          /* Do something if received Signal_111 is greather than 3... */
+      }
+      
+      /* More application code goes here... */
+  }
+}
+```
+
+#### "Update Direct" macros (write directly to TX unified buffer)
+
+Update Direct macros are generated for all non-array transmission signals. These "update direct" macros write the data for the given signal directly to the TX unified buffer. "Update direct" macros are not applicable for reception signals since received signals shouldn't be updated by the user but directly by the CAN layer upon receiving them. 
+
+These "update direct" macros have the following naming convention:
+
+`#define CAN_NWID_NODEID_update_direct_SIGNALNAME(data_in)`
+
+The macro argument "data_in" is the data to be written to the TX unified buffer.
+
+Usage Example:
+
+- Message:
+
+  - Name: MESSAGE12
+  - Message direction: transmission
+  - Message transmission type: spontan
+  - Length: 5 bytes
+
+- MESSAGE12 signals: 
+
+  - Signal\_121: (start bit = 0, start byte = 0, length = 8)
+
+  - Signal\_122: (start bit = 0, start byte = 1, length = 32)
+
+Three get macros will be generated:
+
+`#define CAN_NWID_update_direct_Signal_121()`
+
+`#define CAN_NWID_update_direct_Signal_122()`
+
+```c
+void some_app_function(void)
+{
+  uint8_t my_Signal_121; /* Local variable for signal Signal_121 */
+  uint32_t my_Signal_122; /* Local variable for signal Signal_122 */
+  CalvosError tx_return; /* Hold the TX request returned value */
+    
+  /* Application code to determine local values for Signals Signal_121
+   * and Signal_122 */
+  my_Signal_121 = 0xDE;
+  my_Signal_122 = 0xFE00AABB;
+    
+  /* Directly update TX unified buffer with local data */
+  CALVOS_CRITICAL_ENTER();
+  CAN_NWID_NODEID_update_direct_Signal_121(my_Signal_121);
+  CAN_NWID_NODEID_update_direct_Signal_122(my_Signal_122);
+  CALVOS_CRITICAL_EXIT();
+    
+  /* Request message 'MESSAGE12' transmission. If this message was of type
+   * 'cyclic' then it will be automatically transmitted when its
+   * period expires. */
+  tx_return = can_NWID_NODEID_transmitMsg(kCAN_NWID_NODEID_txMsgIdx_MESSAGE12);
+  if(tx_return == kError)
+  {
+      /* Message was not accepted for transmission by the CAN HAL and was
+       * neither queued for automatic retransmission. Application needs
+       * to manually trigger its transmission again. Probably some 
+       * milliseconds later...*/
+  }
+}
+```

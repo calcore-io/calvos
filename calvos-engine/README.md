@@ -2,6 +2,8 @@
 
 Open Source SW Utilities for Embedded Systems
 
+[https://github.com/calcore-io/calvos](https://github.com/calcore-io/calvos)
+
 ## Overview
 CalvOS system is an open-source (GPL v3 license) set of software utilities for the development of embedded systems in C programming language. CalvOS generates C-code based on user defined inputs for "middleware" SW layers sitting above Hardware Abstraction Layer (HAL) and below Application Layer. This in order to speed up the development of embedded SW applications.
 
@@ -102,7 +104,7 @@ Here we'll exemplify the installation of a calvos under MS Windows.
 
    `c:\>python -m calvos -v`
 
-   Version should like like: `calvos v0.0.1`
+   Version should like like: `calvos v0.0.2`
 
 ### Command Line Arguments
 

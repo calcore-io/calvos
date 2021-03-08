@@ -478,19 +478,19 @@ if len(subnet.messages) > 0:
 						+ signal.name + "(" + array_str + "," + data_in_str + ")"
 
 			# New macro names
-			def_read_array = "CAN_" + net_name_str + "get_ptr_direct_" \
+			def_read_array = "CAN_" + net_name_str + node_name_str+"get_ptr_direct_" \
 							+ signal.name + "()"
-			def_get_direct = "CAN_"+net_name_str+"get_direct_" \
+			def_get_direct = "CAN_"+net_name_str+node_name_str+"get_direct_" \
 							+ signal.name + "()"
 
-			def_write_array = "CAN_" + net_name_str + "update_ptr_direct_" \
+			def_write_array = "CAN_" + net_name_str + node_name_str+"update_ptr_direct_" \
 							+ signal.name + "("+ data_in_str + ")"
-			def_update_direct = "CAN_"+net_name_str+"update_direct_" \
+			def_update_direct = "CAN_"+net_name_str+node_name_str+"update_direct_" \
 							+ signal.name + "(" + data_in_str + ")"
 
-			sym_avlb_get = "CAN_" + net_name_str + "get_avlbl_" \
+			sym_avlb_get = "CAN_" + net_name_str +node_name_str+ "get_avlbl_" \
 							+ signal.name + "()"
-			sym_avlb_clear = "CAN_" + net_name_str + "clr_avlbl_" \
+			sym_avlb_clear = "CAN_" + net_name_str +node_name_str+ "clr_avlbl_" \
 							+ signal.name + "()"
 
 			max_len = cg.get_str_max_len([def_read_array, def_get_direct, \
