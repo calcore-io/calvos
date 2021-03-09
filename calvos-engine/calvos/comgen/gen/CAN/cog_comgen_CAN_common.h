@@ -187,14 +187,15 @@ typedef struct{
 /* HAL tx function typedef */
 typedef CalvosError (*CANhalTxFunction)(const CANtxMsgStaticData* msg_info);
 
-/* Queueing Functions */
-CalvosError can_txQueueEnqueue(CANtxQueue* queue, const CANtxMsgStaticData* node);
-const CANtxMsgStaticData* can_txQueueGetHead(CANtxQueue* queue);
-CalvosError can_txQueueDequeue(CANtxQueue* queue, const CANtxMsgStaticData* node);
-CalvosError can_txQueueInit(CANtxQueue* queue);
-void can_clearAllAvlblFlags(const CANrxMsgStaticData* msg_struct);
-
 /* Exported Prototypes */
+/* ------------------- */
+/* Queueing Functions */
+extern CalvosError can_txQueueEnqueue(CANtxQueue* queue, const CANtxMsgStaticData* node);
+extern const CANtxMsgStaticData* can_txQueueGetHead(CANtxQueue* queue);
+extern CalvosError can_txQueueDequeue(CANtxQueue* queue, const CANtxMsgStaticData* node);
+extern CalvosError can_txQueueInit(CANtxQueue* queue);
+
+extern void can_clearAllAvlblFlags(const CANrxMsgStaticData* msg_struct);
 extern const CANrxMsgStaticData* can_traverseRxSearchTree(uint32_t msg_id, \
 		const CANrxMsgStaticData* root, \
 		uint32_t guard);

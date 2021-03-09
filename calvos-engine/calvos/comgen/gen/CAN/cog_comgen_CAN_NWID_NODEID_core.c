@@ -414,6 +414,10 @@ if len(list_of_tx_msgs) > 0:
  *
  * @param msg_id 	Id of the received message.
  * @param data_in 	Pointer to the message's received data.
+ *
+ * IMPORTANT: This function needs to be called by user's application upon
+ * indication of successful reception by the CAN HAL (typically within ISR
+ * context).
  * ===========================================================================*/
 /* [[[cog
 if len(list_of_tx_msgs) > 0:
@@ -429,20 +433,23 @@ if len(list_of_tx_msgs) > 0:
 	"""+invoke_search+"""
 	if(msg_static_data != NULL){
 		// Consider message as valid if it matches the expected length
-		if((data_len != 0u && data_len == msg_static_data->fields.len) \\
-		|| (data_len == 0u)){
-			// Copy data to buffer
-			memcpy(msg_static_data->data, data_in, msg_static_data->fields.len);
-			// Set Message available flags
-			msg_static_data->dyn->available.all = kAllOnes32;
-			// Set Signals available flags
-			if(msg_static_data->sig_avlbl_buf_len == 1){
-				*msg_static_data->sig_avlbl_flags = kAllOnes8;
-			}else{
-				for(uint32_t i=0; i < msg_static_data->sig_avlbl_buf_len; i++){
-					msg_static_data->sig_avlbl_flags[i] = kAllOnes8;
+		if(data_len == msg_static_data->fields.len){
+			if(data_len != 0){
+				// Copy data to buffer
+				memcpy(msg_static_data->data, data_in, msg_static_data->fields.len);
+				// Set Signals available flags
+				if(msg_static_data->sig_avlbl_buf_len == 1){
+					*msg_static_data->sig_avlbl_flags = kAllOnes8;
+				}else{
+					for(uint32_t i=0; i < msg_static_data->sig_avlbl_buf_len; i++){
+						msg_static_data->sig_avlbl_flags[i] = kAllOnes8;
+					}
 				}
 			}
+
+			// Set Message available flags
+			msg_static_data->dyn->available.all = kAllOnes32;
+
 			// clear timeout flag
 			msg_static_data->dyn->timedout = kFalse;
 			// Invoke rx callback
@@ -504,6 +511,8 @@ if len(list_of_tx_msgs) > 0:
 /** Function for processing cyclic CAN TX messages.
  *
  * Triggers the transmission of CAN messages set as cyclic or cyclic+spontan.
+ * IMPORTANT: This function needs to be called by user's application in a
+ * periodic task with the period indicated in this function's name.
  * ===========================================================================*/
 /* [[[cog
 if len(list_of_tx_msgs) > 0:
@@ -535,6 +544,8 @@ if len(list_of_tx_msgs) > 0:
 	function_body = """
 
 	// TODO: Implement this as a timer wheel for efficiency
+	// TODO: Group tx messages with same period in single timers rather than
+	// individual ones for efficiency.
 
 """+code_strs+"\n"
 
@@ -547,6 +558,8 @@ if len(list_of_tx_msgs) > 0:
 /** Function for processing CAN TX retry mechanism.
  *
  * Triggers transmission of queued CAN messages (retry mechanism).
+ * IMPORTANT: This function needs to be called by user's application either in
+ * a periodic task or right after a CAN transmission within ISR context.
  * ===========================================================================*/
 /* [[[cog
 if len(list_of_tx_msgs) > 0:
@@ -609,9 +622,14 @@ cog.outl(function_body+"}")
 /** Function for initialization of CAN core.
  *
  * Initializes data for CAN core functionality of current node.
+ * IMPORTANT: This function needs to be called by user's application during SW
+ * initialization phase.
  * ===========================================================================*/
 /* [[[cog
 if len(list_of_tx_msgs) > 0:
+
+	sym_hal_init_name = "can_"+net_name_str+node_name_str+"HALinit"
+
 	sym_tx_init_val = "kCAN_" + net_name_str + "TxDataInitVal"
 	sym_rx_init_val = "kCAN_" + net_name_str + "RxDataInitVal"
 
@@ -639,6 +657,9 @@ if len(list_of_tx_msgs) > 0:
 
 	// Init transmitting message
 	"""+sym_txing_msg_name+""" = NULL;
+
+	// Init CAN HAL
+	"""+sym_hal_init_name+"""();
 """
 	function_body = function_body[1:]
 	cog.outl(function_body+"}")

@@ -153,6 +153,7 @@ CalvosError can_txQueueEnqueue(CANtxQueue* queue, const CANtxMsgStaticData* node
 	CalvosError return_value = kError;
 
 	/* Queue node at the tail if there is still empty space in the queue */
+	CALVOS_CRITICAL_ENTER();
 	if(queue->length < kCANtxQueueLen){
 		if(queue->length == 0){
 			// List is empty, make tail equal to new node and tail equal to head
@@ -167,6 +168,7 @@ CalvosError can_txQueueEnqueue(CANtxQueue* queue, const CANtxMsgStaticData* node
 		queue->length++;
 		return_value = kNoError;
 	}
+	CALVOS_CRITICAL_EXIT();
 
 	return return_value;
 }
@@ -182,9 +184,11 @@ const CANtxMsgStaticData* can_txQueueGetHead(CANtxQueue* queue){
 	const CANtxMsgStaticData* return_value = NULL;
 
 	/* Queue node at the tail if there is still empty space in the queue */
+	CALVOS_CRITICAL_ENTER();
 	if(queue->length > 0){
 		return_value = queue->head;
 	}
+	CALVOS_CRITICAL_EXIT();
 
 	return return_value;
 }
@@ -201,6 +205,7 @@ CalvosError can_txQueueDequeue(CANtxQueue* queue, const CANtxMsgStaticData* node
 	CalvosError return_value = kError;
 
 	/* Dequeue node at the head if queue is not empty. */
+	CALVOS_CRITICAL_ENTER();
 	if((queue->length > 0) && (queue->head != NULL)){
 		if(node != NULL){
 			node = queue->head;
@@ -213,6 +218,7 @@ CalvosError can_txQueueDequeue(CANtxQueue* queue, const CANtxMsgStaticData* node
 		}
 		return_value = kNoError;
 	}
+	CALVOS_CRITICAL_EXIT();
 
 	return return_value;
 }
@@ -330,9 +336,14 @@ void can_commonConfirmTxMsg(const CANtxMsgStaticData* transmitting_msg, \
 
 	if(transmitting_msg != NULL){
 		// Confirm message only if the transmitted ID matches in case
-		// check_msg_id is set true. If check_msg_id is false
+		// check_msg_id is set true. If check_msg_id is false then
+		// last transmission will be confirmed but no TX callback triggered.
 		if(!check_msg_id || txd_msg_id == transmitting_msg->id){
 			transmitting_msg->dyn->state = kCANtxState_transmitted;
+			// Invoke TX callback if defined and check_msg_id is true
+			if((check_msg_id) && (transmitting_msg->tx_callback != NULL)){
+				(transmitting_msg->tx_callback)();
+			}
 			// Clears transmitting message pointer
 			transmitting_msg = NULL;
 		}

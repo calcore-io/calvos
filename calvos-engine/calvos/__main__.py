@@ -21,6 +21,7 @@ import pathlib as pl
 import shutil
 import logging
 import traceback
+import csv
 
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
@@ -304,7 +305,8 @@ USAGE
                     if args.backup is not None:
                         MAX_BKUP_COPIES = 10
                         current_bkup_copy = 0
-                        
+                        create_header = False
+
                         log.info("main","-------------- Backing up files. --------------")
                         print("INFO: Backing up C-code to be overwritten during export...")
                         backup_path =  string_to_path(args.backup)
@@ -313,19 +315,35 @@ USAGE
                                 log.info("main", " Backup path '%s' doesn't exist, creating it..." \
                                          % backup_path)
                                 cg.create_folder(backup_path)
-                            # Get backup copy number to use  
-                            for file in c_files:
-                                while current_bkup_copy <= MAX_BKUP_COPIES:
-                                    file_name = str(file.name)
-                                    if current_bkup_copy > 0:
-                                        file_name = str(current_bkup_copy) + "_" + file_name  
-                                    dest_file = backup_path / file_name
-                                    if cg.file_exists(dest_file):
-                                        # Increment copy number  
-                                        current_bkup_copy += 1
-                                    else:
-                                        # File doesn't exist, use current backup cupy number
-                                        break
+                            # Check if history file exists
+                            try:
+                                history_file_name = "backup_history.csv"
+                                history_fields = ['bkpu_set', 'store_date']
+                                history_file = backup_path / history_file_name
+                                if cg.file_exists(history_file):
+                                    # Get last stored backup set
+                                    with open(history_file, newline='') as csvfile:
+                                        reader = csv.DictReader(csvfile, fieldnames=history_fields)
+                                        for row in reader:
+                                            current_bkup_copy = row['bkpu_set']
+                                            
+                                        #current_bkup_copy = int(writer[-1][history_fields[0]])
+                                        current_bkup_copy = int(current_bkup_copy)
+                                        # increment bkup copy
+                                        if current_bkup_copy < MAX_BKUP_COPIES - 1:
+                                            current_bkup_copy += 1
+                                        else:
+                                            current_bkup_copy = 0
+                                else:
+                                    # Create history file header
+                                    create_header = True
+                                    current_bkup_copy = 0
+                            except Exception as e:
+                                current_bkup_copy = MAX_BKUP_COPIES
+                                print(("WARNING: Error accessing bkup history file (backup_history.csv). " \
+                                      + "Backed up in set number %s.") % MAX_BKUP_COPIES)
+                                log.warning(("Error accessing bkup history file (backup_history.csv). " \
+                                      + "Backed up in set number %s.") % MAX_BKUP_COPIES)
                             
                             # Backup files to be overwritten
                             file_counter = 0
@@ -343,14 +361,23 @@ USAGE
                             for file in h_files:
                                 file_name = str(file.name)
                                 file_name_dest = file_name
-                                if current_bkup_copy > 0:
-                                    file_name_dest = str(current_bkup_copy) + "_" + file_name_dest 
+                                file_name_dest = str(current_bkup_copy) + "_" + file_name_dest 
                                 orig_file = export_path / file_name
                                 dest_file = backup_path / file_name_dest
                                 if cg.file_exists(orig_file):
                                     # Copy file to backup location
                                     shutil.copy(orig_file, dest_file)
                                     file_counter += 1
+                            
+                            # Write history file with latest information
+                            with open(history_file, 'a', newline='') as csvfile:
+                                writer = csv.DictWriter(csvfile, fieldnames=history_fields)
+                                if create_header:
+                                    writer.writeheader()
+                                writer.writerow({history_fields[0] : str(current_bkup_copy), 
+                                                history_fields[1] : "\tCreated on " \
+                                                + cg.get_local_time_formatted() \
+                                                + ". " + str(file_counter) + " file(s) backed-up."})
                             
                             log.info("main", " Backup completed. '%s' file(s) backed-up." \
                                          % file_counter)
@@ -385,6 +412,8 @@ USAGE
                         log.info("main", "Export completed. '%s' file(s) exported." % file_counter)
                         print("INFO: Export completed. '%s' file(s) exported." % file_counter)
                 else:
+                    print("ERROR: Export folder '%s' doesn't exist. No export performed." \
+                             % export_path)
                     log.warning("main", "Export folder '%s' doesn't exist. No export performed." \
                              % export_path)
             

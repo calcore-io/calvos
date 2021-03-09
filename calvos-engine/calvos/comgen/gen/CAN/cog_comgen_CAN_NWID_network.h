@@ -220,12 +220,12 @@ for i, macro_name in enumerate(macro_names):
 tx_data_init_val = network.get_simple_param("CAN_tx_data_init_val")
 tx_data_init_val = cg.to_hex_string_with_suffix(tx_data_init_val)
 macro_name = "kCAN_" + net_name_str + "TxDataInitVal"
-cog.outl("#define "+macro_name+"()\t\t("+tx_data_init_val+")")
+cog.outl("#define "+macro_name+"\t\t("+tx_data_init_val+")")
 
 rx_data_init_val = network.get_simple_param("CAN_rx_data_init_val")
 rx_data_init_val = cg.to_hex_string_with_suffix(rx_data_init_val)
 macro_name = "kCAN_" + net_name_str + "RxDataInitVal"
-cog.outl("#define "+macro_name+"()\t\t("+rx_data_init_val+")\n")
+cog.outl("#define "+macro_name+"\t\t("+rx_data_init_val+")\n")
 ]]] */
 // [[[end]]]
 

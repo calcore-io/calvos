@@ -251,6 +251,7 @@ code_str = sym_hal_rx_return+" "+sym_hal_rx_name+sym_hal_rx_args+"{\n"
 cog.outl(code_str)
 
 sym_can_transmit_body="""
+	#warning "This function shall be called in user's CAN HAL rx ISR. Remove this line when done".
 	// Call RX processor function
 	"""+sym_rx_proc_func_name+"""(msg_id, data_in, data_len);
 """
@@ -259,3 +260,25 @@ cog.outl(sym_can_transmit_body)
 ]]] */
 // [[[end]]]
 
+/* ===========================================================================*/
+/** Function for initializing CAN Hardware Abstraction Layer (HAL).
+ *
+ * This function is called by can_NWID_NODEID_coreInit function and is in charge
+ * of initializing the CAN HAL for the target MCU.
+ * ===========================================================================*/
+/* [[[cog
+sym_hal_init_return = "void"
+sym_hal_init_name = "can_"+net_name_str+node_name_str+"HALinit"
+sym_hal_init_args = "(void)"
+
+code_str = sym_hal_init_return+" "+sym_hal_init_name+sym_hal_init_args+"{\n"
+cog.outl(code_str)
+
+sym_can_transmit_body="""
+	// Write user code to initialize CAN HAL in the target MCU.
+	#error "User code needed here. Remove this line when done."
+"""
+sym_can_transmit_body = sym_can_transmit_body[1:]+"}"
+cog.outl(sym_can_transmit_body)
+]]] */
+// [[[end]]]
