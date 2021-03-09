@@ -251,6 +251,7 @@ code_str = sym_hal_rx_return+" "+sym_hal_rx_name+sym_hal_rx_args+"{\n"
 cog.outl(code_str)
 
 sym_can_transmit_body="""
+	#warning "This function shall be called in user's CAN HAL rx ISR. Remove this line when done".
 	// Call RX processor function
 	"""+sym_rx_proc_func_name+"""(msg_id, data_in, data_len);
 """
