@@ -218,7 +218,7 @@ if len(list_of_rx_msgs) > 0:
 /* [[[cog
 if len(list_of_rx_msgs) > 0:
 	# Calculate padding spaces
-	sym_sig_idx_pfx = "kCAN_" + net_name_str + "sig_avlbl_idx_"
+	sym_sig_idx_pfx = "kCAN_" + net_name_str + node_name_str + "sig_avlbl_idx_"
 	macro_names = []
 	macro_values = []
 	avlbl_flags_idx = {}
@@ -240,7 +240,7 @@ if len(list_of_rx_msgs) > 0:
 	for i, macro_name in enumerate(macro_names):
 		code_string = "#define " + macro_name \
 					+ cg.gen_padding(max_len, len(macro_name)) + macro_values[i]
-		cog.outl(code_string)
+#		cog.outl(code_string)
 ]]] */
 // [[[end]]]
 
@@ -248,7 +248,7 @@ if len(list_of_rx_msgs) > 0:
 /* [[[cog
 if len(list_of_rx_msgs) > 0:
 	# Calculate padding spaces
-	sym_avlbl_buff_idx_pfx = "kCAN_" + net_name_str + "avlbl_buffer_idx_"
+	sym_avlbl_buff_idx_pfx = "kCAN_" + net_name_str + node_name_str + "avlbl_buffer_idx_"
 	macro_names = []
 	macro_values = []
 	avlbl_msg_buff_idx = {}
@@ -281,7 +281,7 @@ if len(list_of_rx_msgs) > 0:
 /* [[[cog
 if len(list_of_rx_msgs) > 0:
 	# Calculate padding spaces
-	sym_avlbl_size_idx_pfx = "kCAN_" + net_name_str + "avlbl_slot_len_"
+	sym_avlbl_size_idx_pfx = "kCAN_" + net_name_str + node_name_str + "avlbl_slot_len_"
 	macro_names = []
 	macro_values = []
 	for message in subnet.messages.values():
@@ -309,7 +309,7 @@ if len(list_of_rx_msgs) > 0:
 /* RX signals availability buffer size */
 /* [[[cog
 if len(list_of_rx_msgs) > 0:
-	sym_avlbl_buff_len = "kCAN_" + net_name_str + "avlbl_buffer_len"
+	sym_avlbl_buff_len = "kCAN_" + net_name_str + node_name_str + "avlbl_buffer_len"
 	sym_avlbl_buff_len_val = str(avlbl_buff_byte)
 
 	cog.outl("#define "+sym_avlbl_buff_len+"\t\t("+sym_avlbl_buff_len_val+"u)")

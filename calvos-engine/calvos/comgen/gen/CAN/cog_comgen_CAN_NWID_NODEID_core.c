@@ -155,7 +155,7 @@ if len(list_of_rx_msgs) > 0:
 /* [[[cog
 if len(list_of_rx_msgs) > 0:
 	sym_avlbl_buffer_name = "can_" + net_name_str + node_name_str + "avlbl_buffer"
-	sym_avlbl_buff_len = "kCAN_" + net_name_str + "avlbl_buffer_len"
+	sym_avlbl_buff_len = "kCAN_" + net_name_str + node_name_str + "avlbl_buffer_len"
 	code_str = cg.get_dtv(8) + " " + sym_avlbl_buffer_name + "[" + sym_avlbl_buff_len + "];"
 	cog.outl(code_str)
 ]]] */
@@ -166,7 +166,7 @@ if len(list_of_rx_msgs) > 0:
 /* [[[cog
 if len(list_of_rx_msgs) > 0:
 	# Estimate size of
-	sym_sig_idx_pfx = "kCAN_" + net_name_str + "sig_avlbl_idx_"
+	sym_sig_idx_pfx = "kCAN_" + net_name_str + node_name_str + "sig_avlbl_idx_"
 	macro_names = []
 	macro_values = []
 	for message in subnet.messages.values():
@@ -220,8 +220,8 @@ if len(list_of_rx_msgs) > 0:
 	callback_rx_sufix = "_rx_callback"
 	callback_tout_sufix = "_timeout_callback"
 
-	sym_avlbl_buff_idx_pfx = "kCAN_" + net_name_str + "avlbl_buffer_idx_"
-	sym_avlbl_size_idx_pfx = "kCAN_" + net_name_str + "avlbl_slot_len_"
+	sym_avlbl_buff_idx_pfx = "kCAN_" + net_name_str + node_name_str + "avlbl_buffer_idx_"
+	sym_avlbl_size_idx_pfx = "kCAN_" + net_name_str + node_name_str + "avlbl_slot_len_"
 
 	array_data = []
 	data_idx = 0

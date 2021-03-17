@@ -125,7 +125,7 @@ if len(list_of_rx_msgs) > 0:
 	# Rx available buffer
 	# -------------------
 	sym_avlbl_buffer_name = "can_" + net_name_str + node_name_str + "avlbl_buffer"
-	sym_avlbl_buff_len = "kCAN_" + net_name_str + "avlbl_buffer_len"
+	sym_avlbl_buff_len = "kCAN_" + net_name_str + node_name_str + "avlbl_buffer_len"
 	code_str = "extern " + cg.get_dtv(8) + " " \
 			   + sym_avlbl_buffer_name + "[" + sym_avlbl_buff_len + "];"
 	cog.outl(code_str)
