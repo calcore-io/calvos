@@ -1,0 +1,41 @@
+<?xml version="1.0" ?>
+<!--GENERATED FILE, PLEASE DO NOT EDIT!!!--><EXT object="Use Case Analysis" version="4">
+  <OBJECT>
+    <ID name="Use Case Analysis" mc="Standard.Package" uid="5ef30a45-ad1f-463f-ba1b-2b1bcf710f6e"/>
+    <PID name="Calvos Engine" mc="Standard.Package" uid="396982d8-5be0-4e3d-a8c9-3f9209643c99"/>
+    <ATTRIBUTES>
+      <ATT name="IsInstantiable">false</ATT>
+      <ATT name="IsAbstract">false</ATT>
+      <ATT name="IsLeaf">false</ATT>
+      <ATT name="IsRoot">false</ATT>
+      <ATT name="Visibility">Public</ATT>
+      <ATT name="Name"><![CDATA[Use Case Analysis]]></ATT>
+      <ATT name="status">1970354901745664</ATT>
+    </ATTRIBUTES>
+    <DEPENDENCIES>
+      <COMP relation="OwnedElement">
+        <COMPID name="User" mc="Standard.Actor" uid="3d327a7e-6807-4fc8-a5a1-44e7271160af"/>
+        <COMPID name="Configure project" mc="Standard.UseCase" uid="b74d64cd-dbf1-4231-98fd-95bdb4cc3e95"/>
+        <COMPID name="Generate project" mc="Standard.UseCase" uid="9bac264e-6c4b-4bd5-a923-025b8ee2e63b"/>
+        <COMPID name="Validate project" mc="Standard.UseCase" uid="ec9cd756-e119-4f69-8937-ede38b381717"/>
+        <COMPID name="Develop an engine feature" mc="Standard.UseCase" uid="8892445a-d15c-42cf-a4d4-a8dfe4e1a50b"/>
+        <COMPID name="Develop an engine component" mc="Standard.UseCase" uid="6446ba76-5d9c-4e4b-bba7-d06b4306507b"/>
+        <COMPID name="Developer" mc="Standard.Actor" uid="febddd97-1400-4e8e-b263-1b6165029d4b"/>
+        <COMPID name="Retrieve available components" mc="Standard.UseCase" uid="6afd5f1d-497a-46ef-ae7f-9f147f3c24a0"/>
+        <COMPID name="Select components" mc="Standard.UseCase" uid="a1e6e39c-e877-49e7-a9c8-4b0022ade3ae"/>
+        <COMPID name="Define Platform Characteristics" mc="Standard.UseCase" uid="8f14312c-7110-47d0-b47e-f1751bfa96f8"/>
+        <COMPID name="Configure Components" mc="Standard.UseCase" uid="f4407529-a2c8-48ec-9555-498b6af38b91"/>
+        <COMPID name="Configure Engine" mc="Standard.UseCase" uid="b3d9761a-c29d-42f1-a419-31dcd9d9841c"/>
+        <COMPID name="Start project generation" mc="Standard.UseCase" uid="846f80a6-73c7-4e15-83bf-a5a0f306787c"/>
+        <COMPID name="Pause project generation" mc="Standard.UseCase" uid="1fcb26ec-1b12-4a50-95c6-91ec1e37a51d"/>
+        <COMPID name="Cancel project generation" mc="Standard.UseCase" uid="00527dff-fb2c-4cfe-996d-7d4c54628dfc"/>
+        <COMPID name="Get generation log" mc="Standard.UseCase" uid="7730f9bc-4da5-488f-ad5b-ee7166577e25"/>
+      </COMP>
+      <COMP relation="Product">
+        <COMPID name="ucd_top_use_cases" mc="Standard.UseCaseDiagram" uid="a8915fb9-6b01-4cb1-8947-d673464f33c6"/>
+        <COMPID name="ucd_user_configure_project" mc="Standard.UseCaseDiagram" uid="2a393360-dfdb-4ad8-9203-3f71f0f8d29a"/>
+        <COMPID name="ucd_user_generate_project" mc="Standard.UseCaseDiagram" uid="c2ee8459-f706-4860-b631-8338626218e3"/>
+      </COMP>
+    </DEPENDENCIES>
+  </OBJECT>
+</EXT>

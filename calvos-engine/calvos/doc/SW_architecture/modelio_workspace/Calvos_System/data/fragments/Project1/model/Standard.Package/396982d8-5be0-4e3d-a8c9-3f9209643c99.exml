@@ -1,0 +1,21 @@
+<?xml version="1.0" ?>
+<!--GENERATED FILE, PLEASE DO NOT EDIT!!!--><EXT object="Calvos Engine" version="4">
+  <OBJECT>
+    <ID name="Calvos Engine" mc="Standard.Package" uid="396982d8-5be0-4e3d-a8c9-3f9209643c99"/>
+    <PID name="Calvos System" mc="Standard.Project" uid="e1040adc-1de3-4e7f-9a94-6ed49555a764"/>
+    <ATTRIBUTES>
+      <ATT name="IsInstantiable">false</ATT>
+      <ATT name="IsAbstract">false</ATT>
+      <ATT name="IsLeaf">false</ATT>
+      <ATT name="IsRoot">false</ATT>
+      <ATT name="Visibility">Public</ATT>
+      <ATT name="Name"><![CDATA[Calvos Engine]]></ATT>
+      <ATT name="status">1970354901745664</ATT>
+    </ATTRIBUTES>
+    <DEPENDENCIES>
+      <COMP relation="OwnedElement">
+        <COMPID name="Use Case Analysis" mc="Standard.Package" uid="5ef30a45-ad1f-463f-ba1b-2b1bcf710f6e"/>
+      </COMP>
+    </DEPENDENCIES>
+  </OBJECT>
+</EXT>
