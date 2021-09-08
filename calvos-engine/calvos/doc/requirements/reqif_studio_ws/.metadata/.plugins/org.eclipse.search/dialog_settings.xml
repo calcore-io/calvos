@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<section name="SearchDialog.ScopePart">
+		<item value="0" key="scope"/>
+	</section>
+	<section name="Search">
+		<list key="Search.processedPageIds">
+			<item value="org.eclipse.rmf.reqif10.search.filter.ui.page"/>
+			<item value="org.eclipse.rmf.reqif10.search.ui.page.reqif"/>
+			<item value="org.eclipse.search.internal.ui.text.TextSearchPage"/>
+		</list>
+		<list key="Search.enabledPageIds">
+			<item value="org.eclipse.rmf.reqif10.search.filter.ui.page"/>
+			<item value="org.eclipse.rmf.reqif10.search.ui.page.reqif"/>
+			<item value="org.eclipse.search.internal.ui.text.TextSearchPage"/>
+		</list>
+	</section>
+	<section name="SearchDialog">
+		<item value="org.eclipse.rmf.reqif10.search.ui.page.reqif" key="PREVIOUS_PAGE"/>
+	</section>
+	<section name="DialogBounds_SearchDialog">
+		<item value="467" key="DIALOG_WIDTH"/>
+		<item value="1|Segoe UI|9.0|0|WINDOWS|1|-12|0|0|0|400|0|0|0|1|0|0|0|0|Segoe UI" key="DIALOG_FONT_NAME"/>
+		<item value="380" key="DIALOG_HEIGHT"/>
+		<item value="735" key="DIALOG_X_ORIGIN"/>
+		<item value="316" key="DIALOG_Y_ORIGIN"/>
+	</section>
+</section>

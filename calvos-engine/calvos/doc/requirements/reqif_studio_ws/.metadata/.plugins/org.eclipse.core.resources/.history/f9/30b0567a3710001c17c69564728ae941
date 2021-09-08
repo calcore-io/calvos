@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<REQ-IF xmlns="http://www.omg.org/spec/ReqIF/20110401/reqif.xsd" xmlns:configuration="http://eclipse.org/rmf/pror/toolextensions/1.0" xmlns:id="http://pror.org/presentation/id" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <THE-HEADER>
+    <REQ-IF-HEADER IDENTIFIER="_1Dhm4RA1Eeyqk_JaTSRGpw">
+      <COMMENT>Created by: carlo</COMMENT>
+      <CREATION-TIME>2021-09-07T18:46:31.936-05:00</CREATION-TIME>
+      <REQ-IF-TOOL-ID>ReqIF Studio (https://reqif.academy)</REQ-IF-TOOL-ID>
+      <REQ-IF-VERSION>1.0</REQ-IF-VERSION>
+      <SOURCE-TOOL-ID>ReqIF Studio (https://reqif.academy)</SOURCE-TOOL-ID>
+      <TITLE>ReqIF10_Model</TITLE>
+    </REQ-IF-HEADER>
+  </THE-HEADER>
+  <CORE-CONTENT>
+    <REQ-IF-CONTENT>
+      <DATATYPES>
+        <DATATYPE-DEFINITION-STRING IDENTIFIER="_1Dhm4xA1Eeyqk_JaTSRGpw" LAST-CHANGE="2021-09-07T18:46:31.936-05:00" LONG-NAME="T_String32k" MAX-LENGTH="32000"/>
+        <DATATYPE-DEFINITION-STRING IDENTIFIER="_1Dhm5BA1Eeyqk_JaTSRGpw" LAST-CHANGE="2021-09-07T18:46:31.936-05:00" LONG-NAME="T_String32k_SO_ForeignId" MAX-LENGTH="32000"/>
+        <DATATYPE-DEFINITION-XHTML IDENTIFIER="_1Dhm5RA1Eeyqk_JaTSRGpw" LAST-CHANGE="2021-09-07T18:46:31.936-05:00" LONG-NAME="T_Xhtml_SO_ChapterName"/>
+        <DATATYPE-DEFINITION-XHTML IDENTIFIER="_1Dhm5hA1Eeyqk_JaTSRGpw" LAST-CHANGE="2021-09-07T18:46:31.936-05:00" LONG-NAME="T_Xhtml_SO_Text"/>
+        <DATATYPE-DEFINITION-XHTML IDENTIFIER="_1Dhm5xA1Eeyqk_JaTSRGpw" LAST-CHANGE="2021-09-07T18:46:31.936-05:00" LONG-NAME="T_Xhtml_Spec_Description"/>
+        <DATATYPE-DEFINITION-XHTML IDENTIFIER="_1Dhm6BA1Eeyqk_JaTSRGpw" LAST-CHANGE="2021-09-07T18:46:31.936-05:00" LONG-NAME="T_Xhtml_SR_Description"/>
+        <DATATYPE-DEFINITION-STRING IDENTIFIER="_1Dhm6RA1Eeyqk_JaTSRGpw" LAST-CHANGE="2021-09-07T18:46:31.936-05:00" LONG-NAME="T_String32k_SR_ForeignId" MAX-LENGTH="32000"/>
+      </DATATYPES>
+      <SPEC-TYPES>
+        <SPEC-OBJECT-TYPE IDENTIFIER="_1Dhm6hA1Eeyqk_JaTSRGpw" LAST-CHANGE="2021-09-07T18:46:31.936-05:00" LONG-NAME="Requirement Type">
+          <SPEC-ATTRIBUTES>
+            <ATTRIBUTE-DEFINITION-STRING IDENTIFIER="_1Dhm6xA1Eeyqk_JaTSRGpw" LAST-CHANGE="2021-09-07T18:46:31.936-05:00" LONG-NAME="ReqIF.ForeignID">
+              <TYPE>
+                <DATATYPE-DEFINITION-STRING-REF>_1Dhm5BA1Eeyqk_JaTSRGpw</DATATYPE-DEFINITION-STRING-REF>
+              </TYPE>
+            </ATTRIBUTE-DEFINITION-STRING>
+            <ATTRIBUTE-DEFINITION-XHTML IDENTIFIER="_1Dhm7BA1Eeyqk_JaTSRGpw" LAST-CHANGE="2021-09-07T18:46:31.936-05:00" LONG-NAME="ReqIF.ChapterName">
+              <TYPE>
+                <DATATYPE-DEFINITION-XHTML-REF>_1Dhm5RA1Eeyqk_JaTSRGpw</DATATYPE-DEFINITION-XHTML-REF>
+              </TYPE>
+            </ATTRIBUTE-DEFINITION-XHTML>
+            <ATTRIBUTE-DEFINITION-XHTML IDENTIFIER="_1Dhm7RA1Eeyqk_JaTSRGpw" LAST-CHANGE="2021-09-07T18:46:31.936-05:00" LONG-NAME="ReqIF.Text">
+              <TYPE>
+                <DATATYPE-DEFINITION-XHTML-REF>_1Dhm5hA1Eeyqk_JaTSRGpw</DATATYPE-DEFINITION-XHTML-REF>
+              </TYPE>
+            </ATTRIBUTE-DEFINITION-XHTML>
+          </SPEC-ATTRIBUTES>
+        </SPEC-OBJECT-TYPE>
+        <SPECIFICATION-TYPE IDENTIFIER="_1Dhm7hA1Eeyqk_JaTSRGpw" LAST-CHANGE="2021-09-07T18:46:31.936-05:00" LONG-NAME="Specification Type">
+          <SPEC-ATTRIBUTES>
+            <ATTRIBUTE-DEFINITION-XHTML IDENTIFIER="_1Dhm7xA1Eeyqk_JaTSRGpw" LAST-CHANGE="2021-09-07T18:46:31.936-05:00" LONG-NAME="ReqIF.Description">
+              <TYPE>
+                <DATATYPE-DEFINITION-XHTML-REF>_1Dhm5xA1Eeyqk_JaTSRGpw</DATATYPE-DEFINITION-XHTML-REF>
+              </TYPE>
+            </ATTRIBUTE-DEFINITION-XHTML>
+          </SPEC-ATTRIBUTES>
+        </SPECIFICATION-TYPE>
+        <SPEC-RELATION-TYPE IDENTIFIER="_1Dhm8BA1Eeyqk_JaTSRGpw" LAST-CHANGE="2021-09-07T18:46:31.936-05:00" LONG-NAME="SpecRealtion Type">
+          <SPEC-ATTRIBUTES>
+            <ATTRIBUTE-DEFINITION-XHTML IDENTIFIER="_1Dhm8RA1Eeyqk_JaTSRGpw" LAST-CHANGE="2021-09-07T18:46:31.936-05:00" LONG-NAME="ReqIF.Description">
+              <TYPE>
+                <DATATYPE-DEFINITION-XHTML-REF>_1Dhm6BA1Eeyqk_JaTSRGpw</DATATYPE-DEFINITION-XHTML-REF>
+              </TYPE>
+            </ATTRIBUTE-DEFINITION-XHTML>
+            <ATTRIBUTE-DEFINITION-STRING IDENTIFIER="_1Dhm8hA1Eeyqk_JaTSRGpw" LAST-CHANGE="2021-09-07T18:46:31.936-05:00" LONG-NAME="ReqIF.ForeignID">
+              <TYPE>
+                <DATATYPE-DEFINITION-STRING-REF>_1Dhm6RA1Eeyqk_JaTSRGpw</DATATYPE-DEFINITION-STRING-REF>
+              </TYPE>
+            </ATTRIBUTE-DEFINITION-STRING>
+          </SPEC-ATTRIBUTES>
+        </SPEC-RELATION-TYPE>
+      </SPEC-TYPES>
+      <SPEC-OBJECTS>
+        <SPEC-OBJECT IDENTIFIER="_1Dhm8xA1Eeyqk_JaTSRGpw" LAST-CHANGE="2021-09-07T18:46:31.936-05:00">
+          <VALUES>
+            <ATTRIBUTE-VALUE-XHTML>
+              <DEFINITION>
+                <ATTRIBUTE-DEFINITION-XHTML-REF>_1Dhm7BA1Eeyqk_JaTSRGpw</ATTRIBUTE-DEFINITION-XHTML-REF>
+              </DEFINITION>
+              <THE-VALUE>
+                <xhtml:div>Title Here</xhtml:div>
+              </THE-VALUE>
+            </ATTRIBUTE-VALUE-XHTML>
+            <ATTRIBUTE-VALUE-STRING THE-VALUE="REQ-1">
+              <DEFINITION>
+                <ATTRIBUTE-DEFINITION-STRING-REF>_1Dhm6xA1Eeyqk_JaTSRGpw</ATTRIBUTE-DEFINITION-STRING-REF>
+              </DEFINITION>
+            </ATTRIBUTE-VALUE-STRING>
+          </VALUES>
+          <TYPE>
+            <SPEC-OBJECT-TYPE-REF>_1Dhm6hA1Eeyqk_JaTSRGpw</SPEC-OBJECT-TYPE-REF>
+          </TYPE>
+        </SPEC-OBJECT>
+        <SPEC-OBJECT IDENTIFIER="_1Dhm9xA1Eeyqk_JaTSRGpw" LAST-CHANGE="2021-09-07T18:46:31.936-05:00">
+          <VALUES>
+            <ATTRIBUTE-VALUE-XHTML>
+              <DEFINITION>
+                <ATTRIBUTE-DEFINITION-XHTML-REF>_1Dhm7RA1Eeyqk_JaTSRGpw</ATTRIBUTE-DEFINITION-XHTML-REF>
+              </DEFINITION>
+              <THE-VALUE>
+                <xhtml:div>Text Here</xhtml:div>
+              </THE-VALUE>
+            </ATTRIBUTE-VALUE-XHTML>
+            <ATTRIBUTE-VALUE-STRING THE-VALUE="REQ-2">
+              <DEFINITION>
+                <ATTRIBUTE-DEFINITION-STRING-REF>_1Dhm6xA1Eeyqk_JaTSRGpw</ATTRIBUTE-DEFINITION-STRING-REF>
+              </DEFINITION>
+            </ATTRIBUTE-VALUE-STRING>
+          </VALUES>
+          <TYPE>
+            <SPEC-OBJECT-TYPE-REF>_1Dhm6hA1Eeyqk_JaTSRGpw</SPEC-OBJECT-TYPE-REF>
+          </TYPE>
+        </SPEC-OBJECT>
+      </SPEC-OBJECTS>
+      <SPECIFICATIONS>
+        <SPECIFICATION IDENTIFIER="_1Dhm-xA1Eeyqk_JaTSRGpw" LAST-CHANGE="2021-09-07T18:46:31.936-05:00" LONG-NAME="Requirements Document">
+          <VALUES>
+            <ATTRIBUTE-VALUE-XHTML>
+              <DEFINITION>
+                <ATTRIBUTE-DEFINITION-XHTML-REF>_1Dhm7xA1Eeyqk_JaTSRGpw</ATTRIBUTE-DEFINITION-XHTML-REF>
+              </DEFINITION>
+              <THE-VALUE>
+                <xhtml:div>Requirements Document</xhtml:div>
+              </THE-VALUE>
+            </ATTRIBUTE-VALUE-XHTML>
+          </VALUES>
+          <TYPE>
+            <SPECIFICATION-TYPE-REF>_1Dhm7hA1Eeyqk_JaTSRGpw</SPECIFICATION-TYPE-REF>
+          </TYPE>
+          <CHILDREN>
+            <SPEC-HIERARCHY IDENTIFIER="_1Dhm_xA1Eeyqk_JaTSRGpw" LAST-CHANGE="2021-09-07T18:46:31.936-05:00">
+              <OBJECT>
+                <SPEC-OBJECT-REF>_1Dhm8xA1Eeyqk_JaTSRGpw</SPEC-OBJECT-REF>
+              </OBJECT>
+            </SPEC-HIERARCHY>
+            <SPEC-HIERARCHY IDENTIFIER="_1DhnABA1Eeyqk_JaTSRGpw" LAST-CHANGE="2021-09-07T18:46:31.936-05:00">
+              <OBJECT>
+                <SPEC-OBJECT-REF>_1Dhm9xA1Eeyqk_JaTSRGpw</SPEC-OBJECT-REF>
+              </OBJECT>
+            </SPEC-HIERARCHY>
+          </CHILDREN>
+        </SPECIFICATION>
+      </SPECIFICATIONS>
+    </REQ-IF-CONTENT>
+  </CORE-CONTENT>
+  <TOOL-EXTENSIONS>
+    <REQ-IF-TOOL-EXTENSION>
+      <configuration:ProrToolExtension>
+        <configuration:generalConfiguration>
+          <configuration:ProrGeneralConfiguration>
+            <configuration:labelConfiguration>
+              <configuration:LabelConfiguration>
+                <defaultLabel>ReqIF.Description</defaultLabel>
+                <defaultLabel>ReqIF.ForeignID</defaultLabel>
+              </configuration:LabelConfiguration>
+            </configuration:labelConfiguration>
+          </configuration:ProrGeneralConfiguration>
+        </configuration:generalConfiguration>
+        <configuration:presentationConfigurations>
+          <configuration:ProrPresentationConfigurations>
+            <configuration:presentationConfigurations>
+              <id:IdConfiguration datatype="_1Dhm5BA1Eeyqk_JaTSRGpw" prefix="REQ-" count="2"/>
+              <id:IdConfiguration datatype="_1Dhm6RA1Eeyqk_JaTSRGpw" prefix="LNK-" count="0"/>
+            </configuration:presentationConfigurations>
+          </configuration:ProrPresentationConfigurations>
+        </configuration:presentationConfigurations>
+      </configuration:ProrToolExtension>
+    </REQ-IF-TOOL-EXTENSION>
+  </TOOL-EXTENSIONS>
+</REQ-IF>
