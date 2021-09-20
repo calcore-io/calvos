@@ -29,7 +29,12 @@
         <COMPID name="Start project generation" mc="Standard.UseCase" uid="846f80a6-73c7-4e15-83bf-a5a0f306787c"/>
         <COMPID name="Pause project generation" mc="Standard.UseCase" uid="1fcb26ec-1b12-4a50-95c6-91ec1e37a51d"/>
         <COMPID name="Cancel project generation" mc="Standard.UseCase" uid="00527dff-fb2c-4cfe-996d-7d4c54628dfc"/>
-        <COMPID name="Get generation log" mc="Standard.UseCase" uid="7730f9bc-4da5-488f-ad5b-ee7166577e25"/>
+        <COMPID name="Get log file" mc="Standard.UseCase" uid="7730f9bc-4da5-488f-ad5b-ee7166577e25"/>
+        <COMPID name="Generate log file" mc="Standard.UseCase" uid="c24fe478-9126-42bf-a124-2c2856a5e812"/>
+        <COMPID name="Export generated files" mc="Standard.UseCase" uid="89d788e1-c781-46ed-93bc-f02746f537b4"/>
+        <COMPID name="Backup target files" mc="Standard.UseCase" uid="e9f1f0cf-216d-4fcc-9525-eefed1df6c4b"/>
+        <COMPID name="Configure Demo project" mc="Standard.UseCase" uid="3fb515db-98ba-4509-8f56-ff720697c155"/>
+        <COMPID name="Configure default components" mc="Standard.UseCase" uid="0bafd9cc-acef-4c00-8e85-f01f5436018e"/>
       </COMP>
       <COMP relation="Product">
         <COMPID name="ucd_top_use_cases" mc="Standard.UseCaseDiagram" uid="a8915fb9-6b01-4cb1-8947-d673464f33c6"/>

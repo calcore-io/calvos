@@ -1,6 +1,8 @@
-#Tue Sep 07 19:50:31 CDT 2021
+#Mon Sep 20 14:33:11 CDT 2021
+org.modelio.app.diagram.editor.OpenedDiagrams5='Activity diagram' {bded9c44-9e4f-4d52-8a47-a3d4da47ad74} Standard.ActivityDiagram
 org.modelio.app.diagram.editor.OpenedDiagrams4='act_discover_components' {a8964e0a-90c7-4641-895a-732eab4dfb0f} Standard.ActivityDiagram
 org.modelio.app.diagram.editor.OpenedDiagrams3='acd_retrieve_components_1' {16790189-d250-4296-a485-415896f8eeac} Standard.ActivityDiagram
 org.modelio.app.diagram.editor.OpenedDiagrams2='ucd_user_generate_project' {c2ee8459-f706-4860-b631-8338626218e3} Standard.UseCaseDiagram
 org.modelio.app.diagram.editor.OpenedDiagrams1='ucd_user_configure_project' {2a393360-dfdb-4ad8-9203-3f71f0f8d29a} Standard.UseCaseDiagram
 org.modelio.app.diagram.editor.OpenedDiagrams0='ucd_top_use_cases' {a8915fb9-6b01-4cb1-8947-d673464f33c6} Standard.UseCaseDiagram
+org.modelio.app.diagram.editor.OpenedDiagrams6='Activity diagram' {0fa6f02d-268f-42cf-a5e8-1b3b0bb6b6fe} Standard.ActivityDiagram

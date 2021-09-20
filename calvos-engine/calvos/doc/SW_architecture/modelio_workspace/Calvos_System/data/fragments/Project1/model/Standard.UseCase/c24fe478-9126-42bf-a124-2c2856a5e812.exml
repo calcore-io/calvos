@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
-<!--GENERATED FILE, PLEASE DO NOT EDIT!!!--><EXT object="Generate project" version="4">
+<!--GENERATED FILE, PLEASE DO NOT EDIT!!!--><EXT object="Generate log file" version="4">
   <OBJECT>
-    <ID name="Generate project" mc="Standard.UseCase" uid="9bac264e-6c4b-4bd5-a923-025b8ee2e63b"/>
+    <ID name="Generate log file" mc="Standard.UseCase" uid="c24fe478-9126-42bf-a124-2c2856a5e812"/>
     <PID name="Use Case Analysis" mc="Standard.Package" uid="5ef30a45-ad1f-463f-ba1b-2b1bcf710f6e"/>
     <ATTRIBUTES>
       <ATT name="IsElementary">false</ATT>
@@ -9,41 +9,13 @@
       <ATT name="IsLeaf">false</ATT>
       <ATT name="IsRoot">false</ATT>
       <ATT name="Visibility">Public</ATT>
-      <ATT name="Name"><![CDATA[Generate project]]></ATT>
+      <ATT name="Name"><![CDATA[Generate log file]]></ATT>
       <ATT name="status">1970354901745664</ATT>
     </ATTRIBUTES>
     <DEPENDENCIES>
-      <COMP relation="Used">
-        <OBJECT>
-          <ID name="UseCaseDependency" mc="Standard.UseCaseDependency" uid="f9ac1f4d-34b4-497f-b1ba-6c207b66943d"/>
-          <ATTRIBUTES>
-            <ATT name="Name"><![CDATA[UseCaseDependency]]></ATT>
-            <ATT name="status">1970354901745664</ATT>
-          </ATTRIBUTES>
-          <DEPENDENCIES>
-            <LINK relation="Target">
-              <ID name="Generate log file" mc="Standard.UseCase" uid="c24fe478-9126-42bf-a124-2c2856a5e812"/>
-            </LINK>
-            <LINK relation="Extension">
-              <FOREIGNID name="include" mc="Infrastructure.Stereotype" uid="00000000-0000-9c49-0000-000000000000"/>
-            </LINK>
-          </DEPENDENCIES>
-        </OBJECT>
-      </COMP>
-      <COMP relation="OwnedExtension">
-        <OBJECT>
-          <ID name="gen_control" mc="Standard.ExtensionPoint" uid="f172aa9a-2875-46af-b8f5-c91bd56388b2"/>
-          <ATTRIBUTES>
-            <ATT name="Visibility">Public</ATT>
-            <ATT name="Name"><![CDATA[gen_control]]></ATT>
-            <ATT name="status">1970354901745664</ATT>
-          </ATTRIBUTES>
-          <DEPENDENCIES></DEPENDENCIES>
-        </OBJECT>
-      </COMP>
       <COMP relation="Descriptor">
         <OBJECT>
-          <ID name="" mc="Infrastructure.Note" uid="c6f6bae2-9700-4c3e-92be-df885b7fcff3"/>
+          <ID name="" mc="Infrastructure.Note" uid="d5363fac-568f-444e-9b7a-d3ca61b360ef"/>
           <ATTRIBUTES>
             <ATT name="Content"><![CDATA[...]]></ATT>
             <ATT name="MimeType"><![CDATA[text/plain]]></ATT>
@@ -57,7 +29,7 @@
           </DEPENDENCIES>
         </OBJECT>
         <OBJECT>
-          <ID name="" mc="Infrastructure.Note" uid="195018bf-7b20-4847-9a59-a2d76b1f7fd9"/>
+          <ID name="" mc="Infrastructure.Note" uid="c11ba444-f55c-4d34-b0a2-2636465c7787"/>
           <ATTRIBUTES>
             <ATT name="Content"><![CDATA[...]]></ATT>
             <ATT name="MimeType"><![CDATA[text/plain]]></ATT>
@@ -71,7 +43,7 @@
           </DEPENDENCIES>
         </OBJECT>
         <OBJECT>
-          <ID name="" mc="Infrastructure.Note" uid="aece5767-b152-4346-b316-348635f49030"/>
+          <ID name="" mc="Infrastructure.Note" uid="4966804e-d398-452a-96f0-e39c2a6b0e03"/>
           <ATTRIBUTES>
             <ATT name="Content"><![CDATA[...]]></ATT>
             <ATT name="MimeType"><![CDATA[text/plain]]></ATT>
@@ -85,7 +57,7 @@
           </DEPENDENCIES>
         </OBJECT>
         <OBJECT>
-          <ID name="" mc="Infrastructure.Note" uid="b4ace3b0-ddf8-4f1d-ac9c-577f4f88dc4e"/>
+          <ID name="" mc="Infrastructure.Note" uid="aa868b8d-2417-4595-bbd3-b8698ea2edd9"/>
           <ATTRIBUTES>
             <ATT name="Content"><![CDATA[...]]></ATT>
             <ATT name="MimeType"><![CDATA[text/plain]]></ATT>
@@ -99,7 +71,7 @@
           </DEPENDENCIES>
         </OBJECT>
         <OBJECT>
-          <ID name="" mc="Infrastructure.Note" uid="323c80bb-b2dc-4190-bbe6-ad01eed37b9a"/>
+          <ID name="" mc="Infrastructure.Note" uid="d00201ee-b03e-46f9-8b26-51d7d37ff0d4"/>
           <ATTRIBUTES>
             <ATT name="Content"><![CDATA[...]]></ATT>
             <ATT name="MimeType"><![CDATA[text/plain]]></ATT>
@@ -113,7 +85,7 @@
           </DEPENDENCIES>
         </OBJECT>
         <OBJECT>
-          <ID name="" mc="Infrastructure.Note" uid="01643cd4-5a47-4aad-a110-10bf73783416"/>
+          <ID name="" mc="Infrastructure.Note" uid="31089bf3-4f82-4e59-942e-14e93f8259b8"/>
           <ATTRIBUTES>
             <ATT name="Content"><![CDATA[...]]></ATT>
             <ATT name="MimeType"><![CDATA[text/plain]]></ATT>

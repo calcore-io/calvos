@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ASCII"?>
 <application:Application xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:advanced="http://www.eclipse.org/ui/2010/UIModel/application/ui/advanced" xmlns:application="http://www.eclipse.org/ui/2010/UIModel/application" xmlns:basic="http://www.eclipse.org/ui/2010/UIModel/application/ui/basic" xmlns:menu="http://www.eclipse.org/ui/2010/UIModel/application/ui/menu" xmi:id="_kIfpIRA1Eeyqk_JaTSRGpw" elementId="org.eclipse.e4.legacy.ide.application" contributorURI="platform:/plugin/org.eclipse.ui.workbench" selectedElement="_kIfpIhA1Eeyqk_JaTSRGpw" bindingContexts="_kIfpKBA1Eeyqk_JaTSRGpw">
-  <persistedState key="memento" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?>&#xD;&#xA;&lt;workbench>&#xD;&#xA;&lt;mruList>&#xD;&#xA;&lt;file factoryID=&quot;org.eclipse.ui.part.FileEditorInputFactory&quot; id=&quot;com.formalmind.rmf.reqif10.studio.editor.main&quot; name=&quot;ReqIF10_Model.reqif&quot; tooltip=&quot;Calvos_Engine/ReqIF10_Model.reqif&quot;>&#xD;&#xA;&lt;persistable path=&quot;/Calvos_Engine/ReqIF10_Model.reqif&quot;/>&#xD;&#xA;&lt;/file>&#xD;&#xA;&lt;/mruList>&#xD;&#xA;&lt;/workbench>"/>
+  <persistedState key="memento" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?>&#xD;&#xA;&lt;workbench>&#xD;&#xA;&lt;mruList>&#xD;&#xA;&lt;file factoryID=&quot;org.eclipse.ui.part.FileEditorInputFactory&quot; id=&quot;com.formalmind.rmf.reqif10.studio.editor.main&quot; name=&quot;ReqIF10_Model.reqif&quot; tooltip=&quot;Calvos_Engine/ReqIF10_Model.reqif&quot;>&#xD;&#xA;&lt;persistable path=&quot;/Calvos_Engine/ReqIF10_Model.reqif&quot;/>&#xD;&#xA;&lt;/file>&#xD;&#xA;&lt;file factoryID=&quot;org.eclipse.ui.part.FileEditorInputFactory&quot; id=&quot;org.eclipse.ui.DefaultTextEditor&quot; name=&quot;ReqIF10_Model.rmf&quot; tooltip=&quot;Calvos_Engine/ReqIF10_Model.rmf&quot;>&#xD;&#xA;&lt;persistable path=&quot;/Calvos_Engine/ReqIF10_Model.rmf&quot;/>&#xD;&#xA;&lt;/file>&#xD;&#xA;&lt;/mruList>&#xD;&#xA;&lt;/workbench>"/>
   <tags>activeSchemeId:org.eclipse.ui.defaultAcceleratorConfiguration</tags>
   <tags>ModelMigrationProcessor.001</tags>
   <children xsi:type="basic:TrimmedWindow" xmi:id="_kIfpIhA1Eeyqk_JaTSRGpw" elementId="IDEWindow" contributorURI="platform:/plugin/org.eclipse.ui.workbench" selectedElement="_kOPr0xA1Eeyqk_JaTSRGpw" label="%trimmedwindow.label.eclipseSDK" x="182" y="182" width="1024" height="768">
@@ -152,7 +152,7 @@
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_kO3W4BA1Eeyqk_JaTSRGpw" elementId="org.eclipse.ui.workbench.file">
         <tags>Draggable</tags>
-        <children xsi:type="menu:HandledToolItem" xmi:id="_Gn3jMhA9EeyOfLJaNP224Q" elementId="print" iconURI="platform:/plugin/org.eclipse.ui/icons/full/etool16/print_edit.png" tooltip="Print" enabled="false" command="_kIvgwBA1Eeyqk_JaTSRGpw"/>
+        <children xsi:type="menu:HandledToolItem" xmi:id="_JxqQ8BpJEeydTtEqJ_WhCQ" elementId="print" iconURI="platform:/plugin/org.eclipse.ui/icons/full/etool16/print_edit.png" tooltip="Print" enabled="false" command="_kIvgwBA1Eeyqk_JaTSRGpw"/>
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_kO3W4RA1Eeyqk_JaTSRGpw" elementId="additions" toBeRendered="false">
         <tags>toolbarSeparator</tags>
@@ -164,13 +164,19 @@
       <children xsi:type="menu:ToolBar" xmi:id="_kQnDUBA1Eeyqk_JaTSRGpw" elementId="org.eclipse.search.searchActionSet">
         <tags>Draggable</tags>
       </children>
+      <children xsi:type="menu:ToolBar" xmi:id="_N_QSwBpJEeydTtEqJ_WhCQ" elementId="org.eclipse.ui.edit.text.actionSet.presentation">
+        <tags>Draggable</tags>
+      </children>
       <children xsi:type="menu:ToolBar" xmi:id="_kO3W4xA1Eeyqk_JaTSRGpw" elementId="group.nav" toBeRendered="false">
         <tags>toolbarSeparator</tags>
         <children xsi:type="menu:ToolBarSeparator" xmi:id="_kO3W5BA1Eeyqk_JaTSRGpw" elementId="group.nav" toBeRendered="false"/>
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_kO3W5RA1Eeyqk_JaTSRGpw" elementId="org.eclipse.ui.workbench.navigate">
         <tags>Draggable</tags>
-        <children xsi:type="menu:HandledToolItem" xmi:id="_Gn5_dBA9EeyOfLJaNP224Q" elementId="org.eclipse.ui.window.pinEditor" visible="false" iconURI="platform:/plugin/org.eclipse.ui/icons/full/etool16/pin_editor.png" tooltip="Pin Editor" type="Check" command="_kIuSoBA1Eeyqk_JaTSRGpw"/>
+        <children xsi:type="menu:HandledToolItem" xmi:id="_JxstNBpJEeydTtEqJ_WhCQ" elementId="org.eclipse.ui.window.pinEditor" visible="false" iconURI="platform:/plugin/org.eclipse.ui/icons/full/etool16/pin_editor.png" tooltip="Pin Editor" type="Check" command="_kIuSoBA1Eeyqk_JaTSRGpw"/>
+      </children>
+      <children xsi:type="menu:ToolBar" xmi:id="_KLz2UBpJEeydTtEqJ_WhCQ" elementId="com.formalmind.rmf.reqif10.studio.editor.specification">
+        <tags>Draggable</tags>
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_kO3W5hA1Eeyqk_JaTSRGpw" elementId="group.editor" toBeRendered="false">
         <tags>toolbarSeparator</tags>
