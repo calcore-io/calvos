@@ -481,39 +481,40 @@ if len(list_of_rx_msgs) > 0:
 	code_str = "void "+sym_rx_proc_func_name+"(void){"
 	cog.outl(code_str)
 
-	code_strs = ""
-	for message_name in list_of_rx_msgs:
-		msg_timeout = subnet.get_message_timeout(node_name, message_name)
-		if msg_timeout is not None:
-			sym_rx_msg_idx_name = sym_rx_msg_idx_prefix + message_name
-			code_strs += """	// Only increment timer if message hasn't timed out
-	if(!"""+sym_rx_stat_data_name+"["+sym_rx_msg_idx_name+"""].dyn->timedout){
-		// Increment timer (up-counter since they are initialized with zero)
-		"""+sym_rx_stat_data_name+"["+sym_rx_msg_idx_name+"""].dyn->timeout_timer++;
-		if("""+sym_rx_stat_data_name+"["+sym_rx_msg_idx_name+"""].dyn->timeout_timer \\
-		>= """+sym_rx_stat_data_name+"["+sym_rx_msg_idx_name+"""].timeout){
-			// Set timeout flag
+	code_strs = """
+	for(uint32_t i = 0u; i < """+sym_rx_msgs+"""; i++){
+		// Check if message has a timeout defined
+		if("""+sym_rx_stat_data_name+"""[i].timeout > 0u){
+			// Only increment timer if message hasn't timed out
 			CALVOS_CRITICAL_ENTER();
-			"""+sym_rx_stat_data_name+"["+sym_rx_msg_idx_name+"""].dyn->timedout=kTrue;
-			CALVOS_CRITICAL_EXIT();
-			// Call timeout callback if not NULL
-			if("""+sym_rx_stat_data_name+"["+sym_rx_msg_idx_name+"""].timeout_callback != NULL){
-				("""+sym_rx_stat_data_name+"["+sym_rx_msg_idx_name+"""].timeout_callback)();
+			if(!"""+sym_rx_stat_data_name+"""[i].dyn->timedout){
+				CALVOS_CRITICAL_EXIT();
+				// Increment timer (up-counter since they are initialized with zero)
+				"""+sym_rx_stat_data_name+"""[i].dyn->timeout_timer++;
+				if("""+sym_rx_stat_data_name+"""[i].dyn->timeout_timer \\
+				>= """+sym_rx_stat_data_name+"""[i].timeout){
+					// Set timeout flag
+					CALVOS_CRITICAL_ENTER();
+					"""+sym_rx_stat_data_name+"""[i].dyn->timedout = kTrue;
+					CALVOS_CRITICAL_EXIT();
+					// Call timeout callback if not NULL
+					if("""+sym_rx_stat_data_name+"""[i].timeout_callback != NULL){
+						("""+sym_rx_stat_data_name+"""[i].timeout_callback)();
+					}
+					// Reset timer
+					"""+sym_rx_stat_data_name+"""[i].dyn->timeout_timer = 0u;
+				}
+			}else{
+				CALVOS_CRITICAL_EXIT();
 			}
-			// Reset timer
-			"""+sym_rx_stat_data_name+"["+sym_rx_msg_idx_name+"""].dyn->timeout_timer = 0u;
 		}
 	}\n"""
-
 
 	function_body = """
 
 	// TODO: Implement this as a timer wheel for efficiency
-	// TODO: Group rx messages with same period in single timers rather than
-	// individual ones for efficiency.
 	// TODO: Consider separating data structures for timeout so that memory for that
 	// is only used for messages with defined timeout and not for all.
-
 """+code_strs+"\n"
 
 	function_body = function_body[1:]

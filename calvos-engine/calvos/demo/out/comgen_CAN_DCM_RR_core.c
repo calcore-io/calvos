@@ -27,7 +27,7 @@
  *  along with calvOS.  If not, see <https://www.gnu.org/licenses/>. */
 /*============================================================================*/
 /*-----------------------------------------------------------------------------
- * This file was generated on (yyyy.mm.dd::hh:mm:ss): 2021.10.5::23:23:58
+ * This file was generated on (yyyy.mm.dd::hh:mm:ss): 2021.10.6::0:10:26
  * Generated from following source(s):
  *     Network file: "G:\devproj\github\calvos_0_4\calvos\calvos-engine\calvos\..
                       demo\usr_in\template - CAN Network Definition.ods"
@@ -201,138 +201,37 @@ void can_DCM_RR_processRxMessage(uint32_t msg_id, uint8_t * data_in, uint8_t dat
  * IMPORTANT: This function needs to be called by user's application in a
  * periodic task with the period indicated in this function's name.
  * ===========================================================================*/
-void can_task_10ms_DCM_RR_rxProcess(void){
+void can_task_20ms_DCM_RR_rxProcess(void){
 
 	// TODO: Implement this as a timer wheel for efficiency
-	// TODO: Group rx messages with same period in single timers rather than
-	// individual ones for efficiency.
 	// TODO: Consider separating data structures for timeout so that memory for that
 	// is only used for messages with defined timeout and not for all.
 
-	// Only increment timer if message hasn't timed out
-	if(!can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_BCM_5].dyn->timedout){
-		// Increment timer (up-counter since they are initialized with zero)
-		can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_BCM_5].dyn->timeout_timer++;
-		if(can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_BCM_5].dyn->timeout_timer \
-		>= can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_BCM_5].timeout){
-			// Set timeout flag
+	for(uint32_t i = 0u; i < kCAN_DCM_RR_nOfRxMsgs; i++){
+		// Check if message has a timeout defined
+		if(can_DCM_RR_rxMsgStaticData[i].timeout > 0u){
+			// Only increment timer if message hasn't timed out
 			CALVOS_CRITICAL_ENTER();
-			can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_BCM_5].dyn->timedout=kTrue;
-			CALVOS_CRITICAL_EXIT();
-			// Call timeout callback if not NULL
-			if(can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_BCM_5].timeout_callback != NULL){
-				(can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_BCM_5].timeout_callback)();
+			if(!can_DCM_RR_rxMsgStaticData[i].dyn->timedout){
+				CALVOS_CRITICAL_EXIT();
+				// Increment timer (up-counter since they are initialized with zero)
+				can_DCM_RR_rxMsgStaticData[i].dyn->timeout_timer++;
+				if(can_DCM_RR_rxMsgStaticData[i].dyn->timeout_timer \
+				>= can_DCM_RR_rxMsgStaticData[i].timeout){
+					// Set timeout flag
+					CALVOS_CRITICAL_ENTER();
+					can_DCM_RR_rxMsgStaticData[i].dyn->timedout = kTrue;
+					CALVOS_CRITICAL_EXIT();
+					// Call timeout callback if not NULL
+					if(can_DCM_RR_rxMsgStaticData[i].timeout_callback != NULL){
+						(can_DCM_RR_rxMsgStaticData[i].timeout_callback)();
+					}
+					// Reset timer
+					can_DCM_RR_rxMsgStaticData[i].dyn->timeout_timer = 0u;
+				}
+			}else{
+				CALVOS_CRITICAL_EXIT();
 			}
-			// Reset timer
-			can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_BCM_5].dyn->timeout_timer = 0u;
-		}
-	}
-	// Only increment timer if message hasn't timed out
-	if(!can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_BCM_2].dyn->timedout){
-		// Increment timer (up-counter since they are initialized with zero)
-		can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_BCM_2].dyn->timeout_timer++;
-		if(can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_BCM_2].dyn->timeout_timer \
-		>= can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_BCM_2].timeout){
-			// Set timeout flag
-			CALVOS_CRITICAL_ENTER();
-			can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_BCM_2].dyn->timedout=kTrue;
-			CALVOS_CRITICAL_EXIT();
-			// Call timeout callback if not NULL
-			if(can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_BCM_2].timeout_callback != NULL){
-				(can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_BCM_2].timeout_callback)();
-			}
-			// Reset timer
-			can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_BCM_2].dyn->timeout_timer = 0u;
-		}
-	}
-	// Only increment timer if message hasn't timed out
-	if(!can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_BRAKE_2].dyn->timedout){
-		// Increment timer (up-counter since they are initialized with zero)
-		can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_BRAKE_2].dyn->timeout_timer++;
-		if(can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_BRAKE_2].dyn->timeout_timer \
-		>= can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_BRAKE_2].timeout){
-			// Set timeout flag
-			CALVOS_CRITICAL_ENTER();
-			can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_BRAKE_2].dyn->timedout=kTrue;
-			CALVOS_CRITICAL_EXIT();
-			// Call timeout callback if not NULL
-			if(can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_BRAKE_2].timeout_callback != NULL){
-				(can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_BRAKE_2].timeout_callback)();
-			}
-			// Reset timer
-			can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_BRAKE_2].dyn->timeout_timer = 0u;
-		}
-	}
-	// Only increment timer if message hasn't timed out
-	if(!can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_TRANSM_2].dyn->timedout){
-		// Increment timer (up-counter since they are initialized with zero)
-		can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_TRANSM_2].dyn->timeout_timer++;
-		if(can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_TRANSM_2].dyn->timeout_timer \
-		>= can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_TRANSM_2].timeout){
-			// Set timeout flag
-			CALVOS_CRITICAL_ENTER();
-			can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_TRANSM_2].dyn->timedout=kTrue;
-			CALVOS_CRITICAL_EXIT();
-			// Call timeout callback if not NULL
-			if(can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_TRANSM_2].timeout_callback != NULL){
-				(can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_TRANSM_2].timeout_callback)();
-			}
-			// Reset timer
-			can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_TRANSM_2].dyn->timeout_timer = 0u;
-		}
-	}
-	// Only increment timer if message hasn't timed out
-	if(!can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_TRANSM_4].dyn->timedout){
-		// Increment timer (up-counter since they are initialized with zero)
-		can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_TRANSM_4].dyn->timeout_timer++;
-		if(can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_TRANSM_4].dyn->timeout_timer \
-		>= can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_TRANSM_4].timeout){
-			// Set timeout flag
-			CALVOS_CRITICAL_ENTER();
-			can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_TRANSM_4].dyn->timedout=kTrue;
-			CALVOS_CRITICAL_EXIT();
-			// Call timeout callback if not NULL
-			if(can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_TRANSM_4].timeout_callback != NULL){
-				(can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_TRANSM_4].timeout_callback)();
-			}
-			// Reset timer
-			can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_TRANSM_4].dyn->timeout_timer = 0u;
-		}
-	}
-	// Only increment timer if message hasn't timed out
-	if(!can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_DCU_1].dyn->timedout){
-		// Increment timer (up-counter since they are initialized with zero)
-		can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_DCU_1].dyn->timeout_timer++;
-		if(can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_DCU_1].dyn->timeout_timer \
-		>= can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_DCU_1].timeout){
-			// Set timeout flag
-			CALVOS_CRITICAL_ENTER();
-			can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_DCU_1].dyn->timedout=kTrue;
-			CALVOS_CRITICAL_EXIT();
-			// Call timeout callback if not NULL
-			if(can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_DCU_1].timeout_callback != NULL){
-				(can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_DCU_1].timeout_callback)();
-			}
-			// Reset timer
-			can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_DCU_1].dyn->timeout_timer = 0u;
-		}
-	}
-	// Only increment timer if message hasn't timed out
-	if(!can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_DCU_2].dyn->timedout){
-		// Increment timer (up-counter since they are initialized with zero)
-		can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_DCU_2].dyn->timeout_timer++;
-		if(can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_DCU_2].dyn->timeout_timer \
-		>= can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_DCU_2].timeout){
-			// Set timeout flag
-			CALVOS_CRITICAL_ENTER();
-			can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_DCU_2].dyn->timedout=kTrue;
-			CALVOS_CRITICAL_EXIT();
-			// Call timeout callback if not NULL
-			if(can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_DCU_2].timeout_callback != NULL){
-				(can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_DCU_2].timeout_callback)();
-			}
-			// Reset timer
-			can_DCM_RR_rxMsgStaticData[kCAN_DCM_RR_rxMsgIdx_DCU_2].dyn->timeout_timer = 0u;
 		}
 	}
 

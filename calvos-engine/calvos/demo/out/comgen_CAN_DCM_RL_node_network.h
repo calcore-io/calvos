@@ -28,7 +28,7 @@
  *  along with calvOS.  If not, see <https://www.gnu.org/licenses/>. */
 /*============================================================================*/
 /*-----------------------------------------------------------------------------
- * This file was generated on (yyyy.mm.dd::hh:mm:ss): 2021.10.5::23:23:58
+ * This file was generated on (yyyy.mm.dd::hh:mm:ss): 2021.10.6::0:10:26
  * Generated from following source(s):
  *     Network file: "G:\devproj\github\calvos_0_4\calvos\calvos-engine\calvos\..
                       demo\usr_in\template - CAN Network Definition.ods"
@@ -71,13 +71,13 @@
 /* Totals numbers for TX / RX message(s) */
 
 /* RX message(s) timeout */
-#define kCAN_DCM_RL_msgTimeout_BCM_5       (250u)
-#define kCAN_DCM_RL_msgTimeout_BCM_2       (250u)
-#define kCAN_DCM_RL_msgTimeout_BRAKE_2     (250u)
-#define kCAN_DCM_RL_msgTimeout_TRANSM_2    (250u)
-#define kCAN_DCM_RL_msgTimeout_TRANSM_4    (250u)
-#define kCAN_DCM_RL_msgTimeout_DCU_1       (100u)
-#define kCAN_DCM_RL_msgTimeout_DCU_2       (100u)
+#define kCAN_DCM_RL_msgTimeout_BCM_5       (125u)
+#define kCAN_DCM_RL_msgTimeout_BCM_2       (125u)
+#define kCAN_DCM_RL_msgTimeout_BRAKE_2     (125u)
+#define kCAN_DCM_RL_msgTimeout_TRANSM_2    (125u)
+#define kCAN_DCM_RL_msgTimeout_TRANSM_4    (125u)
+#define kCAN_DCM_RL_msgTimeout_DCU_1       (50u)
+#define kCAN_DCM_RL_msgTimeout_DCU_2       (50u)
 
 /* RX signal availability flag indexes */
 

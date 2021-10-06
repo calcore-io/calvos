@@ -116,8 +116,8 @@ Use ${DATATYPE} to indicate the Data_Type name.
 		<clv:ParamDefinition type="int" id="CAN_rx_task_period"
 			category="catCAN_network" is_advanced="true">
 			<clv:Title>Period of RX task</clv:Title>
-			<clv:Desc>Period of task for polling spontaneous RX messages.</clv:Desc>
-			<clv:Default>10</clv:Default>
+			<clv:Desc>Period of task for processing RX messages timeouts.</clv:Desc>
+			<clv:Default>20</clv:Default>
 		</clv:ParamDefinition>
 		<clv:ParamDefinition type="int" id="CAN_rx_timeout_tolerance"
 			category="catCAN_network" is_advanced="true">
