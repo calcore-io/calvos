@@ -690,19 +690,34 @@ if len(list_of_tx_msgs) > 0:
 	sym_tx_init_val = "kCAN_" + net_name_str + "TxDataInitVal"
 	sym_rx_init_val = "kCAN_" + net_name_str + "RxDataInitVal"
 
+	timeouts_initially_true = network.get_simple_param("CAN_init_timeouts_val")
+
 	sym_core_init_name = "can_"+net_name_str+node_name_str+"coreInit"
 	code_str = "void "+sym_core_init_name+"(void){"
 	cog.outl(code_str)
 
+	timeout_inits_str = ""
+	if timeouts_initially_true is True:
+		timeout_inits_str = """
+	// Set initial timeout flags as true (param 'CAN_init_timeouts_val' is set to True)
+	for(uint32_t i = 0; i < """+sym_rx_msgs+"""; i++){
+		"""+sym_rx_dyn_data_name+"""[i].timedout = kTrue;
+	}\n"""
+
 	function_body = """
+
 	// Clear RX data buffer
 	memset(&"""+sym_rx_data_name+","+sym_rx_init_val+","+sym_rx_data_len+""");
+
 	// Clear RX available flags buffer
 	memset(&"""+sym_avlbl_buffer_name+",0u,"+sym_avlbl_buff_len+""");
+
 	// Clear TX data buffer
 	memset(&"""+sym_tx_data_name+","+sym_tx_init_val+","+sym_tx_data_len+""");
+
 	// Clear RX dynamic data
 	memset(&"""+sym_rx_dyn_data_name+",0u,sizeof("+sym_rx_dyn_data_type+")*("+sym_rx_msgs+"""));
+	"""+timeout_inits_str+"""
 	// Clear TX dynamic data
 	memset(&"""+sym_tx_dyn_data_name+",0u,sizeof("+sym_tx_dyn_data_type+")*("+sym_tx_dyn_data_len+"""));
 
