@@ -387,6 +387,8 @@ if len(list_of_tx_msgs) > 0:
 sym_rx_data_name = "can_" + net_name_str +  node_name_str + "RxDataBuffer"
 sym_rx_stat_data_name = "can_" + net_name_str + node_name_str \
 	+ "rxMsgStaticData"
+sym_rx_dyn_data_name = "can_" + net_name_str + node_name_str \
+	+ "rxMsgDynamicData"
 sym_tx_data_name = "can_" + net_name_str +  node_name_str + "TxDataBuffer"
 sym_tx_stat_data_name = "can_" + net_name_str + node_name_str + "txMsgStaticData"
 
@@ -482,6 +484,15 @@ if len(subnet.messages) > 0:
 			macro_vals = "can_clearAllAvlblFlags(&"+ sym_rx_stat_data_name + "[" + sym_rx_idx_pfx \
 				+ message_name + "])"
 			code_str = "#define "+macro_name+"()"+"\t\t"+macro_vals
+			cog.outl(code_str)
+			cog.outl()
+
+			# Message get timeout flag macro.
+			cog.outl("/"+chr(42)+" Get message timeout flag "+chr(42)+"/")
+			macro_name = "CAN_" + net_name_str + node_name_str+"get_timeout_flag_"+message_name
+			macro_vals = "(" + sym_rx_dyn_data_name + "[" + sym_rx_idx_pfx \
+				+ message_name + "].timedout)"
+			code_str = "#define "+macro_name+"()"+"\t\t\t"+macro_vals
 			cog.outl(code_str)
 			cog.outl()
 

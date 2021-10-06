@@ -104,7 +104,7 @@ Here we'll exemplify the installation of a calvos under MS Windows.
 
    `c:\>python -m calvos -v`
 
-   Version should like like: `calvos v0.0.2`
+   Version should like: `calvos v0.0.2`
 
 ### Command Line Arguments
 
