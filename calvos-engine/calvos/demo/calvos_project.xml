@@ -1,0 +1,22 @@
+<CalvosProject xmlns:clv="calvos" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../schemas/_calvos_project.xsd">
+  <Name>Demo Calvos Project</Name>
+  <Desc>Demo Calvos Project generated from found components with templates.</Desc>
+  <Version>Version</Version>
+  <Date>Date</Date>
+  <Components>
+    <Component type="comgen.CAN">
+      <Name>CAN Network</Name>
+      <Desc>Models a network for Controller Area Network (CAN) protocol.</Desc>
+      <Input type="ods">"usr_in/template - CAN Network Definition.ods"</Input>
+    </Component>
+  </Components>
+  <Params />
+  <Metadata>
+    <!-- Do NOT modify these metadata information. -->
+    <clv:TemplateId>calvos_project</clv:TemplateId>
+    <clv:TemplateVer>0.1.0</clv:TemplateVer>
+    <clv:TemplateTitle>Calvos Project</clv:TemplateTitle>
+    <clv:TemplateDesc>Template for modeling a Calvos Project</clv:TemplateDesc>
+    <clv:TemplateDate>2021-02-24</clv:TemplateDate>
+  </Metadata>
+</CalvosProject>

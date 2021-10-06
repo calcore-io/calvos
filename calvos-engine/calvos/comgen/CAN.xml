@@ -119,6 +119,12 @@ Use ${DATATYPE} to indicate the Data_Type name.
 			<clv:Desc>Period of task for polling spontaneous RX messages.</clv:Desc>
 			<clv:Default>10</clv:Default>
 		</clv:ParamDefinition>
+		<clv:ParamDefinition type="int" id="CAN_rx_timeout_tolerance"
+			category="catCAN_network" is_advanced="true">
+			<clv:Title>Tolerance for RX timeout</clv:Title>
+			<clv:Desc>Tolerance in percentage to deviate from RX message timeouts before throwing a warning message.</clv:Desc>
+			<clv:Default>10</clv:Default>
+		</clv:ParamDefinition>
 		<clv:ParamDefinition type="int" id="CAN_tx_queue_len"
 			category="catCAN_network" is_advanced="true">
 			<clv:Title>Length of queue for TX messages</clv:Title>

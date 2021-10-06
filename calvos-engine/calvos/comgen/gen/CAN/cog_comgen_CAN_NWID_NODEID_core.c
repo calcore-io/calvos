@@ -420,7 +420,7 @@ if len(list_of_tx_msgs) > 0:
  * context).
  * ===========================================================================*/
 /* [[[cog
-if len(list_of_tx_msgs) > 0:
+if len(list_of_rx_msgs) > 0:
 	code_str = sym_rx_proc_func_return+" "+sym_rx_proc_func_name+sym_rx_proc_func_args+"{"
 	cog.outl(code_str)
 
@@ -462,6 +462,62 @@ if len(list_of_tx_msgs) > 0:
 	"""
 	function_body = function_body[1:]
 	cog.outl(function_body)
+]]] */
+// [[[end]]]
+
+/* ===========================================================================*/
+/** Function for cyclic processing of CAN RX messages.
+ *
+ * Keeps track of message timeouts if defined for this node.
+ * IMPORTANT: This function needs to be called by user's application in a
+ * periodic task with the period indicated in this function's name.
+ * ===========================================================================*/
+/* [[[cog
+if len(list_of_rx_msgs) > 0:
+	sym_rx_msg_idx_prefix = "kCAN_" + net_name_str + node_name_str + "rxMsgIdx_"
+	rx_proc_task = network.get_simple_param("CAN_rx_task_period")
+
+	sym_rx_proc_func_name = "can_task_"+str(rx_proc_task)+"ms_"+net_name_str+node_name_str+"rxProcess"
+	code_str = "void "+sym_rx_proc_func_name+"(void){"
+	cog.outl(code_str)
+
+	code_strs = ""
+	for message_name in list_of_rx_msgs:
+		msg_timeout = subnet.get_message_timeout(node_name, message_name)
+		if msg_timeout is not None:
+			sym_rx_msg_idx_name = sym_rx_msg_idx_prefix + message_name
+			code_strs += """	// Only increment timer if message hasn't timed out
+	if(!"""+sym_rx_stat_data_name+"["+sym_rx_msg_idx_name+"""].dyn->timedout){
+		// Increment timer (up-counter since they are initialized with zero)
+		"""+sym_rx_stat_data_name+"["+sym_rx_msg_idx_name+"""].dyn->timeout_timer++;
+		if("""+sym_rx_stat_data_name+"["+sym_rx_msg_idx_name+"""].dyn->timeout_timer \\
+		>= """+sym_rx_stat_data_name+"["+sym_rx_msg_idx_name+"""].timeout){
+			// Set timeout flag
+			CALVOS_CRITICAL_ENTER();
+			"""+sym_rx_stat_data_name+"["+sym_rx_msg_idx_name+"""].dyn->timedout=kTrue;
+			CALVOS_CRITICAL_EXIT();
+			// Call timeout callback if not NULL
+			if("""+sym_rx_stat_data_name+"["+sym_rx_msg_idx_name+"""].timeout_callback != NULL){
+				("""+sym_rx_stat_data_name+"["+sym_rx_msg_idx_name+"""].timeout_callback)();
+			}
+			// Reset timer
+			"""+sym_rx_stat_data_name+"["+sym_rx_msg_idx_name+"""].dyn->timeout_timer = 0u;
+		}
+	}\n"""
+
+
+	function_body = """
+
+	// TODO: Implement this as a timer wheel for efficiency
+	// TODO: Group rx messages with same period in single timers rather than
+	// individual ones for efficiency.
+	// TODO: Consider separating data structures for timeout so that memory for that
+	// is only used for messages with defined timeout and not for all.
+
+"""+code_strs+"\n"
+
+	function_body = function_body[1:]
+	cog.outl(function_body+"}")
 ]]] */
 // [[[end]]]
 

@@ -76,7 +76,18 @@ def file_exists(path):
     if path.exists() and path.is_file():
         return_value = True
     
-    return return_value  
+    return return_value
+
+def create_folder(folder):
+    """ Creates the specified folder.
+    """
+    if folder_exists(folder) is False:
+        try:
+            folder.mkdir()
+        except Exception as e:
+            print('Failed to create folder %s. Reason: %s' % (folder, e))
+    else:
+        print("Folder to be created '%s' already exists." % folder)
     
 
 def main(argv=None): # IGNORE:C0111
@@ -126,7 +137,8 @@ USAGE
                                 formatter_class=RawDescriptionHelpFormatter)
         parser.add_argument("-d","--demo", dest="demo", required=False, \
             help=("Will provide an example calvos project with user input templates in " \
-                +"the given DEMO path. No project will be processed if this argument is provided."))
+                +"the given DEMO path and will process it. " \
+                +"Argument -p is ignored if this argument is provided."))
         parser.add_argument('-V', '--version', action='version', version=program_version_message)
         parser.add_argument('-v', '--ver', action='version', version=program_version_message)
         parser.add_argument("-p","--project", dest="project", \
@@ -217,7 +229,9 @@ USAGE
                 return 2
                 
             print("INFO: Don't provide argument -d if a project needs to be processed.")
-            return 0    
+            
+            project = str(demo_path / "calvos_project.xml")
+            #return 0    
         
         #==============================================================================
         # Start project processing if argument -d was not provided
@@ -236,13 +250,16 @@ USAGE
             #==============================================================================
             # Setup logging system
             #==============================================================================
-            log_output_file = project_path / "log.log"
-            if file_exists(log_output_file):
-                log_output_file.unlink()
-             
-            lg.log_system = lg.Log(log_level, log_output_file)
-            log = lg.log_system
-            log.add_logger("main")
+            # Setup logging system here only if argument -d was not provided, otherwise
+            # logging system should've been already initialized during demo generation.
+            if args.demo is None:
+                log_output_file = project_path / "log.log"
+                if file_exists(log_output_file):
+                    log_output_file.unlink()
+                 
+                lg.log_system = lg.Log(log_level, log_output_file)
+                log = lg.log_system
+                log.add_logger("main")
             log.info("main","============== Started calvOS project processing. ==============")
             print("INFO: ============== Started calvOS project processing. ==============")
              
@@ -449,10 +466,17 @@ USAGE
 
 if __name__ == "__main__":
     if DEBUG:
-        sys.argv.append("-p")
-        sys.argv.append('G:\\devproj\\github\\calvos\\calvos\\project_example\\project.xml')
-        sys.argv.append("-c")
-        sys.argv.append('G:\\devproj\\github\\calvos\\calvos\\calvos-engine\\calvos')
+        
+        debug_calvos_path = pl.Path(__file__).parent.absolute()
+        debug_demo_path = debug_calvos_path / "demo"
+        create_folder(debug_demo_path)
+        
+        print(str(debug_demo_path))
+        
+        sys.argv.append("-d")
+        sys.argv.append(str(debug_demo_path))
+        #sys.argv.append("-c")
+        #sys.argv.append('G:\\devproj\\github\\calvos\\calvos\\calvos-engine\\calvos')
     if TESTRUN:
         import doctest
         doctest.testmod()
