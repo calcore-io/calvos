@@ -2728,6 +2728,18 @@ class Network_CAN:
                 return_value = False
                 
             return return_value
+        
+        #===========================================================================================
+        def is_scalar(self):
+            """ Returns True if signal is of scalar type.
+            """
+            return_value = None
+            if self.data_type == data_types_list[SCALAR] and self.is_enum_type == False:
+                return_value = True
+            else:
+                return_value = False
+                
+            return return_value
 
     #===============================================================================================
     class SignalAccess():

@@ -30,7 +30,7 @@ __all__ = []
 __date__ = '2021-10-06'
 __updated__ = '2020-10-06'
 
-DEBUG = 0
+DEBUG = 1
 TESTRUN = 0
 PROFILE = 0
 
