@@ -158,7 +158,7 @@ sym_can_transmit_body="""
 	CalvosError return_value = kError;
 	// Write HAL code to transmit a CAN message. Information about the message
 	// can be extracted from the provided msg_info structure.
-	#error "User code needed here. Remove this line when done."
+	#warning "User code needed here. Remove this line when done."
 
 	return return_value;
 """
@@ -185,7 +185,7 @@ sym_get_tx_id_body="""
 	uint32_t txd_msg_id;
 	// Write user code to return the ID of the CAN message just transmitted
 	// by the CAN HAL.
-	#error "User code needed here. Remove this line when done."
+	#warning "User code needed here. Remove this line when done."
 
 	return txd_msg_id;
 """
@@ -276,7 +276,7 @@ cog.outl(code_str)
 
 sym_can_transmit_body="""
 	// Write user code to initialize CAN HAL in the target MCU.
-	#error "User code needed here. Remove this line when done."
+	#warning "User code needed here. Remove this line when done."
 """
 sym_can_transmit_body = sym_can_transmit_body[1:]+"}"
 cog.outl(sym_can_transmit_body)

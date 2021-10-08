@@ -30,7 +30,7 @@ __all__ = []
 __date__ = '2021-10-06'
 __updated__ = '2020-10-06'
 
-DEBUG = 1
+DEBUG = 0
 TESTRUN = 0
 PROFILE = 0
 
@@ -475,8 +475,12 @@ if __name__ == "__main__":
         
         sys.argv.append("-d")
         sys.argv.append(str(debug_demo_path))
-        #sys.argv.append("-c")
-        #sys.argv.append('G:\\devproj\\github\\calvos\\calvos\\calvos-engine\\calvos')
+        
+        sys.argv.append("-e")
+        sys.argv.append("C:\\diplomado_udg\\s32ds_workspace\\DCU_2020B_EquipoX_3\\src\\DCU\\Communication\\Calvos")
+        
+        sys.argv.append("-b")
+        sys.argv.append("C:\\diplomado_udg\\s32ds_workspace\\bkup")
     if TESTRUN:
         import doctest
         doctest.testmod()
