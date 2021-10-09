@@ -5,6 +5,7 @@ Open Source SW Utilities for Embedded Systems
 <img src="doc/templates/logo_full_bw_small.png">
 
 ## Overview
+
 CalvOS system is an open-source (GPL v3 license) set of software utilities for the development of embedded systems in C programming language. CalvOS generates C-code based on user defined inputs for "middleware" SW layers sitting above Hardware Abstraction Layer (HAL) and below Application Layer. This in order to speed up the development of embedded SW applications.
 
 ## Motivation
@@ -104,7 +105,7 @@ Here we'll exemplify the installation of a calvos under MS Windows.
 
    `c:\>python -m calvos -v`
 
-   Version should like like: `calvos v0.0.2`
+   Version should like like: `calvos v0.0.4`
 
 ### Command Line Arguments
 
@@ -113,7 +114,7 @@ Calvos accepts the following command-line arguments:
 | Argument                      | Usage                                                        |
 | ----------------------------- | ------------------------------------------------------------ |
 | -h, --help                    | show help message and exit.                                  |
-| -d DEMO, --demo DEMO          | Will provide an example calvos project with user input templates in the given DEMO path. No project will be processed if this argument is provided. |
+| -d DEMO, --demo DEMO          | Will provide an example calvos project with user input templates in the given DEMO path and will process it. Argument -p is ignored if this argument is provided. |
 | -p PROJECT, --project PROJECT | Required (if -d was not provided). Full path with file name of the calvos project to be processed. |
 | -l LOG_LEVEL, --log LOG_LEVEL | Optional. LOG_LEVEL: 0 - Debug, 1 - Info, 2 - Warning, 3 - Error. Default is 1 - Info. |
 | -e EXPORT, --export EXPORT    | Optional. Generated C-code will be exported (copied) into the provided EXPORT path. |
@@ -141,6 +142,8 @@ This will create the following files:
 
   location: *c:\\demo_project\\log.log*
 
+- Folder "**out**": Contains the generated C source code for the demo project  
+
 It is useful to get this demo project since by doing so, also the template for the CAN network definition is exported.
 
 In order to generate the code of the demo project, run the following command:
@@ -158,4 +161,3 @@ Information about the project processing and possible warnings/errors found duri
 ## CAN Interaction Layer User Guide
 
 Refer to document "[comgen_CAN - Integration Manual.md](https://github.com/calcore-io/calvos/blob/main/calvos-engine/calvos/comgen/doc/comgen_CAN%20-%20Integration%20Manual.md)" for user guide on the integration of a CAN IL with Calvos.
-

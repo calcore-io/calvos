@@ -1918,6 +1918,14 @@ class Network_CAN:
                             {"category" : "common"})
         self.add_cog_source("network_h", "cog_comgen_CAN_NWID_network.h", True, \
                             None, {"category" : "network"})
+        self.add_cog_source("nw_includes_h", "cog_comgen_CAN_NWID_includes.h", True, \
+                            [["comgen.CAN", "common_h"], \
+                             ["comgen.CAN", "network_h"], \
+                             ["comgen.CAN", "can_node_hal_h"], \
+                             ["comgen.CAN", "node_net_h"], \
+                             ["comgen.CAN", "core_h"], \
+                             ["comgen.CAN", "callbacks_h"]], \
+                            {"category" : "network"})
         self.add_cog_source("can_node_hal_h", "cog_comgen_CAN_NWID_NODEID_hal.h", True, \
                             [["comgen.CAN", "common_h"], \
                              ["comgen.CAN", "network_h"]], \
@@ -1974,6 +1982,26 @@ class Network_CAN:
             log_warn("Include file id '%s' for CAN module not defined.")
         
         return return_str
+    
+    #===============================================================================================    
+    def get_cog_includes_objects(self, source_id): 
+        """ Returns a list of CogSrc objects related to the given source_id code. """
+        
+        global cog_sources 
+        return_obj = []
+        if source_id in cog_sources.sources:
+            for relation in cog_sources.sources[source_id].relations:
+                target_module = importlib.import_module("calvos."+relation.module)
+                target_srcs = target_module.cog_sources
+                if relation.source_id in target_srcs.sources:
+                    return_obj.append(target_srcs.sources[relation.source_id])
+                else:
+                    log_warn("Include file id '%s' of module '%s' not found." \
+                             % (source_id, "calvos."+relation.module))
+        else:
+            log_warn("Include file id '%s' for CAN module not defined.")
+        
+        return return_obj
 
     #===============================================================================================    
     def add_cog_source(self, cog_id, cog_in_file, is_header = False, relations = None, \
@@ -2169,14 +2197,37 @@ class Network_CAN:
                     # Generate includes variable if needed
                     log_debug("Generating network specific file '%s'..." % cog_source.cog_out_file)
                     variables = {}
-                    includes_lst = self.get_cog_includes(cog_source.source_id)
+                    includes_objs = self.get_cog_includes_objects(cog_source.source_id)
+                    includes_lst = []
+                    categories_lst = []
+                    for src_object in includes_objs:
+                        includes_lst.append(src_object.cog_out_file)
+                        if "category" in src_object.dparams:
+                            categories_lst.append(src_object.dparams["category"])
+                        else:
+                            categories_lst.append(None)
                     if len(includes_lst) > 0:
                         include_var = json.dumps(includes_lst)
                         variables.update({"include_var" : include_var})
+                        
+                        categories_var = json.dumps(categories_lst)
+                        variables.update({"categories_var" : categories_var})
                     
+                    # Set-up wildcard variables
                     # Add variable for NWID wildcard
                     variables.update({"NWID_wildcard" : str(NWID_wildcard)})
-                         
+                    
+                    # Add list of wildacrds for nodes
+                    NODEID_names = []
+                    for node in subnetwork.nodes.values():
+                        if len(self.get_messages_of_node(node.name)) > 0:
+                            # Update cog output files names (replace node id wildcard)
+                            if multiple_nodes is True or full_names is True:
+                                NODEID_names.append(node.name) 
+                    
+                    NODEID_names_var = json.dumps(NODEID_names)
+                    variables.update({"NODEID_names_var" : NODEID_names_var})
+                            
                     self.cog_generator(cog_source, project_pickle, cog_serialized_network_file, \
                                        variables)
             
@@ -2195,7 +2246,7 @@ class Network_CAN:
                         if "category" in cog_source.dparams \
                         and cog_source.dparams["category"] == "node":
                             log_debug("Generating Node '%s' file '%s'..." \
-                                      % (node.name, cog_source.cog_out_file))
+                                      % (node.name, cog_source.cog_out_file))  
                             # Generate includes variable if needed
                             variables = {}
                             includes_lst = self.get_cog_includes(cog_source.source_id)
@@ -2723,6 +2774,18 @@ class Network_CAN:
             """
             return_value = None
             if self.data_type == data_types_list[ARRAY]:
+                return_value = True
+            else:
+                return_value = False
+                
+            return return_value
+        
+        #===========================================================================================
+        def is_scalar(self):
+            """ Returns True if signal is of scalar type.
+            """
+            return_value = None
+            if self.data_type == data_types_list[SCALAR] and self.is_enum_type == False:
                 return_value = True
             else:
                 return_value = False

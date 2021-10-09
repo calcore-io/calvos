@@ -6,6 +6,7 @@ calvos-engine/calvos/test.py
 calvos-engine/build
 calvos-engine/dist
 calvos-engine/calvos.egg-info
+calvos-engine/calvos/demo
 project_example/log.log
 project_example/out/
 .~lock*

@@ -139,6 +139,14 @@ if len(list_of_rx_msgs) > 0:
 	code_str = "extern "+sym_rx_stat_data_type+" "+sym_rx_stat_data_name+"["+sym_rx_msgs+"];"
 	cog.outl(code_str)
 
+	# Rx dynamic data
+	# ---------------
+	sym_rx_dyn_data_type = "CANrxMsgDynamicData"
+	sym_rx_dyn_data_name = "can_" + net_name_str + node_name_str \
+			+ "rxMsgDynamicData"
+	code_str = "extern "+sym_rx_dyn_data_type+" "+sym_rx_dyn_data_name+"["+sym_rx_msgs+"];"
+	cog.outl(code_str)
+
 if len(list_of_tx_msgs) > 0:
 	# Tx data buffer
 	# --------------
@@ -169,6 +177,16 @@ if len(list_of_rx_msgs) > 0:
 	# ----------------------
 	sym_rx_proc_func_name = "can_" + net_name_str + node_name_str + "processRxMessage"
 	sym_rx_proc_func_args = "(uint32_t msg_id, uint8_t * data_in, uint8_t data_len)"
+	sym_rx_proc_func_return = "void"
+
+	code_str = "extern "+sym_rx_proc_func_return+" "+sym_rx_proc_func_name+sym_rx_proc_func_args+";"
+	cog.outl(code_str)
+
+	# RX Cyclic Processing Function
+	# -----------------------------
+	rx_proc_task = network.get_simple_param("CAN_rx_task_period")
+	sym_rx_proc_func_name = "can_task_"+str(rx_proc_task)+"ms_"+net_name_str+node_name_str+"rxProcess"
+	sym_rx_proc_func_args = "(void)"
 	sym_rx_proc_func_return = "void"
 
 	code_str = "extern "+sym_rx_proc_func_return+" "+sym_rx_proc_func_name+sym_rx_proc_func_args+";"

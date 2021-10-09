@@ -420,7 +420,7 @@ if len(list_of_tx_msgs) > 0:
  * context).
  * ===========================================================================*/
 /* [[[cog
-if len(list_of_tx_msgs) > 0:
+if len(list_of_rx_msgs) > 0:
 	code_str = sym_rx_proc_func_return+" "+sym_rx_proc_func_name+sym_rx_proc_func_args+"{"
 	cog.outl(code_str)
 
@@ -462,6 +462,63 @@ if len(list_of_tx_msgs) > 0:
 	"""
 	function_body = function_body[1:]
 	cog.outl(function_body)
+]]] */
+// [[[end]]]
+
+/* ===========================================================================*/
+/** Function for cyclic processing of CAN RX messages.
+ *
+ * Keeps track of message timeouts if defined for this node.
+ * IMPORTANT: This function needs to be called by user's application in a
+ * periodic task with the period indicated in this function's name.
+ * ===========================================================================*/
+/* [[[cog
+if len(list_of_rx_msgs) > 0:
+	sym_rx_msg_idx_prefix = "kCAN_" + net_name_str + node_name_str + "rxMsgIdx_"
+	rx_proc_task = network.get_simple_param("CAN_rx_task_period")
+
+	sym_rx_proc_func_name = "can_task_"+str(rx_proc_task)+"ms_"+net_name_str+node_name_str+"rxProcess"
+	code_str = "void "+sym_rx_proc_func_name+"(void){"
+	cog.outl(code_str)
+
+	code_strs = """
+	for(uint32_t i = 0u; i < """+sym_rx_msgs+"""; i++){
+		// Check if message has a timeout defined
+		if("""+sym_rx_stat_data_name+"""[i].timeout > 0u){
+			// Only increment timer if message hasn't timed out
+			CALVOS_CRITICAL_ENTER();
+			if(!"""+sym_rx_stat_data_name+"""[i].dyn->timedout){
+				CALVOS_CRITICAL_EXIT();
+				// Increment timer (up-counter since they are initialized with zero)
+				"""+sym_rx_stat_data_name+"""[i].dyn->timeout_timer++;
+				if("""+sym_rx_stat_data_name+"""[i].dyn->timeout_timer \\
+				>= """+sym_rx_stat_data_name+"""[i].timeout){
+					// Set timeout flag
+					CALVOS_CRITICAL_ENTER();
+					"""+sym_rx_stat_data_name+"""[i].dyn->timedout = kTrue;
+					CALVOS_CRITICAL_EXIT();
+					// Call timeout callback if not NULL
+					if("""+sym_rx_stat_data_name+"""[i].timeout_callback != NULL){
+						("""+sym_rx_stat_data_name+"""[i].timeout_callback)();
+					}
+					// Reset timer
+					"""+sym_rx_stat_data_name+"""[i].dyn->timeout_timer = 0u;
+				}
+			}else{
+				CALVOS_CRITICAL_EXIT();
+			}
+		}
+	}\n"""
+
+	function_body = """
+
+	// TODO: Implement this as a timer wheel for efficiency
+	// TODO: Consider separating data structures for timeout so that memory for that
+	// is only used for messages with defined timeout and not for all.
+"""+code_strs+"\n"
+
+	function_body = function_body[1:]
+	cog.outl(function_body+"}")
 ]]] */
 // [[[end]]]
 
@@ -633,19 +690,34 @@ if len(list_of_tx_msgs) > 0:
 	sym_tx_init_val = "kCAN_" + net_name_str + "TxDataInitVal"
 	sym_rx_init_val = "kCAN_" + net_name_str + "RxDataInitVal"
 
+	timeouts_initially_true = network.get_simple_param("CAN_init_timeouts_val")
+
 	sym_core_init_name = "can_"+net_name_str+node_name_str+"coreInit"
 	code_str = "void "+sym_core_init_name+"(void){"
 	cog.outl(code_str)
 
+	timeout_inits_str = ""
+	if timeouts_initially_true is True:
+		timeout_inits_str = """
+	// Set initial timeout flags as true (param 'CAN_init_timeouts_val' is set to True)
+	for(uint32_t i = 0; i < """+sym_rx_msgs+"""; i++){
+		"""+sym_rx_dyn_data_name+"""[i].timedout = kTrue;
+	}\n"""
+
 	function_body = """
+
 	// Clear RX data buffer
 	memset(&"""+sym_rx_data_name+","+sym_rx_init_val+","+sym_rx_data_len+""");
+
 	// Clear RX available flags buffer
 	memset(&"""+sym_avlbl_buffer_name+",0u,"+sym_avlbl_buff_len+""");
+
 	// Clear TX data buffer
 	memset(&"""+sym_tx_data_name+","+sym_tx_init_val+","+sym_tx_data_len+""");
+
 	// Clear RX dynamic data
 	memset(&"""+sym_rx_dyn_data_name+",0u,sizeof("+sym_rx_dyn_data_type+")*("+sym_rx_msgs+"""));
+	"""+timeout_inits_str+"""
 	// Clear TX dynamic data
 	memset(&"""+sym_tx_dyn_data_name+",0u,sizeof("+sym_tx_dyn_data_type+")*("+sym_tx_dyn_data_len+"""));
 

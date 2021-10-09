@@ -188,6 +188,14 @@ macro_value = str(len(list_of_rx_msgs))
 /* RX message(s) timeout */
 /* [[[cog
 if len(list_of_rx_msgs) > 0:
+	# Get timeout toleance parameter
+	rx_proc_task = subnet.get_simple_param("CAN_rx_task_period")
+	rx_timeout_tolerance = subnet.get_simple_param("CAN_rx_timeout_tolerance")
+	if rx_timeout_tolerance < 0 or rx_timeout_tolerance > 100:
+		rx_timeout_tolerance = 100
+		log_warn("Config parameter 'CAN_rx_timeout_tolerance' wrong value '%s'. Assumed 100 (\%)." \
+			% str(rx_timeout_tolerance))
+
 	# Calculate padding spaces
 	macro_prefix = "kCAN_" + net_name_str + node_name_str + "msgTimeout_"
 	macro_names = []
@@ -195,9 +203,22 @@ if len(list_of_rx_msgs) > 0:
 	for message in subnet.messages.values():
 		macro_name = macro_prefix + message.name
 		if subnet.get_message_direction(node_name,message.name) == nw.CAN_RX:
-			if subnet.get_message_timeout(node_name,message.name) is not None:
-				macro_value = \
-					"(" + subnet.get_message_timeout(node_name,message.name) + "u)"
+			message_timeout = subnet.get_message_timeout(node_name,message.name)
+			if message_timeout is not None:
+				message_timeout = int(message_timeout)
+				timeout_in_ticks = round(int(message_timeout)/rx_proc_task)
+				macro_value = "(" + str(timeout_in_ticks) + "u)"
+
+				# Check if RX timeout tolerance is met
+				upper_tol_perc = (100 + rx_timeout_tolerance) / 100
+				lower_tol_perc = (100 - rx_timeout_tolerance) / 100
+
+				if ((timeout_in_ticks * rx_proc_task) > (upper_tol_perc * message_timeout)) or \
+				((timeout_in_ticks * rx_proc_task) < (lower_tol_perc * message_timeout)):
+					log_warn(("Generated timeout of '%sms' for message '%s' doesn't met tolerance of +/-'%s' percent. " \
+							 + "Consider changing period of Rx task in config parameter 'CAN_rx_task_period' " \
+							 + "or the tolerance for RX timeouts in parameter 'CAN_rx_timeout_tolerance'.") \
+							 % ((timeout_in_ticks * rx_proc_task), message.name, str(rx_timeout_tolerance)))
 			else:
 				macro_value = "(0u)"
 			macro_names.append(macro_name)
@@ -366,6 +387,8 @@ if len(list_of_tx_msgs) > 0:
 sym_rx_data_name = "can_" + net_name_str +  node_name_str + "RxDataBuffer"
 sym_rx_stat_data_name = "can_" + net_name_str + node_name_str \
 	+ "rxMsgStaticData"
+sym_rx_dyn_data_name = "can_" + net_name_str + node_name_str \
+	+ "rxMsgDynamicData"
 sym_tx_data_name = "can_" + net_name_str +  node_name_str + "TxDataBuffer"
 sym_tx_stat_data_name = "can_" + net_name_str + node_name_str + "txMsgStaticData"
 
@@ -461,6 +484,15 @@ if len(subnet.messages) > 0:
 			macro_vals = "can_clearAllAvlblFlags(&"+ sym_rx_stat_data_name + "[" + sym_rx_idx_pfx \
 				+ message_name + "])"
 			code_str = "#define "+macro_name+"()"+"\t\t"+macro_vals
+			cog.outl(code_str)
+			cog.outl()
+
+			# Message get timeout flag macro.
+			cog.outl("/"+chr(42)+" Get message timeout flag "+chr(42)+"/")
+			macro_name = "CAN_" + net_name_str + node_name_str+"get_timeout_flag_"+message_name
+			macro_vals = "(" + sym_rx_dyn_data_name + "[" + sym_rx_idx_pfx \
+				+ message_name + "].timedout)"
+			code_str = "#define "+macro_name+"()"+"\t\t\t"+macro_vals
 			cog.outl(code_str)
 			cog.outl()
 

@@ -96,9 +96,9 @@ Use ${DATATYPE} to indicate the Data_Type name.
 			</clv:Desc>
 			<clv:Default>0</clv:Default>
 		</clv:ParamDefinition>
-		<clv:ParamDefinition type="boolean" id="CAN_start_timeouts_at_init">
-			<clv:Title>Msgs timeout starts at init</clv:Title>
-			<clv:Desc>If set to true timeout of rx CAN messages will start counting down from init. If set to false, user will need to start the timeout manually.</clv:Desc>
+		<clv:ParamDefinition type="boolean" id="CAN_init_timeouts_val">
+			<clv:Title>Determine initial value for timeout flags.</clv:Title>
+			<clv:Desc>If set to true timeout flags of rx CAN messages will be initialized as true. If set to false, timeout flags will be initialized as false.</clv:Desc>
 			<clv:Default>True</clv:Default>
 		</clv:ParamDefinition>
 		<clv:ParamDefinition type="int" id="CAN_tx_task_period"
@@ -116,7 +116,13 @@ Use ${DATATYPE} to indicate the Data_Type name.
 		<clv:ParamDefinition type="int" id="CAN_rx_task_period"
 			category="catCAN_network" is_advanced="true">
 			<clv:Title>Period of RX task</clv:Title>
-			<clv:Desc>Period of task for polling spontaneous RX messages.</clv:Desc>
+			<clv:Desc>Period of task for processing RX messages timeouts.</clv:Desc>
+			<clv:Default>20</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="int" id="CAN_rx_timeout_tolerance"
+			category="catCAN_network" is_advanced="true">
+			<clv:Title>Tolerance for RX timeout</clv:Title>
+			<clv:Desc>Tolerance in percentage to deviate from RX message timeouts before throwing a warning message.</clv:Desc>
 			<clv:Default>10</clv:Default>
 		</clv:ParamDefinition>
 		<clv:ParamDefinition type="int" id="CAN_tx_queue_len"

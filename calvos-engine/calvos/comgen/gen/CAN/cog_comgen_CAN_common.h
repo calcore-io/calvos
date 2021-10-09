@@ -132,7 +132,8 @@ typedef enum{
 typedef struct{
 	FlagsNative available;
 	intNat_t timedout;
-	NodeUint32 timeout_queue;
+	uint32_t timeout_timer;
+	// NodeUint32 timeout_queue;
 }CANrxMsgDynamicData;
 
 typedef struct{
@@ -156,7 +157,7 @@ typedef struct CANrxMsgStaticData{
 	uint8_t* data;
 	uint8_t * sig_avlbl_flags;
 	uint8_t sig_avlbl_buf_len;
-	CANrxMsgDynamicData* dyn;
+	CANrxMsgDynamicData* dyn;	/* TODO: evaluate removing this pointer to dyn data and instead use the dyn data array directly. */
 	CANrxMsgStaticFields fields;
 	const struct CANrxMsgStaticData* searchPrev;
 	const struct CANrxMsgStaticData* searchNext;
@@ -173,7 +174,7 @@ typedef struct CANtxMsgStaticData{
 	uint32_t period; /* Given in base time ticks */
 	Callback tx_callback;
 	uint8_t* data;
-	CANtxMsgDynamicData* dyn;
+	CANtxMsgDynamicData* dyn;	/* TODO: evaluate removing this pointer to dyn data and instead use the dyn data array directly. */
 	CANtxMsgStaticFields fields;
 }CANtxMsgStaticData;
 

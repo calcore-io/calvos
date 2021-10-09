@@ -245,6 +245,8 @@ else:
 
 datat_type_name = network.get_simple_param("CAN_enum_type_prefix")
 
+cog.outl("\n/"+chr(42)+" Enumerated Types " + chr(42) + "/\n")
+
 for enum_type in network.enum_types.values():
 	cog.out("typedef enum{\n\t")
 	counter = 0
@@ -266,6 +268,24 @@ for enum_type in network.enum_types.values():
 			cg.resolve_wildcards(datat_type_name, {"DATATYPE":enum_type.name})
 
 	cog.outl("}" + type_name + ";\n")
+
+cog.outl("\n/"+chr(42)+" Scalar Types " + chr(42) + "/\n")
+
+for signal in network.signals:
+	if network.signals[signal].is_scalar():
+		signal_len = network.signals[signal].len
+		code_string = "typedef uint" + str(cg.calculate_base_type_len(signal_len)) + "_t "
+		# Resolve type name
+		if datat_type_name == "" or  datat_type_name is None:
+			type_name = signal
+		else:
+			type_name = \
+				cg.resolve_wildcards(datat_type_name, {"DATATYPE":signal})
+
+		code_string += type_name + ";"
+
+		cog.outl(code_string)
+
 ]]] */
 // [[[end]]]
 
