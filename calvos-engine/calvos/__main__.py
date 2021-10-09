@@ -27,10 +27,10 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 __all__ = []
-__date__ = '2021-10-06'
-__updated__ = '2020-10-06'
+__date__ = '2021-10-08'
+__updated__ = '2020-10-08'
 
-DEBUG = 0
+DEBUG = 1
 TESTRUN = 0
 PROFILE = 0
 
