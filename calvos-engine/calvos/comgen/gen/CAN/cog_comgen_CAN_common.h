@@ -206,7 +206,7 @@ extern CalvosError can_commonTransmitMsg(const CANtxMsgStaticData* msg_struct, \
 		  CANhalTxFunction can_hal_tx_function, \
 		  const CANtxMsgStaticData** transmitting_msg);
 
-extern void can_commonConfirmTxMsg(const CANtxMsgStaticData* transmitting_msg, \
+extern void can_commonConfirmTxMsg(const CANtxMsgStaticData** transmitting_msg, \
 		uintNat_t check_msg_id, uint32_t txd_msg_id);
 
 /* [[[cog

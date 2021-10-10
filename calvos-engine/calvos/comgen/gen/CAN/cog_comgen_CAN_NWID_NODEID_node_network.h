@@ -563,9 +563,10 @@ if len(subnet.messages) > 0:
 				cog.outl("/"+chr(42)+" Macros for direct writing of signal \"" \
 					+ signal.name + "\". " + chr(42) + "/")
 				if signal.is_array():
+					signal_len_in_bytes = int(signal.len/8)
 					cog.outl("#define " + def_write_array + pad_write_array \
-							+"( memcpy(const &"+msg_stat_data+".data["+str(signal.start_byte) \
-							+ "],"+data_in_str+", "+msg_stat_data+".len)" )
+							+"memcpy(const &"+msg_stat_data+".data["+str(signal.start_byte) \
+							+ "],"+data_in_str+","+str(signal_len_in_bytes)+")" )
 				else:
 					cog.outl("#define " + def_update_direct + pad_update_direct \
 						+ def_write.replace("("+array_str,"("+msg_stat_data+".data"))

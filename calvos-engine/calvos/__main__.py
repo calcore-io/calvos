@@ -154,6 +154,10 @@ USAGE
             help=("Optional. Backups of the overwritten C-code during an export operation " \
                   + "will be placed in the provided BACKUP path. " \
                   + "This is only used if -e argument was provided."))
+        parser.add_argument("--dont-export-user", dest="dont_export_user", action='store_true', \
+                            required=False, \
+            help=("Optional. If argument -e is provided and also this one, then the export " \
+                  + "operation won't export 'USER_' files. Use with care."))
         
 
         # Process arguments
@@ -318,6 +322,22 @@ USAGE
                     c_files = list(project_path_output.glob('*.c'))
                     h_files = list(project_path_output.glob('*.h'))
                     
+                    # Check if argument --dont-export-user was provided
+                    if args.dont_export_user is True:
+                        # Remove user files, i.e., files starting with "USER_" so that they
+                        # are not exported.
+                        c_files_no_user = []
+                        h_files_no_user = []
+                        for c_file in c_files:
+                            if str(c_file.name).startswith("USER_") is False:
+                                c_files_no_user.append(c_file)
+                        for h_file in h_files:
+                            if str(h_file.name).startswith("USER_") is False:
+                                h_files_no_user.append(h_file)
+                        # Overwrite lists of files
+                        c_files = c_files_no_user
+                        h_files = h_files_no_user
+                    
                     # If backup location is defined then do the backup
                     if args.backup is not None:
                         MAX_BKUP_COPIES = 10
@@ -476,11 +496,13 @@ if __name__ == "__main__":
         sys.argv.append("-d")
         sys.argv.append(str(debug_demo_path))
         
-        sys.argv.append("-e")
-        sys.argv.append("C:\\diplomado_udg\\s32ds_workspace\\DCU_2020B_EquipoX_3\\src\\DCU\\Communication\\Calvos")
-        
-        sys.argv.append("-b")
-        sys.argv.append("C:\\diplomado_udg\\s32ds_workspace\\bkup")
+#         sys.argv.append("-e")
+#         sys.argv.append("C:\\diplomado_udg\\s32ds_workspace\\DCU_2020B_EquipoX_3\\src\\DCU\\Communication\\Calvos")
+#         
+#         sys.argv.append("-b")
+#         sys.argv.append("C:\\diplomado_udg\\s32ds_workspace\\bkup")
+#         
+#         sys.argv.append("--dont-export-user")
     if TESTRUN:
         import doctest
         doctest.testmod()

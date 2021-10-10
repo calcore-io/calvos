@@ -520,10 +520,10 @@ for message in messages_layouts:
 		cog.outl("/"+chr(42)+" Macros for writing signal \"" \
 			+ signal.name + "\". " + chr(42) + "/")
 		if signal.is_array():
+			signal_len_in_bytes = int(signal.len/8)
 			cog.outl("#define " + def_write_array + pad_write_array \
-					+"( memcpy(&"+array_str+".all["+str(signal.start_byte) \
-					+ "],&"+data_in_str+", kCAN_" + net_name_str \
-					+ "msgLen_" + message.name + ")" )
+					+"memcpy(&"+array_str+".all["+str(signal.start_byte) \
+					+ "],&"+data_in_str+", " + str(signal_len_in_bytes) + ")" )
 		else:
 			pass
 

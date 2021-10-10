@@ -331,21 +331,21 @@ CalvosError can_commonTransmitMsg(const CANtxMsgStaticData* msg_struct, \
  * @Return 		Returns @c kNoError if provided @c transmitting_msg is not NULL.
  * 				Returns @c kError otherwise.
  * ===========================================================================*/
-void can_commonConfirmTxMsg(const CANtxMsgStaticData* transmitting_msg, \
+void can_commonConfirmTxMsg(const CANtxMsgStaticData** transmitting_msg, \
 							uintNat_t check_msg_id, uint32_t txd_msg_id){
 
 	if(transmitting_msg != NULL){
 		// Confirm message only if the transmitted ID matches in case
 		// check_msg_id is set true. If check_msg_id is false then
 		// last transmission will be confirmed but no TX callback triggered.
-		if(!check_msg_id || txd_msg_id == transmitting_msg->id){
-			transmitting_msg->dyn->state = kCANtxState_transmitted;
+		if(!check_msg_id || txd_msg_id == (*transmitting_msg)->id){
+			(*transmitting_msg)->dyn->state = kCANtxState_transmitted;
 			// Invoke TX callback if defined and check_msg_id is true
-			if((check_msg_id) && (transmitting_msg->tx_callback != NULL)){
-				(transmitting_msg->tx_callback)();
+			if((check_msg_id) && ((*transmitting_msg)->tx_callback != NULL)){
+				((*transmitting_msg)->tx_callback)();
 			}
 			// Clears transmitting message pointer
-			transmitting_msg = NULL;
+			*transmitting_msg = NULL;
 		}
 	}
 }

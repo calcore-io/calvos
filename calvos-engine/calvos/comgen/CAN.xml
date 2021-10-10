@@ -158,5 +158,10 @@ Use ${DATATYPE} to indicate the Data_Type name.
 			<clv:Title>RX Data initial value</clv:Title>
 			<clv:Desc>RX Data initial value.</clv:Desc>
 			<clv:Default>0</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="boolean" id="CAN_protect_direct_access">
+			<clv:Title>Protect direct access to data buffers</clv:Title>
+			<clv:Desc>If set to True, the functions for reading and writing signals will be done in critical sections. If set to False, no critical sections will be used.</clv:Desc>
+			<clv:Default>True</clv:Default>
 		</clv:ParamDefinition></clv:ParamsDefinitions>
 </clv:ComponentDefinition>
