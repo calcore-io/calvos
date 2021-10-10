@@ -40,11 +40,10 @@ cog.outl("/"+chr(42)+chr(42)+" \\file\t\t"+file_name+" "+padding_str+chr(42)+"/"
 ]]] */
 // [[[end]]]
 /** \brief     	Source file for CAN node network signal access functions.
- *  \details   	Definitions for functions to have direct access to signals from
- *  			the data buffers. Functions will be generated in this file
- *  			only if configurable parameter "CAN_protect_direct_access" is
- *  			"True". Otherwise, these functions are not required and direct
- *  			access will be provided directly by macros.
+ *  \details   	Definitions for functions to have direct access to signals
+ *  			from/to the data buffers. Functions generated in this file
+ *  			will do de access in critical sections if configurable parameter
+ *  			"CAN_protect_direct_access" is set to "True".
  *  \author    	Carlos Calvillo
  *  \version   	0.1
  *  \date      	2021-10-10
@@ -257,12 +256,17 @@ if len(list_of_rx_msgs) > 0:
 			signal_name = signal.name
 			# Functions are not generated for signals of type array
 			if signal.is_array() is False:
+				if signal.is_enum_type is True:
+					name_subst = signal.data_type
+				else:
+					name_subst = signal_name
+
 				# Resolve type name
 				if datat_type_name == "" or  datat_type_name is None:
-					type_name = signal_name
+					type_name = name_subst
 				else:
 					type_name = \
-						cg.resolve_wildcards(datat_type_name, {"DATATYPE":signal_name})
+						cg.resolve_wildcards(datat_type_name, {"DATATYPE":name_subst})
 
 				# Generate read function
 				cog.outl(get_read_signal_header(signal_name,type_name))
@@ -293,12 +297,17 @@ if len(list_of_tx_msgs) > 0:
 			# Functions are not generated for signals of type array
 			signal_name = signal.name
 			if signal.is_array() is False:
+				if signal.is_enum_type is True:
+					name_subst = signal.data_type
+				else:
+					name_subst = signal_name
+
 				# Resolve type name
 				if datat_type_name == "" or  datat_type_name is None:
-					type_name = signal_name
+					type_name = name_subst
 				else:
 					type_name = \
-						cg.resolve_wildcards(datat_type_name, {"DATATYPE":signal_name})
+						cg.resolve_wildcards(datat_type_name, {"DATATYPE":name_subst})
 
 				# Generate write function
 				cog.outl(get_write_signal_header(signal_name,type_name))
