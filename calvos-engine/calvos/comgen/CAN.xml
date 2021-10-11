@@ -169,7 +169,7 @@ Use ${DATATYPE} to indicate the Data_Type name.
 			</clv:Desc>
 			<clv:Default>True</clv:Default>
 		</clv:ParamDefinition>
-		<clv:ParamDefinition type="int" id="CAN_gen_all_non_overlapping"
+		<clv:ParamDefinition type="boolean" id="CAN_gen_all_non_overlapping"
 			category="catCAN_network" is_advanced="true">
 			<clv:Title>
 				Generate all network with no overlaping between nodes

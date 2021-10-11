@@ -8,6 +8,7 @@ Module for code generation utilities.
 @license:    GPL v3
 """
 __version__ = '0.0.1'
+from math import floor
 __date__ = '2020-09-29'
 __updated__ = '2020-09-29'
 
@@ -197,6 +198,122 @@ def get_bit_mask(n_of_bits, start_bit = 0, inverse = False, length = None):
     bits_mask = int(bits_mask_str, 2)
          
     return bits_mask
+
+#==============================================================================
+def get_bit_mask_str_binary(n_of_bits, start_bit = 0, inverse = False, length = None):
+    """ Returns an string mask. 
+        
+        if lenght is provided then the mask string will always be of byte-size
+        enough to cover lenght.
+    """
+    bits_mask_str = ""
+    if inverse is False:
+        zero_char = "0"
+        one_char = "1"
+    else:
+        zero_char = "1"
+        one_char = "0"
+     
+    if length is not None:
+        curr_len = length
+    else:
+        curr_len = n_of_bits+start_bit
+
+    # Calculate max lenght and put it in complete bytes    
+    max_len = floor(curr_len/8)
+    if curr_len % 8 > 0:
+        max_len += 1
+    max_len = int(max_len*8)
+    
+    last_bit_position = start_bit + n_of_bits - 1
+
+    for i in range(max_len):
+        if i >= start_bit and i <= last_bit_position:
+            bits_mask_str = one_char + bits_mask_str
+        else:
+            bits_mask_str = zero_char + bits_mask_str
+         
+    return bits_mask_str
+
+#==============================================================================
+def get_bit_mask_str_hex(n_of_bits, start_bit = 0, inverse = False, length = None):
+    """ Returns an string mask in hex format. 
+        
+        if lenght is provided then the mask string will always be of byte-size
+        enough to cover lenght.
+    """
+    bits_mask_str = get_bit_mask_str_binary(n_of_bits, start_bit, inverse, length);
+    bit_mask_hex = hex(int(bits_mask_str, 2))
+
+    return bit_mask_hex
+
+#==============================================================================
+#get_dtk -> "get data type key" (previously "g_dt_k")
+def split_bit_len_in_base_types(size_in_bits):
+    """ Given a lenght, split this lenght on pieces so that each piece is of a base type lenght.
+    
+    Return a list of pieces with format:
+    [size of piece 1, size of piece 2, ..., size of piece X]
+    """
+    pieces_sizes = []
+    remaining_bits = size_in_bits
+    piece_size = remaining_bits
+    while remaining_bits > 8 and calculate_base_type_len(remaining_bits) > remaining_bits:
+        # Attempt with the lower base type
+        piece_size = calculate_base_type_len(piece_size) / 2
+        remaining_bits -= piece_size
+        if remaining_bits < 0:
+            remaining_bits += piece_size
+            piece_size = calculate_base_type_len(piece_size) / 2
+            pieces_sizes.append(int(piece_size))
+            remaining_bits -= piece_size
+        else:
+            pieces_sizes.append(int(piece_size))
+    else:
+        pieces_sizes.append(int(remaining_bits))
+    
+    return pieces_sizes
+        
+#==============================================================================
+#get_dtk -> "get data type key" (previously "g_dt_k")
+def split_bit_str_in_base_types(size_in_bits, bits_string):
+    """ Given a string of binary number, split it in pieces of base type lenghts.
+    
+    Return a list of lists with format:
+    [ [size in bits LSB, sub string LSB], [size in bits x, sub string x],
+    ..., [size in bits MSB, sub string MSB] ]
+    """
+    
+    pieces_sizes_list = split_bit_len_in_base_types(size_in_bits)
+    pieces_out = []
+    remaining_str = bits_string
+    
+    for piece_size in pieces_sizes_list:
+        # Form "item" list with format [size in bits][bit_string]
+        if len(remaining_str) >= piece_size:
+            # Generate sub-string and consume the characters
+            item_str = remaining_str[-piece_size:]
+            remaining_str = remaining_str[:-piece_size]
+            item_lst = [piece_size, item_str]
+            pieces_out.append(item_lst)
+        else:
+            item_str = remaining_str[-piece_size:]
+            item_lst = [len(item_str), item_str]
+            pieces_out.append(item_lst)
+            break
+        
+    return pieces_out
+
+#==============================================================================
+#get_dtk -> "get data type key" (previously "g_dt_k")
+def round_to_bytes(size_in_bits):
+    """ Will get the nubmer of full bytes necessary to contain the given number of bits.
+    """
+    n_of_bytes = floor(size_in_bits / 8)
+    if size_in_bits % 8 > 0:
+        n_of_bytes += 1
+    
+    return int(n_of_bytes)
 
 #==============================================================================
 #get_dtk -> "get data type key" (previously "g_dt_k")

@@ -574,14 +574,16 @@ if len(subnet.messages) > 0:
 			cog.outl("")
 			# Signal available flags macros
 			# -----------------------------
-			# Available macros are only for RX messages.
-			cog.outl("/"+chr(42)+" Macros for available flags handling of signal \"" \
-					+ signal.name + "\". " + chr(42) + "/")
 
 			sym_avlbl_buffer_name = "can_" + net_name_str + node_name_str + "avlbl_buffer"
 
 			# Available flags only apply for RX signals
 			if msg_is_tx is False:
+
+				# Available macros are only for RX messages.
+				cog.outl("/"+chr(42)+" Macros for available flags handling of signal \"" \
+					+ signal.name + "\". " + chr(42) + "/")
+
 				working_byte = math.floor(avlbl_flags_idx[signal.name] / 8)
 				working_bit = avlbl_flags_idx[signal.name] - (working_byte*8)
 				working_clr_mask = cg.get_bit_mask(1, working_bit, True, 8)
@@ -606,6 +608,109 @@ if len(subnet.messages) > 0:
 				cog.outl("#define " + sym_avlb_clear + pad_avlb_clear + macro_value)
 
 			cog.outl("")
+]]] */
+// [[[end]]]
+
+
+/* ----------------------------- */
+/* Exported functions prototypes */
+/* ----------------------------- */
+
+/* Signal reading functions    */
+/* [[[cog
+read_function_prefix = "can_" + net_name_str + node_name_str + "read_"
+write_function_prefix = "can_" + net_name_str + node_name_str + "write_"
+
+read_array_function_prefix = "can_" + net_name_str + node_name_str + "read_array_"
+write_array_function_prefix = "can_" + net_name_str + node_name_str + "write_array_"
+
+# Definition of Functions
+
+def get_read_signal_signature(signal_name, signal_data_type):
+	return_str = signal_data_type + " " + read_function_prefix + signal_name+"()"
+	return return_str
+
+def get_write_signal_signature(signal_name, signal_data_type):
+	return_str = "void " + write_function_prefix + signal_name + "(" + signal_data_type +" value)"
+	return return_str
+
+def get_read_array_signature(signal_name):
+	return_str = "void " + read_array_function_prefix + signal_name+"(uint8_t * dest_array)"
+	return return_str
+
+def get_write_array_signature(signal_name):
+	return_str = "void " + write_array_function_prefix + signal_name + "(uint8_t * src_array)"
+	return return_str
+
+
+# Resolve enum symbols wildcards
+datat_symb_prfx = network.get_simple_param("CAN_enum_sym_prefix")
+if datat_symb_prfx == "$":
+	datat_symb_prfx = ""
+else:
+	datat_symb_prfx = \
+		cg.resolve_wildcards(datat_symb_prfx, {"NWID":network.id_string})
+
+datat_type_name = network.get_simple_param("CAN_enum_type_prefix")
+
+if len(list_of_rx_msgs) > 0:
+
+	for message_name in list_of_rx_msgs:
+		message_signals = subnet.get_signals_of_message(message_name)
+		for signal in message_signals:
+			signal_name = signal.name
+			# Functions are not generated for signals of type array
+			if signal.is_array() is False:
+				if signal.is_enum_type is True:
+					name_subst = signal.data_type
+				else:
+					name_subst = signal_name
+
+				# Resolve type name
+				if datat_type_name == "" or  datat_type_name is None:
+					type_name = name_subst
+				else:
+					type_name = \
+						cg.resolve_wildcards(datat_type_name, {"DATATYPE":name_subst})
+
+				# Generate read function
+				cog.outl("extern "+get_read_signal_signature(signal_name,type_name)+";")
+			else:
+				array_len_in_bytes = int(signal.len/8)
+				# Generate read function
+				cog.outl("extern "+get_read_array_signature(signal_name)+";")
+]]] */
+// [[[end]]]
+
+/* Signal writing functions    */
+/* [[[cog
+
+if len(list_of_tx_msgs) > 0:
+
+	for message_name in list_of_tx_msgs:
+		message_signals = subnet.get_signals_of_message(message_name)
+		for signal in message_signals:
+			# Functions are not generated for signals of type array
+			signal_name = signal.name
+			if signal.is_array() is False:
+				if signal.is_enum_type is True:
+					name_subst = signal.data_type
+				else:
+					name_subst = signal_name
+
+				# Resolve type name
+				if datat_type_name == "" or  datat_type_name is None:
+					type_name = name_subst
+				else:
+					type_name = \
+						cg.resolve_wildcards(datat_type_name, {"DATATYPE":name_subst})
+
+				# Generate write function
+				cog.outl("extern "+get_write_signal_signature(signal_name,type_name)+";")
+			else:
+				# Generate write function
+				cog.outl("extern "+get_write_array_signature(signal_name)+";")
+
 ]]] */
 // [[[end]]]
 

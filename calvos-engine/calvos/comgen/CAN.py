@@ -1918,6 +1918,13 @@ class Network_CAN:
                             {"category" : "common"})
         self.add_cog_source("network_h", "cog_comgen_CAN_NWID_network.h", True, \
                             None, {"category" : "network"})
+        self.add_cog_source("node_net_h", "cog_comgen_CAN_NWID_NODEID_node_network.h", True, \
+                            [["comgen.CAN", "common_h"], \
+                             ["comgen.CAN", "network_h"], \
+                             ["comgen.CAN", "core_h"]], \
+                            {"category" : "node"})
+        self.add_cog_source("network_masks_h", "cog_comgen_CAN_NWID_network_masks.h", True, \
+                            None, {"category" : "network"})
         self.add_cog_source("nw_includes_h", "cog_comgen_CAN_NWID_includes.h", True, \
                             [["comgen.CAN", "common_h"], \
                              ["comgen.CAN", "network_h"], \
@@ -1937,11 +1944,6 @@ class Network_CAN:
                              ["comgen.CAN", "core_h"]], \
                             {"category" : "node"}, \
                             user_code=True)
-        self.add_cog_source("node_net_h", "cog_comgen_CAN_NWID_NODEID_node_network.h", True, \
-                            [["comgen.CAN", "common_h"], \
-                             ["comgen.CAN", "network_h"], \
-                             ["comgen.CAN", "core_h"]], \
-                            {"category" : "node"})
         self.add_cog_source("node_net_c", "cog_comgen_CAN_NWID_NODEID_node_network.c", False, \
                             [["comgen.CAN", "network_h"],
                              ["comgen.CAN", "node_net_h"],
@@ -2794,6 +2796,16 @@ class Network_CAN:
                 return_value = True
             else:
                 return_value = False
+                
+            return return_value
+        
+        #===========================================================================================
+        def get_abs_start_bit(self):
+            """ Returns the absolute start bit position of this signal (starting with bit 0)
+            """
+            return_value = None
+            if self.start_byte is not None and self.start_bit is not None:
+                return_value = (self.start_byte * 8) + (self.start_bit)
                 
             return return_value
 
