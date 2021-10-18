@@ -103,6 +103,15 @@ sym_abs_bit_prefix = "kCAN_" + net_name_str + "SIG_ABS_START_BIT_"
 sym_mask_sig_clr = "kCAN_" + net_name_str + "SIG_MASK_CLR"
 sym_mask_sig_clr_in_msg = "kCAN_" + net_name_str + "SIG_MASK_CLR_IN_MSG_"
 
+sym_init_value = "kCAN_" + net_name_str + "SIG_INIT_VAL_"
+
+datat_symb_prfx = network.get_simple_param("CAN_enum_sym_prefix")
+if datat_symb_prfx == "$":
+	datat_symb_prfx = ""
+else:
+	datat_symb_prfx = \
+		cg.resolve_wildcards(datat_symb_prfx, {"NWID":network.id_string})
+
 #for i in range(1,65):
 #	if i == i:
 #		print(" i = ",i," pieces: ", cg.split_bit_len_in_base_types(i))
@@ -145,6 +154,26 @@ for message in network.messages.values():
 		#Generate masks for clearing signal within whole message data
 		clr_mask = cg.get_bit_mask_str_binary(signal.len,signal.get_abs_start_bit(),True,message.len*8)
 		cog.outl(sym_mask_sig_clr_in_msg+signal.name+chr(9)+chr(9)+"(0b"+clr_mask+"ull)")
+
+
+		#Generate macro for initial value
+		if signal.init_value is not None:
+			sig_init_val = "#error 'wrong signal init value'"
+			if signal.is_enum_type is True:
+				sig_init_val = datat_symb_prfx + signal.init_value
+			elif signal.is_scalar() is True:
+				sig_init_val = cg.to_hex_string_with_suffix(signal.init_value, signal.len)
+			elif signal.is_array() is True:
+				byte_val = hex(signal.init_value)
+				byte_val = byte_val[2:]
+				if len(byte_val) == 1:
+					byte_val = "0" + byte_val
+				sig_init_val = "0x"
+				for i in range(int(signal.len/8)):
+					sig_init_val = sig_init_val + byte_val
+				sig_init_val = cg.to_hex_string_with_suffix(sig_init_val, signal.len)
+
+			cog.outl(sym_init_value+signal.name+chr(9)+chr(9)+"("+sig_init_val+")")
 
 		cog.outl()
 ]]] */

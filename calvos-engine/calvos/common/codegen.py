@@ -96,12 +96,14 @@ PRFX_DEFAULT = 0
     
 #==============================================================================
 def calculate_base_type_len(data_size):
-    """ Calculate lenght of type that can hold the input size.
+    """ Calculate length of type that can hold the input size.
     Returns the size of the "base" data type that can contain the input data size, if
     data_size is greater than the maximum variable size of the compiler then
     returns None.
     """
+    #TODO: compiler dependent function
     return_value = None
+    
     exponent = math.ceil(math.log(data_size, 2))
     base = int(math.pow(2, exponent))
     
@@ -111,35 +113,61 @@ def calculate_base_type_len(data_size):
             base = 8
         return_value = base
     
-    return int(return_value)
+    return return_value
 
+#==============================================================================
+def calculate_data_base_type_len(data_value):
+    """ Calculate length of type that can hold the input data value.
+    Returns the size of the "base" data type that can contain the input data value, if
+    value is greater than the maximum variable size of the compiler then
+    returns None.
+    """
+    #TODO: compiler dependent function
+    return_value = None
+    
+    if data_value > 255:
+        exponent = math.ceil(math.log(data_value, 2))
+        if exponent <= 64:
+            base = calculate_base_type_len(exponent)
+            return_value = base
+    else:
+        # Assume minimum data size of 8 bits
+        return_value = 8
+    
+    return return_value
+
+
+#==============================================================================
 def to_hex_string_with_suffix(input_constant, suffix_len = None):
     """ Returns a string for the given number in hex and with unsigned suffix. """
     # TODO: This is compiler-dependent, adapt this function so that it takes that
     # in consideration.
     return_string = ""
-    
-    max_16 = pow(2,16)
-    max_32 = pow(2,32)
-    max_64 = pow(2,64)
+
+    max_64 = 18446744073709551616 #pow(2,64)
     
     if type(input_constant) is not int:
         if is_hex_string(input_constant):
             input_constant = int(str(input_constant),0)
-    
-    if suffix_len is not None and suffix_len >= input_constant:
+
+    input_constant_len = calculate_data_base_type_len(input_constant)
+        
+    if suffix_len is not None and suffix_len > input_constant_len:
         length_to_check = suffix_len
     else:
-        length_to_check = input_constant
+        length_to_check = input_constant_len
     
-    if length_to_check <= max_16:
+    if length_to_check <= 8:
         return_string = "0x{:02x}".format(input_constant)
         return_string += "u"
-    elif length_to_check > max_16 and length_to_check <= max_32:
+    elif length_to_check > 8 and length_to_check <= 16:
         return_string = "0x{:04x}".format(input_constant)
-        return_string += "ul"
-    elif length_to_check > max_32 and length_to_check <= max_64:
+        return_string += "u"
+    elif length_to_check > 16 and length_to_check <= 32:
         return_string = "0x{:08x}".format(input_constant)
+        return_string += "ul"
+    elif length_to_check > 32 and length_to_check <= 64:
+        return_string = "0x{:016x}".format(input_constant)
         return_string += "ull"
     else:
         log_warn("Passed suffix lenght '%s' or input length '%s' exceeds 64-bits." \
@@ -542,11 +570,12 @@ def get_valid_number(input_string):
         input_string (str): input string to be checked.
     
     Returns:
-        return_value: Integer value corresponding to the input string.
+        return_value: Integer value corresponding to the input string. Returns
+        'None' if input doesn't represent a decimal or hex (0x) number.
     """
     return_value = None
     if str(input_string).isnumeric():
-        return_value = input_string
+        return_value = int(input_string)
     else:
         #Check if string is hexadecimal
         if is_hex_string(input_string):

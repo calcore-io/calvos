@@ -1119,6 +1119,66 @@ class Network_CAN:
                               + signal_name + "\". Type not assigned to the signal."))
     
     #===============================================================================================
+    def get_valid_signal_value(self, signal_name, value):
+        """ Returns the proper value if the provided signal value is valid. Returns None otherwise.
+        
+        """
+        return_value = None
+        
+        value = str(value)
+        sig_data_type = str(self.signals[signal_name].data_type)
+        if self.signals[signal_name].is_enum_type is True:
+            # Check if provided value belongs to the enum type
+            if sig_data_type in self.enum_types:
+                if value in self.enum_types[sig_data_type].enum_entries:
+                    # Valid value
+                    return_value = value
+                else:
+                    log_debug(("Invalid value '"+value+"' for signal '" +signal_name\
+                              +"' of enum type '"+sig_data_type+"'."))
+            else:
+                log_debug(("Invalid data type '"+sig_data_type+"' for signal '"+signal_name+"'."))
+        elif self.signals[signal_name].is_array():
+            # For array signals, only a byte value is allowed for checking.
+            # Such value will be assumed for all array signal bytes (init, fail-safe values)
+            sig_data_value = cg.get_valid_number(value)
+            if sig_data_value is not None:
+                if sig_data_value <= 255:
+                    # Valid value
+                    return_value = sig_data_value
+                else:
+                    log_debug(("Invalid signal value '"+value \
+                         + "' for signal '"+signal_name+"' of type '" \
+                         + sig_data_type + "'. Value for array signals " \
+                         + "shall not exceed 1 byte (255 dec or 0xFF hex). "))
+            else:
+                log_debug(("Invalid signal value '"+value \
+                         + "' for signal '"+signal_name+"' of type '" \
+                         + sig_data_type + "'. Value for array signals " \
+                         + "shall be a decimal or hexadecimal number not " \
+                         + "exceeding 1 byte (255 dec or 0xFF hex). "))          
+        elif self.signals[signal_name].is_scalar():
+            sig_data_value = cg.get_valid_number(value)
+            if sig_data_value is not None:
+                if sig_data_value > 0:
+                    value_len = math.log(sig_data_value,2)
+                else:
+                    value_len = 0
+                if self.signals[signal_name].len >= value_len:
+                    # Valid value
+                    return_value = sig_data_value
+                else:
+                    log_debug(("Invalid signal value '" + value + "' for signal '" + signal_name \
+                             + "' of type '"+sig_data_type + "'. Value exceeds signal's length."))
+            else:
+                log_debug(("Invalid signal value '" + value + "' for signal '" + signal_name \
+                          + "' of type '" + sig_data_type + "'. Value for scalar signals " \
+                             + "shall be a decimal or hexadecimal number not " \
+                             + "exceeding the signal's length."))
+                
+        return return_value
+    
+    #===============================================================================================
     def get_signal_conveyor_message(self, signal_name):
         """ Returns the name of the conveyor message of a signal. """
         #TODO: review this function
@@ -2537,21 +2597,35 @@ class Network_CAN:
                 else:
                     log_warn(("Signal \"" + signal_name 
                                   + "\" doesn't have a defined coveyor message."))        
-                # Add extra information paraemters of the signal (no warnings if empty)
+                # Add extra information parameters of the signal (no warnings if empty)
                 if str(signal_init_val) != "":
-                    self.signals[signal_name].init_value = signal_init_val
-                
+                    self.signals[signal_name].init_value = None
+                    valid_init_value = \
+                        self.get_valid_signal_value(signal_name, signal_init_val)
+                    if valid_init_value is not None:
+                        self.signals[signal_name].init_value = valid_init_value
+                    else:
+                        log_warn(("Invalid initial value '"+str(signal_init_val)+"' for signal '" \
+                                  +signal_name+"'. Assumed initial value 'None'."))
+                        
                 if str(signal_fail_val) != "":
-                    self.signals[signal_name].fail_value = signal_fail_val
+                    self.signals[signal_name].fail_value = None
+                    valid_fail_value = \
+                        self.get_valid_signal_value(signal_name, signal_fail_val)
+                    if valid_fail_value is not None:
+                        self.signals[signal_name].fail_value = valid_fail_value
+                    else:
+                        log_warn(("Invalid fail-safe value '"+str(signal_init_val) \
+                                  +"' for signal '"+signal_name+"'. Assumed value 'None'."))
                 
                 if str(signal_offset) != "":
-                    self.signals[signal_name].fail_value = signal_offset
+                    self.signals[signal_name].offset = signal_offset
                 
                 if str(signal_resolution) != "":
-                    self.signals[signal_name].fail_value = signal_resolution
+                    self.signals[signal_name].resolution = signal_resolution
                 
                 if str(signal_unit) != "":
-                    self.signals[signal_name].fail_value = signal_unit
+                    self.signals[signal_name].uint = signal_unit
 
     #===============================================================================================        
     class EnumType:

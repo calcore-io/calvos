@@ -489,12 +489,19 @@ if __name__ == "__main__":
         
         debug_calvos_path = pl.Path(__file__).parent.absolute()
         debug_demo_path = debug_calvos_path / "demo"
+        debug_demo_project_path = debug_calvos_path / "demo" / "calvos_project.xml"
         create_folder(debug_demo_path)
         
-        print(str(debug_demo_path))
+        print(str(debug_demo_project_path))
         
-        sys.argv.append("-d")
-        sys.argv.append(str(debug_demo_path))
+        sys.argv.append("-p")
+        sys.argv.append(str(debug_demo_project_path))
+        
+        sys.argv.append("-l")
+        sys.argv.append("0")
+        
+#         sys.argv.append("-d")
+#         sys.argv.append(str(debug_demo_path))
         
 #         sys.argv.append("-e")
 #         sys.argv.append("C:\\diplomado_udg\\s32ds_workspace\\DCU_2020B_EquipoX_3\\src\\DCU\\Communication\\Calvos")
