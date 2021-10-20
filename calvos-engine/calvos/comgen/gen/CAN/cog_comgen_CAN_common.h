@@ -154,6 +154,7 @@ typedef struct CANrxMsgStaticData{
 	uint32_t timeout; /* Given in base time ticks */
 	Callback rx_callback;
 	Callback timeout_callback;
+	Callback write_inits_func;
 	uint8_t* data;
 	uint8_t * sig_avlbl_flags;
 	uint8_t sig_avlbl_buf_len;

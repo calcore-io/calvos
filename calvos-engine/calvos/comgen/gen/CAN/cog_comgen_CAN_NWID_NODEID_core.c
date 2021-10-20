@@ -131,6 +131,56 @@ if len(list_of_tx_msgs) > 0:
 // [[[end]]]
 
 /* Private Function Prototypes */
+/* [[[cog
+
+sym_rx_msg_idx_prefix = "kCAN_" + net_name_str + node_name_str + "rxMsgIdx_"
+
+sym_rx_stat_data_type = "const CANrxMsgStaticData"
+sym_rx_stat_data_name = "can_" + net_name_str + node_name_str \
+	+ "rxMsgStaticData"
+
+sym_tx_msg_idx_prefix = "kCAN_" + net_name_str + node_name_str + "txMsgIdx_"
+
+sym_tx_stat_data_name = "can_" + net_name_str + node_name_str + "txMsgStaticData"
+sym_tx_stat_data_type = "const CANtxMsgStaticData"
+sym_tx_stat_data_len = "kCAN_" + net_name_str + node_name_str + "nOfTxMsgs"
+
+sym_set_msg_inits = "CAN_" + net_name_str + "write_msg_init_vals_"
+
+write_init_function_prefix = "can_"+net_name_str+node_name_str+"write_initial_values_"
+
+def get_write_init_header(message_name):
+	return_str = """
+/"""+chr(42)+""" ==========================================================================="""+chr(42)+"""/
+/"""+chr(42)+chr(42)+""" Function for writing initial values of message """+message_name+""".
+ """+chr(42)+"""
+ """+chr(42)+""" This function writes all configured initial values in the data buffer for
+ """+chr(42)+""" message """+message_name+""".
+ """+chr(42)+""" ==========================================================================="""+chr(42)+"""/"""
+	return return_str[1:]
+
+def get_write_init_signature(message_name):
+	return_str = "void " + write_init_function_prefix + message_name + "(void)"
+	return return_str
+
+def get_write_init_body(message_name, buffer_name, msg_idx):
+	return_str = chr(9)
+	return_str += "CALVOS_CRITICAL_ENTER();"+chr(13)+chr(9)
+	return_str += sym_set_msg_inits+message_name+"("+buffer_name+"["+msg_idx+"].data);"
+	return_str += chr(13)+chr(9)+"CALVOS_CRITICAL_EXIT();"
+	return return_str
+
+# Print local function prototypes
+if len(list_of_rx_msgs) > 0:
+	for message_name in list_of_rx_msgs:
+		# Generate write init values function
+		cog.outl(get_write_init_signature(message_name)+";")
+if len(list_of_tx_msgs) > 0:
+	for message_name in list_of_tx_msgs:
+		# Generate write init values function
+		cog.outl(get_write_init_signature(message_name)+";")
+]]] */
+// [[[end]]]
 
 /* Private macro definitions */
 
@@ -210,10 +260,6 @@ if len(list_of_rx_msgs) > 0:
 	cg.inorderTree(root, search_tree)
 
 	# Create static array
-	sym_rx_stat_data_type = "const CANrxMsgStaticData"
-	sym_rx_stat_data_name = "can_" + net_name_str + node_name_str \
-		+ "rxMsgStaticData"
-
 	cog.outl(sym_rx_stat_data_type+" "+sym_rx_stat_data_name+"["+sym_rx_msgs+"] = {\\")
 
 	callback_prefix = "can_" + net_name_str + node_name_str
@@ -236,6 +282,8 @@ if len(list_of_rx_msgs) > 0:
 		array_data.append("&" + callback_prefix + msg_name + callback_rx_sufix)
 		# Msg timeout callback
 		array_data.append("&" + callback_prefix + msg_name + callback_tout_sufix)
+		# Msg write inits function
+		array_data.append("&" + write_init_function_prefix + msg_name)
 		# Data Buffer
 		array_data.append(" \\\n\t\t\t\t&" + sym_rx_data_name + "["+ str(data_idx) +"]")
 		data_idx += subnet.messages[msg_name].len
@@ -343,10 +391,6 @@ if len(list_of_tx_msgs) > 0:
 /* Array of Tx messages static data */
 /* [[[cog
 if len(list_of_tx_msgs) > 0:
-	sym_tx_stat_data_name = "can_" + net_name_str + node_name_str + "txMsgStaticData"
-	sym_tx_stat_data_type = "const CANtxMsgStaticData"
-	sym_tx_stat_data_len = "kCAN_" + net_name_str + node_name_str + "nOfTxMsgs"
-
 	cog.outl(sym_tx_stat_data_type+" "+sym_tx_stat_data_name+"["+sym_tx_stat_data_len+"] = {\\")
 
 	callback_prefix = "can_" + net_name_str + node_name_str
@@ -474,7 +518,6 @@ if len(list_of_rx_msgs) > 0:
  * ===========================================================================*/
 /* [[[cog
 if len(list_of_rx_msgs) > 0:
-	sym_rx_msg_idx_prefix = "kCAN_" + net_name_str + node_name_str + "rxMsgIdx_"
 	rx_proc_task = network.get_simple_param("CAN_rx_task_period")
 
 	sym_rx_proc_func_name = "can_task_"+str(rx_proc_task)+"ms_"+net_name_str+node_name_str+"rxProcess"
@@ -497,6 +540,10 @@ if len(list_of_rx_msgs) > 0:
 					CALVOS_CRITICAL_ENTER();
 					"""+sym_rx_stat_data_name+"""[i].dyn->timedout = kTrue;
 					CALVOS_CRITICAL_EXIT();
+					// Call write initial values function if not NULL
+					if("""+sym_rx_stat_data_name+"""[i].write_inits_func != NULL){
+						("""+sym_rx_stat_data_name+"""[i].write_inits_func)();
+					}
 					// Call timeout callback if not NULL
 					if("""+sym_rx_stat_data_name+"""[i].timeout_callback != NULL){
 						("""+sym_rx_stat_data_name+"""[i].timeout_callback)();
@@ -573,7 +620,6 @@ if len(list_of_tx_msgs) > 0:
  * ===========================================================================*/
 /* [[[cog
 if len(list_of_tx_msgs) > 0:
-	sym_tx_msg_idx_prefix = "kCAN_" + net_name_str + node_name_str + "txMsgIdx_"
 	tx_proc_task = network.get_simple_param("CAN_tx_task_period")
 
 	sym_tx_proc_func_name = "can_task_"+str(tx_proc_task)+"ms_"+net_name_str+node_name_str+"txProcess"
@@ -735,5 +781,24 @@ if len(list_of_tx_msgs) > 0:
 """
 	function_body = function_body[1:]
 	cog.outl(function_body+"}")
+]]] */
+// [[[end]]]
+
+
+/* [[[cog
+if len(list_of_rx_msgs) > 0:
+	for message_name in list_of_rx_msgs:
+		# Generate write init values function
+		cog.outl(get_write_init_header(message_name))
+		cog.outl(get_write_init_signature(message_name)+"{")
+		cog.outl(get_write_init_body(message_name,sym_rx_stat_data_name,sym_rx_msg_idx_prefix+message_name)+chr(13)+"}")
+		cog.outl("")
+if len(list_of_tx_msgs) > 0:
+	for message_name in list_of_tx_msgs:
+		# Generate write init values function
+		cog.outl(get_write_init_header(message_name))
+		cog.outl(get_write_init_signature(message_name)+"{")
+		cog.outl(get_write_init_body(message_name,sym_tx_stat_data_name,sym_tx_msg_idx_prefix+message_name)+chr(13)+"}")
+		cog.outl("")
 ]]] */
 // [[[end]]]
