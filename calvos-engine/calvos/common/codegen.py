@@ -138,7 +138,7 @@ def calculate_data_base_type_len(data_value):
 
 
 #==============================================================================
-def to_hex_string_with_suffix(input_constant, suffix_len = None):
+def to_hex_string_with_suffix(input_constant, suffix_len = None, padding = False):
     """ Returns a string for the given number in hex and with unsigned suffix. """
     # TODO: This is compiler-dependent, adapt this function so that it takes that
     # in consideration.
@@ -158,16 +158,28 @@ def to_hex_string_with_suffix(input_constant, suffix_len = None):
         length_to_check = input_constant_len
     
     if length_to_check <= 8:
-        return_string = "0x{:02x}".format(input_constant)
+        if padding is True:
+            return_string = "0x{:02x}".format(input_constant)
+        else:
+            return_string = "0x{:x}".format(input_constant)
         return_string += "u"
     elif length_to_check > 8 and length_to_check <= 16:
-        return_string = "0x{:04x}".format(input_constant)
+        if padding is True:
+            return_string = "0x{:04x}".format(input_constant)
+        else:
+            return_string = "0x{:x}".format(input_constant)
         return_string += "u"
     elif length_to_check > 16 and length_to_check <= 32:
-        return_string = "0x{:08x}".format(input_constant)
+        if padding is True:
+            return_string = "0x{:08x}".format(input_constant)
+        else:
+            return_string = "0x{:x}".format(input_constant)
         return_string += "ul"
     elif length_to_check > 32 and length_to_check <= 64:
-        return_string = "0x{:016x}".format(input_constant)
+        if padding is True:
+            return_string = "0x{:016x}".format(input_constant)
+        else:
+            return_string = "0x{:x}".format(input_constant)
         return_string += "ull"
     else:
         log_warn("Passed suffix lenght '%s' or input length '%s' exceeds 64-bits." \
@@ -303,9 +315,8 @@ def split_bit_len_in_base_types(size_in_bits):
     return pieces_sizes
         
 #==============================================================================
-#get_dtk -> "get data type key" (previously "g_dt_k")
 def split_bit_str_in_base_types(size_in_bits, bits_string):
-    """ Given a string of binary number, split it in pieces of base type lenghts.
+    """ Given a string of binary number, split it in pieces of base type lengths.
     
     Return a list of lists with format:
     [ [size in bits LSB, sub string LSB], [size in bits x, sub string x],

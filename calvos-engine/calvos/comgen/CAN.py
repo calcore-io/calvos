@@ -1984,7 +1984,8 @@ class Network_CAN:
                              ["comgen.CAN", "core_h"]], \
                             {"category" : "node"})
         self.add_cog_source("network_masks_h", "cog_comgen_CAN_NWID_network_masks.h", True, \
-                            None, {"category" : "network"})
+                            [["comgen.CAN", "network_h"]], \
+                            {"category" : "network"})
         self.add_cog_source("nw_includes_h", "cog_comgen_CAN_NWID_includes.h", True, \
                             [["comgen.CAN", "common_h"], \
                              ["comgen.CAN", "network_h"], \

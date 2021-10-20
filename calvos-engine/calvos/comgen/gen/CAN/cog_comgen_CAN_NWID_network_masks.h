@@ -6,6 +6,7 @@ import time
 import sys
 import pickle as pic
 import pathlib as plib
+import json
 
 import calvos.comgen.CAN as nw
 import calvos.common.codegen as cg
@@ -95,10 +96,35 @@ if 'include_var' in locals():
 /* -------------------------------------------------------------------------- */
 
 /* [[[cog
+
+class MsgConstantData:
+	def __init__(self, name = "", len = None):
+		self.name = name
+		self.len = len
+		self.pieces = [] #List of size of pieces in bits, e.g., [32,16,8,...]
+		self.signals = [] #list of SignalConstantData objects
+
+class SignalConstantData:
+	def __init__(self, name = "", len = None):
+		self.name = name
+		self.len = len
+		self.clr_in_msg_mask = None
+		self.pieces = [] #list of SignalConstantDataPiece objects
+
+class SignalConstantDataPiece:
+	def __init__(self, len = None, val = None):
+		self.len = len
+		self.val = val
+		self.clr_mask = None
+		self.mask = None
+
 # Get structure of all network messages
+sym_len_prefix = "kCAN_" + net_name_str + "SIG_LEN_"
 sym_bit_prefix = "kCAN_" + net_name_str + "SIG_START_BIT_"
 sym_byte_prefix = "kCAN_" + net_name_str + "SIG_START_BYTE_"
 sym_abs_bit_prefix = "kCAN_" + net_name_str + "SIG_ABS_START_BIT_"
+
+sym_mask_sig = "kCAN_" + net_name_str + "SIG_MASK"
 
 sym_mask_sig_clr = "kCAN_" + net_name_str + "SIG_MASK_CLR"
 sym_mask_sig_clr_in_msg = "kCAN_" + net_name_str + "SIG_MASK_CLR_IN_MSG_"
@@ -112,6 +138,9 @@ else:
 	datat_symb_prfx = \
 		cg.resolve_wildcards(datat_symb_prfx, {"NWID":network.id_string})
 
+
+sym_msg_clr_init = "kCAN_" + net_name_str + "MSG_CLR_INITS_"
+
 #for i in range(1,65):
 #	if i == i:
 #		print(" i = ",i," pieces: ", cg.split_bit_len_in_base_types(i))
@@ -122,11 +151,45 @@ else:
 #		for piece in cg.split_bit_str_in_base_types(i,mask):
 #			print(hex(int(piece[1],2)))
 
+msgs = []
+
 for message in network.messages.values():
-	cog.outl(message.name)
-	cog.outl(str(message.len))
 	signals = network.get_signals_of_message(message.name)
-	for signal in signals:
+
+
+	print("Message ", message.name, ", pieces. ", cg.split_bit_len_in_base_types(message.len*8))
+
+	msg = MsgConstantData(message.name, message.len)
+	base_pieces = cg.split_bit_len_in_base_types(message.len)
+	for base_piece in base_pieces:
+		msg.pieces.append(base_piece)
+
+	for signal_obj in signals:
+
+		signal = SignalConstantData(signal_obj.name, signal_obj.len)
+		base_pieces = cg.split_bit_len_in_base_types(signal_obj.len)
+		reamining_len = signal_obj.len
+		for base_piece in base_pieces:
+			piece = SignalConstantDataPiece(base_piece, 0)
+			if reamining_len > base_piece:
+				mask = cg.get_bit_mask_str_hex(base_piece)
+				clr_mask = cg.get_bit_mask_str_hex(base_piece, 0, True, base_piece)
+				reamining_len -= base_piece
+			else:
+				mask = cg.get_bit_mask_str_hex(reamining_len)
+				clr_mask = cg.get_bit_mask_str_hex(reamining_len, 0, True, base_piece)
+				reamining_len = 0
+
+			piece.mask = mask
+			piece.clr_mask = clr_mask
+
+			signal.pieces.append(piece)
+
+		signal.clr_in_msg_mask = cg.get_bit_mask_str_hex(signal.len,signal_obj.get_abs_start_bit(),True,message.len*8)
+		msg.signals.append(signal)
+
+	msgs.append(msg)
+
 #		cog.outl("    - "+signal.name+", start byte: "+str(signal.start_byte)+", start bit: "+str(signal.start_bit)+", len: "+str(signal.len)+", abs bit: "+str(signal.get_abs_start_bit()))
 #		mask = cg.get_bit_mask_str_binary(signal.len,signal.get_abs_start_bit(),True,message.len*8)
 #		cog.outl("    -"+str(mask))
@@ -135,47 +198,79 @@ for message in network.messages.values():
 #		mask = cg.get_bit_mask_str_hex(signal.len,signal.get_abs_start_bit(),True,message.len*8)
 #		cog.outl("    -"+str(mask))
 
-		cog.outl(sym_bit_prefix+signal.name+chr(9)+chr(9)+"("+str(signal.start_bit)+"u)")
-		cog.outl(sym_byte_prefix+signal.name+chr(9)+chr(9)+"("+str(signal.start_byte)+"u)")
-		cog.outl(sym_abs_bit_prefix+signal.name+chr(9)+chr(9)+"("+str(signal.get_abs_start_bit())+"u)")
 
-		#Generate masks for clearing signal
-		clr_mask = cg.get_bit_mask_str_binary(signal.len,0,True,cg.round_to_bytes(signal.len)*8)
-		clr_mask_pieces = cg.split_bit_str_in_base_types(len(clr_mask),clr_mask)
 
-		if len(clr_mask_pieces) > 1:
-			for i, piece in enumerate(clr_mask_pieces):
-				mask_in_hex = hex(int(piece[1],2))
-				cog.outl(sym_mask_sig_clr+i+"_"+signal.name+chr(9)+chr(9)+"("+mask_in_hex+"u)")
+for message in msgs:
+	cog.outl()
+	cog.outl(message.name)
+	cog.outl(str(message.len))
+
+	for signal in message.signals:
+		cog.outl()
+		signal_obj = network.signals[signal.name]
+		name = signal_obj.name
+		sig_len = str(signal_obj.len)
+		sig_start_bit = str(signal_obj.start_bit)
+		sig_start_byte = str(signal_obj.start_byte)
+		sig_abs_start_bit = str(signal_obj.get_abs_start_bit())
+		sig_init = str(signal_obj.init_value)
+
+		cog.outl("#define "+sym_len_prefix+name+chr(9)+chr(9)+"("+sig_len+"u)")
+		cog.outl("#define "+sym_bit_prefix+name+chr(9)+chr(9)+"("+sig_start_bit+"u)")
+		cog.outl("#define "+sym_byte_prefix+name+chr(9)+chr(9)+"("+sig_start_byte+"u)")
+		cog.outl("#define "+sym_abs_bit_prefix+name+chr(9)+chr(9)+"("+sig_abs_start_bit+"u)")
+
+		cog.outl("#define "+sym_mask_sig_clr_in_msg+name+chr(9)+chr(9)+"("+cg.to_hex_string_with_suffix(signal.clr_in_msg_mask)+")")
+
+		# Signal Masks
+		if len(signal.pieces) > 1:
+			for i, piece in enumerate(signal.pieces):
+				cog.outl("#define "+sym_mask_sig+str(i)+"_"+name+chr(9)+chr(9)+"("+piece.mask+")")
 		else:
-			mask_in_hex = hex(int(clr_mask_pieces[0][1],2))
-			cog.outl(sym_mask_sig_clr+"_"+signal.name+chr(9)+chr(9)+"("+mask_in_hex+"u)")
+			cog.outl("#define "+sym_mask_sig+"_"+name+chr(9)+chr(9)+"("+signal.pieces[0].mask+")")
 
-		#Generate masks for clearing signal within whole message data
-		clr_mask = cg.get_bit_mask_str_binary(signal.len,signal.get_abs_start_bit(),True,message.len*8)
-		cog.outl(sym_mask_sig_clr_in_msg+signal.name+chr(9)+chr(9)+"(0b"+clr_mask+"ull)")
+		# Signal Clear Masks
+		if len(signal.pieces) > 1:
+			for i, piece in enumerate(signal.pieces):
+				cog.outl("#define "+sym_mask_sig_clr+str(i)+"_"+name+chr(9)+chr(9)+"("+piece.clr_mask+")")
+		else:
+			cog.outl("#define "+sym_mask_sig_clr+"_"+name+chr(9)+chr(9)+"("+signal.pieces[0].clr_mask+")")
 
 
-		#Generate macro for initial value
-		if signal.init_value is not None:
+		if signal_obj.init_value is not None:
 			sig_init_val = "#error 'wrong signal init value'"
-			if signal.is_enum_type is True:
-				sig_init_val = datat_symb_prfx + signal.init_value
-			elif signal.is_scalar() is True:
-				sig_init_val = cg.to_hex_string_with_suffix(signal.init_value, signal.len)
-			elif signal.is_array() is True:
-				byte_val = hex(signal.init_value)
+			if signal_obj.is_enum_type is True:
+				sig_init_val = datat_symb_prfx + signal_obj.init_value
+			elif signal_obj.is_scalar() is True:
+				sig_init_val = cg.to_hex_string_with_suffix(signal_obj.init_value, signal_obj.len)
+			elif signal_obj.is_array() is True:
+				byte_val = hex(signal_obj.init_value)
 				byte_val = byte_val[2:]
 				if len(byte_val) == 1:
 					byte_val = "0" + byte_val
 				sig_init_val = "0x"
-				for i in range(int(signal.len/8)):
+				for i in range(int(signal_obj.len/8)):
 					sig_init_val = sig_init_val + byte_val
-				sig_init_val = cg.to_hex_string_with_suffix(sig_init_val, signal.len)
+				sig_init_val = cg.to_hex_string_with_suffix(sig_init_val, signal_obj.len)
 
-			cog.outl(sym_init_value+signal.name+chr(9)+chr(9)+"("+sig_init_val+")")
+			cog.outl("#define "+sym_init_value+name+chr(9)+chr(9)+"("+sig_init_val+")")
 
-		cog.outl()
+	# Msg Init values
+	cog.outl()
+	sym_macro_name = sym_msg_clr_init+message.name
+	sym_macro_value = "("
+	for i, signal in enumerate(message.signals):
+		if i > 0:
+			sym_macro_value += "| "
+		sym_macro_value += sym_mask_sig_clr_in_msg + signal.name
+		if i < len(message.signals)-1:
+			sym_macro_value += " \\"+chr(13)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)
+	sym_macro_value += ")"
+
+	cog.outl("#define "+sym_macro_name+chr(9)+chr(9)+sym_macro_value)
+
+
+
 ]]] */
 // [[[end]]]
 
