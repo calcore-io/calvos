@@ -368,7 +368,7 @@ def get_dtk(size, d_type = "i", is_signed = False):
             not specified will assume "False".
     
     Returns:
-        str: Returns the Key corresponding to the speinput data type if it is 
+        str: Returns the Key corresponding to the input data type if it is 
             a valid specification. This key is taken from the "dt_info" 
             dictionary. If input specification is not valid returns "none".
     """

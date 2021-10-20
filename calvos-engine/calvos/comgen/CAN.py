@@ -1989,6 +1989,7 @@ class Network_CAN:
         self.add_cog_source("nw_includes_h", "cog_comgen_CAN_NWID_includes.h", True, \
                             [["comgen.CAN", "common_h"], \
                              ["comgen.CAN", "network_h"], \
+                             ["comgen.CAN", "network_masks_h"], \
                              ["comgen.CAN", "can_node_hal_h"], \
                              ["comgen.CAN", "node_net_h"], \
                              ["comgen.CAN", "core_h"], \
@@ -2285,7 +2286,7 @@ class Network_CAN:
                     # Add variable for NWID wildcard
                     variables.update({"NWID_wildcard" : str(NWID_wildcard)})
                     
-                    # Add list of wildacrds for nodes
+                    # Add list of wildcards for nodes
                     NODEID_names = []
                     for node in subnetwork.nodes.values():
                         if len(self.get_messages_of_node(node.name)) > 0:

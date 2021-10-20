@@ -87,11 +87,15 @@ if 'include_var' in locals() and 'categories_var' in locals():
 	includes = json.loads(include_var)
 	categories = json.loads(categories_var)
 	for idx, include in enumerate(includes):
+		#cog.outl("#include Test \"" + include + "\"" + categories[idx])
 		if(categories[idx] != "node"):
 			cog.outl("#include \"" + include + "\"")
 		else:
-			for node_name in node_names:
-				cog.outl("#include \"" + include.replace("NODEID",node_name) + "\"")
+			if len(node_names) == 0:
+				cog.outl("#include \"" + include.replace("NODEID_","") + "\"")
+			else:
+				for node_name in node_names:
+					cog.outl("#include \"" + include.replace("NODEID",node_name) + "\"")
  ]]] */
 // [[[end]]]
 

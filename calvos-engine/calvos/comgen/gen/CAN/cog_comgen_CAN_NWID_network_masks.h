@@ -140,6 +140,12 @@ else:
 
 
 sym_msg_clr_init = "kCAN_" + net_name_str + "MSG_CLR_INITS_"
+sym_msg_clr_init_piece = "kCAN_" + net_name_str + "MSG_CLR_INITS"
+
+sym_msg_init_vals = "kCAN_" + net_name_str + "MSG_INIT_VALS_"
+sym_msg_init_vals_piece = "kCAN_" + net_name_str + "MSG_INIT_VALS_"
+
+sym_set_msg_inits = "CAN_" + net_name_str + "write_msg_init_vals_"
 
 #for i in range(1,65):
 #	if i == i:
@@ -160,7 +166,7 @@ for message in network.messages.values():
 	print("Message ", message.name, ", pieces. ", cg.split_bit_len_in_base_types(message.len*8))
 
 	msg = MsgConstantData(message.name, message.len)
-	base_pieces = cg.split_bit_len_in_base_types(message.len)
+	base_pieces = cg.split_bit_len_in_base_types(message.len*8)
 	for base_piece in base_pieces:
 		msg.pieces.append(base_piece)
 
@@ -255,9 +261,10 @@ for message in msgs:
 
 			cog.outl("#define "+sym_init_value+name+chr(9)+chr(9)+"("+sig_init_val+")")
 
-	# Msg Init values
 	cog.outl()
-	sym_macro_name = sym_msg_clr_init+message.name
+
+	# Msg clear init macro
+	sym_msg_clr_macro_name = sym_msg_clr_init+message.name
 	sym_macro_value = "("
 	for i, signal in enumerate(message.signals):
 		if i > 0:
@@ -267,7 +274,77 @@ for message in msgs:
 			sym_macro_value += " \\"+chr(13)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)
 	sym_macro_value += ")"
 
+	cog.outl("#define "+sym_msg_clr_macro_name+chr(9)+chr(9)+sym_macro_value)
+
+	cog.outl()
+
+	# Msg clear init macro pieces
+	if len(message.pieces) > 1:
+		for i, piece in enumerate(message.pieces):
+			sym_macro_name = sym_msg_clr_init_piece+str(i)+"_"+message.name
+			sym_macro_value = "(("+cg.get_dtv(piece)+")("+sym_msg_clr_macro_name+" & " + cg.get_bit_mask_str_hex(piece) + ")"
+			cog.outl("#define "+sym_macro_name+chr(9)+chr(9)+sym_macro_value)
+
+	cog.outl()
+
+	# Msg Init vals macro
+	sym_msg_init_macro_name = sym_msg_init_vals+message.name
+	sym_macro_value = "( "
+	for i, signal in enumerate(message.signals):
+		signal_obj = network.signals[signal.name]
+
+		if i > 0:
+			sym_macro_value += "| "
+
+		if signal_obj.get_abs_start_bit() > 0:
+			sym_macro_value += "(" + sym_init_value + signal.name + " << " + sym_abs_bit_prefix + signal.name + ")"
+		else:
+			sym_macro_value += sym_init_value + signal.name
+
+		if i < len(message.signals)-1:
+			sym_macro_value += " \\"+chr(13)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)
+	sym_macro_value += ")"
+
+	cog.outl("#define "+sym_msg_init_macro_name+chr(9)+chr(9)+sym_macro_value)
+
+	cog.outl()
+
+	# Msg init values macro pieces
+	if len(message.pieces) > 1:
+		for i, piece in enumerate(message.pieces):
+			sym_macro_name = sym_msg_init_vals_piece+str(i)+"_"+message.name
+			sym_macro_value = "(("+cg.get_dtv(piece)+")("+sym_msg_init_macro_name+" & " + cg.get_bit_mask_str_hex(piece) + ")"
+			cog.outl("#define "+sym_macro_name+chr(9)+chr(9)+sym_macro_value)
+
+	cog.outl()
+
+
+	# Write Msg Init values
+	sym_macro_name = sym_set_msg_inits + message.name + "(data_buffer)"
+
+	sym_macro_value = ""
+	if len(message.pieces) > 1:
+		# Clear data
+		byte_idx = 0
+		for i, piece in enumerate(message.pieces):
+			sym_macro_value += "("+cg.get_dtv(piece)+")(((uint8_t *)data_buffer)["+str(byte_idx)+"]) &= "+sym_msg_clr_init_piece+str(i)+"_"+message.name+";"
+			sym_macro_value += " \\"+chr(13)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)
+			byte_idx += int(piece/8)
+
+		# Write init data
+		byte_idx = 0
+		for i, piece in enumerate(message.pieces):
+			sym_macro_value += "("+cg.get_dtv(piece)+")(((uint8_t *)data_buffer)["+str(byte_idx)+"]) |= "+sym_msg_init_vals_piece+str(i)+"_"+message.name+";"
+			if i < len(message.pieces)-1:
+				sym_macro_value += " \\"+chr(13)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)
+			byte_idx += int(piece/8)
+	else:
+		sym_macro_value += "("+cg.get_dtv(message.len*8)+")(((uint8_t *)data_buffer)[0]) &= "+sym_msg_clr_init+message.name+";"
+		sym_macro_value += " \\"+chr(13)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)
+		sym_macro_value += "("+cg.get_dtv(message.len*8)+")(((uint8_t *)data_buffer)[0]) |= "+sym_msg_init_vals+message.name+";"
+
 	cog.outl("#define "+sym_macro_name+chr(9)+chr(9)+sym_macro_value)
+
 
 
 
