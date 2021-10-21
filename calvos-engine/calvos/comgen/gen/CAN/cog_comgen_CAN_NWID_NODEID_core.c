@@ -159,6 +159,10 @@ def get_write_init_header(message_name):
  """+chr(42)+""" ==========================================================================="""+chr(42)+"""/"""
 	return return_str[1:]
 
+def get_write_init_call(message_name):
+	return_str = write_init_function_prefix + message_name + "(void)"
+	return return_str
+
 def get_write_init_signature(message_name):
 	return_str = "void " + write_init_function_prefix + message_name + "(void)"
 	return return_str
@@ -173,12 +177,14 @@ def get_write_init_body(message_name, buffer_name, msg_idx):
 # Print local function prototypes
 if len(list_of_rx_msgs) > 0:
 	for message_name in list_of_rx_msgs:
-		# Generate write init values function
-		cog.outl(get_write_init_signature(message_name)+";")
+		if network.message_has_init_values(message_name):
+			# Generate write init values function
+			cog.outl(get_write_init_signature(message_name)+";")
 if len(list_of_tx_msgs) > 0:
 	for message_name in list_of_tx_msgs:
-		# Generate write init values function
-		cog.outl(get_write_init_signature(message_name)+";")
+		if network.message_has_init_values(message_name):
+			# Generate write init values function
+			cog.outl(get_write_init_signature(message_name)+";")
 ]]] */
 // [[[end]]]
 
@@ -700,8 +706,7 @@ if len(list_of_tx_msgs) > 0:
 /* ===========================================================================*/
 /** Set signals initial values.
  *
- * Initializes the signals with defined initial value if this is different than
- * zero (all signal data buffers are previously initialized with zeros).
+ * Initializes the signals with defined initial value.
  * ===========================================================================*/
 /* [[[cog
 sym_init_sigs_ret = "void"
@@ -713,10 +718,19 @@ cog.outl(code_str)
 
 # Write init values code string
 
-function_body = """
-	// TODO: implement this function
-"""
-function_body = function_body[1:]
+function_body = chr(9)+"// Call functions for initializing signal values\n"
+
+# Call function for initializing signal values
+if len(list_of_rx_msgs) > 0:
+	for message_name in list_of_rx_msgs:
+		if network.message_has_init_values(message_name):
+			function_body += chr(9)+get_write_init_call(message_name)+";\n"
+if len(list_of_tx_msgs) > 0:
+	for message_name in list_of_tx_msgs:
+		if network.message_has_init_values(message_name):
+			function_body += chr(9)+get_write_init_call(message_name)+";\n"
+
+function_body = function_body
 cog.outl(function_body+"}")
 ]]] */
 // [[[end]]]
@@ -788,17 +802,19 @@ if len(list_of_tx_msgs) > 0:
 /* [[[cog
 if len(list_of_rx_msgs) > 0:
 	for message_name in list_of_rx_msgs:
-		# Generate write init values function
-		cog.outl(get_write_init_header(message_name))
-		cog.outl(get_write_init_signature(message_name)+"{")
-		cog.outl(get_write_init_body(message_name,sym_rx_stat_data_name,sym_rx_msg_idx_prefix+message_name)+chr(13)+"}")
-		cog.outl("")
+		if network.message_has_init_values(message_name):
+			# Generate write init values function
+			cog.outl(get_write_init_header(message_name))
+			cog.outl(get_write_init_signature(message_name)+"{")
+			cog.outl(get_write_init_body(message_name,sym_rx_stat_data_name,sym_rx_msg_idx_prefix+message_name)+chr(13)+"}")
+			cog.outl("")
 if len(list_of_tx_msgs) > 0:
 	for message_name in list_of_tx_msgs:
-		# Generate write init values function
-		cog.outl(get_write_init_header(message_name))
-		cog.outl(get_write_init_signature(message_name)+"{")
-		cog.outl(get_write_init_body(message_name,sym_tx_stat_data_name,sym_tx_msg_idx_prefix+message_name)+chr(13)+"}")
-		cog.outl("")
+		if network.message_has_init_values(message_name):
+			# Generate write init values function
+			cog.outl(get_write_init_header(message_name))
+			cog.outl(get_write_init_signature(message_name)+"{")
+			cog.outl(get_write_init_body(message_name,sym_tx_stat_data_name,sym_tx_msg_idx_prefix+message_name)+chr(13)+"}")
+			cog.outl("")
 ]]] */
 // [[[end]]]

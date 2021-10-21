@@ -561,7 +561,7 @@ class Network_CAN:
     
     #===============================================================================================
     def get_signals_of_message(self, message_name):
-        """ Returns a list of signals mapped to the given message.
+        """ Returns a list of signals objects mapped to the given message.
         """
         return_data = [] # [signal_object_1, signal_object_2, ...]
         
@@ -603,8 +603,49 @@ class Network_CAN:
                      % (message_name, self.id_string))
         return is_cannonical
             
-
-#===================================================================================================
+    
+    #===============================================================================================
+    def message_has_init_values(self, message_name):
+        """ Returns True if any signal of the given message has a defined initial value.
+        """
+        
+        return_value = False 
+        signals = self.get_signals_of_message(message_name)
+        for signal in signals:
+            if signal.init_value is not None:
+                return_value = True
+                break
+        
+        return return_value
+        
+    #===============================================================================================
+    def message_has_fail_safe_values(self, message_name):
+        """ Returns True if any signal of the given message has a defined fail-safe value.
+        """
+        
+        return_value = False 
+        signals = self.get_signals_of_message(message_name)
+        for signal in signals:
+            if signal.fail_value is not None:
+                return_value = True
+                break
+        
+        return return_value
+    
+    #===============================================================================================
+    def get_signals_with_init_values(self, message_name):
+        """ Returns a list of signal objects for a given message that have defined initial values.
+        """
+        
+        return_value = []
+        signals = self.get_signals_of_message(message_name)
+        for signal in signals:
+            if signal.init_value is not None:
+                return_value.append(signal)
+        
+        return return_value
+        
+    #===============================================================================================
     def get_messages_structures(self):
         """ Gets layout structure of all messages.
         
@@ -2600,12 +2641,37 @@ class Network_CAN:
                     log_warn(("Signal \"" + signal_name 
                                   + "\" doesn't have a defined coveyor message."))        
                 # Add extra information parameters of the signal (no warnings if empty)
+                
+                optimize_init = self.get_simple_param("CAN_optimize_signals_init")
+                default_init_value = \
+                    cg.get_valid_number(self.get_simple_param("CAN_rx_data_init_val"))
+                
                 if str(signal_init_val) != "":
                     self.signals[signal_name].init_value = None
                     valid_init_value = \
                         self.get_valid_signal_value(signal_name, signal_init_val)
                     if valid_init_value is not None:
-                        self.signals[signal_name].init_value = valid_init_value
+                        # If CAN_optimize_signals_init parameter is True, then set init value only 
+                        # if it is different than the default one in CAN_rx_data_init_val
+                        if optimize_init is True:
+                            optimize = False
+                            # If enum type, check if initial symbol numeric value is equal or not
+                            # to the default init value.
+                            if self.signals[signal_name].is_enum_type:
+                                init_enum_type=self.enum_types[self.signals[signal_name].data_type]
+                                init_enum_value = init_enum_type.enum_entries[valid_init_value]
+                                if init_enum_value is not None:
+                                    if int(init_enum_value) == int(default_init_value):
+                                        optimize = True
+                            else:
+                                if cg.get_valid_number(valid_init_value) is not None \
+                                and cg.get_valid_number(valid_init_value) == default_init_value:
+                                    optimize = True
+                                    
+                            if optimize is False:
+                                self.signals[signal_name].init_value = valid_init_value
+                        else:
+                            self.signals[signal_name].init_value = valid_init_value
                     else:
                         log_warn(("Invalid initial value '"+str(signal_init_val)+"' for signal '" \
                                   +signal_name+"'. Assumed initial value 'None'."))
