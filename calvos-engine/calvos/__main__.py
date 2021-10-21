@@ -499,17 +499,17 @@ if __name__ == "__main__":
         
         sys.argv.append("-l")
         sys.argv.append("0")
-        
+  
 #         sys.argv.append("-d")
 #         sys.argv.append(str(debug_demo_path))
         
-#         sys.argv.append("-e")
-#         sys.argv.append("C:\\diplomado_udg\\s32ds_workspace\\DCU_2020B_EquipoX_3\\src\\DCU\\Communication\\Calvos")
+        sys.argv.append("-e")
+        sys.argv.append("C:\\diplomado_udg\\s32ds_workspace\\DCU_2020B_EquipoX_3_testEngine0_5\\src\\DCU\\Communication\\Calvos")
 #          
-#         sys.argv.append("-b")
-#         sys.argv.append("C:\\diplomado_udg\\s32ds_workspace\\bkup")
+        sys.argv.append("-b")
+        sys.argv.append("C:\\diplomado_udg\\s32ds_workspace\\bkup")
 #          
-#         sys.argv.append("--dont-export-user")
+        sys.argv.append("--dont-export-user")
     if TESTRUN:
         import doctest
         doctest.testmod()

@@ -2021,8 +2021,7 @@ class Network_CAN:
                             None, {"category" : "network"})
         self.add_cog_source("node_net_h", "cog_comgen_CAN_NWID_NODEID_node_network.h", True, \
                             [["comgen.CAN", "common_h"], \
-                             ["comgen.CAN", "network_h"], \
-                             ["comgen.CAN", "core_h"]], \
+                             ["comgen.CAN", "network_h"]], \
                             {"category" : "node"})
         self.add_cog_source("network_masks_h", "cog_comgen_CAN_NWID_network_masks.h", True, \
                             [["comgen.CAN", "network_h"]], \
@@ -2060,6 +2059,7 @@ class Network_CAN:
         self.add_cog_source("core", "cog_comgen_CAN_NWID_NODEID_core.c", False, \
                             [["comgen.CAN", "core_h"], \
                              ["comgen.CAN", "network_h"], \
+                             ["comgen.CAN", "network_masks_h"], \
                              ["comgen.CAN", "callbacks_h"], \
                              ["comgen.CAN","can_node_hal_h"]], \
                             {"category" : "node"})

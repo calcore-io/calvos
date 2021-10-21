@@ -195,6 +195,9 @@ for message in network.messages.values():
 
 for message in msgs:
 	cog.outl("\n/"+chr(42)+" Signals of message \"" + message.name + "\" " + chr(42) + "/\n")
+
+	msg_base_type = cg.get_dtv(cg.calculate_base_type_len(message.len*8))
+
 	for signal in message.signals:
 		signal_obj = network.signals[signal.name]
 		name = signal_obj.name
@@ -204,26 +207,26 @@ for message in msgs:
 		sig_abs_start_bit = str(signal_obj.get_abs_start_bit())
 		sig_init = str(signal_obj.init_value)
 
-		cog.outl("#define "+sym_len_prefix+name+chr(9)+chr(9)+"("+sig_len+"u)")
-		cog.outl("#define "+sym_bit_prefix+name+chr(9)+chr(9)+"("+sig_start_bit+"u)")
-		cog.outl("#define "+sym_byte_prefix+name+chr(9)+chr(9)+"("+sig_start_byte+"u)")
-		cog.outl("#define "+sym_abs_bit_prefix+name+chr(9)+chr(9)+"("+sig_abs_start_bit+"u)")
+		cog.outl("#define "+sym_len_prefix+name+"\t\t("+sig_len+"u)")
+		cog.outl("#define "+sym_bit_prefix+name+"\t\t("+sig_start_bit+"u)")
+		cog.outl("#define "+sym_byte_prefix+name+"\t\t("+sig_start_byte+"u)")
+		cog.outl("#define "+sym_abs_bit_prefix+name+"\t\t("+sig_abs_start_bit+"u)")
 
-		cog.outl("#define "+sym_mask_sig_clr_in_msg+name+chr(9)+chr(9)+"("+cg.to_hex_string_with_suffix(signal.clr_in_msg_mask)+")")
+		cog.outl("#define "+sym_mask_sig_clr_in_msg+name+"\t\t(("+msg_base_type+")"+cg.to_hex_string_with_suffix(signal.clr_in_msg_mask)+")")
 
 #		# Signal Masks
 #		if len(signal.pieces) > 1:
 #			for i, piece in enumerate(signal.pieces):
-#				cog.outl("#define "+sym_mask_sig+str(i)+"_"+name+chr(9)+chr(9)+"("+piece.mask+")")
+#				cog.outl("#define "+sym_mask_sig+str(i)+"_"+name+"\t\t("+piece.mask+")")
 #		else:
-#			cog.outl("#define "+sym_mask_sig+"_"+name+chr(9)+chr(9)+"("+signal.pieces[0].mask+")")
+#			cog.outl("#define "+sym_mask_sig+"_"+name+"\t\t("+signal.pieces[0].mask+")")
 #
 #		# Signal Clear Masks
 #		if len(signal.pieces) > 1:
 #			for i, piece in enumerate(signal.pieces):
-#				cog.outl("#define "+sym_mask_sig_clr+str(i)+"_"+name+chr(9)+chr(9)+"("+piece.clr_mask+")")
+#				cog.outl("#define "+sym_mask_sig_clr+str(i)+"_"+name+"\t\t("+piece.clr_mask+")")
 #		else:
-#			cog.outl("#define "+sym_mask_sig_clr+"_"+name+chr(9)+chr(9)+"("+signal.pieces[0].clr_mask+")")
+#			cog.outl("#define "+sym_mask_sig_clr+"_"+name+"\t\t("+signal.pieces[0].clr_mask+")")
 #
 
 		if signal_obj.init_value is not None:
@@ -242,7 +245,7 @@ for message in msgs:
 					sig_init_val = sig_init_val + byte_val
 				sig_init_val = cg.to_hex_string_with_suffix(sig_init_val, signal_obj.len)
 
-			cog.outl("#define "+sym_init_value+name+chr(9)+chr(9)+"("+sig_init_val+")")
+			cog.outl("#define "+sym_init_value+name+"\t\t"+"("+sig_init_val+")")
 
 		cog.outl()
 
@@ -258,10 +261,10 @@ for message in msgs:
 				sym_macro_value += "| "
 			sym_macro_value += sym_mask_sig_clr_in_msg + init_signal.name
 			if i < len(init_signals)-1:
-				sym_macro_value += " \\"+chr(13)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)
+				sym_macro_value += " \\\n\t\t\t\t\t\t\t\t\t\t\t"
 		sym_macro_value += ")"
 
-		cog.outl("#define "+sym_msg_clr_macro_name+chr(9)+chr(9)+sym_macro_value)
+		cog.outl("#define "+sym_msg_clr_macro_name+"\t\t"+sym_macro_value)
 
 		cog.outl()
 
@@ -271,10 +274,10 @@ for message in msgs:
 			for i, piece in enumerate(message.pieces):
 				sym_macro_name = sym_msg_clr_init_piece+str(i)+"_"+message.name
 				if next_shifting > 0:
-					sym_macro_value = "(("+cg.get_dtv(piece)+")(("+sym_msg_clr_macro_name+" >> " + str(next_shifting) + "u) & " + cg.get_bit_mask_str_hex(piece) + ")"
+					sym_macro_value = "(("+cg.get_dtv(piece)+")((("+msg_base_type+")"+sym_msg_clr_macro_name+" >> " + str(next_shifting) + "u) & " + cg.get_bit_mask_str_hex(piece) + "))"
 				else:
-					sym_macro_value = "(("+cg.get_dtv(piece)+")("+sym_msg_clr_macro_name+" & " + cg.get_bit_mask_str_hex(piece) + ")"
-				cog.outl("#define "+sym_macro_name+chr(9)+chr(9)+sym_macro_value)
+					sym_macro_value = "(("+cg.get_dtv(piece)+")(("+msg_base_type+")"+sym_msg_clr_macro_name+" & " + cg.get_bit_mask_str_hex(piece) + "))"
+				cog.outl("#define "+sym_macro_name+"\t\t"+sym_macro_value)
 				next_shifting += piece
 
 		cog.outl()
@@ -286,14 +289,14 @@ for message in msgs:
 			if i > 0:
 				sym_macro_value += "| "
 			if init_signal.get_abs_start_bit() > 0:
-				sym_macro_value += "(" + sym_init_value + init_signal.name + " << " + sym_abs_bit_prefix + init_signal.name + ")"
+				sym_macro_value += "(("+msg_base_type+")" + sym_init_value + init_signal.name + " << " + sym_abs_bit_prefix + init_signal.name + ")"
 			else:
-				sym_macro_value += sym_init_value + init_signal.name
+				sym_macro_value += "("+msg_base_type+")"+sym_init_value + init_signal.name
 			if i < len(init_signals)-1:
-				sym_macro_value += " \\"+chr(13)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)
+				sym_macro_value += " \\\n\t\t\t\t\t\t\t\t\t\t\t"
 		sym_macro_value += ")"
 
-		cog.outl("#define "+sym_msg_init_macro_name+chr(9)+chr(9)+sym_macro_value)
+		cog.outl("#define "+sym_msg_init_macro_name+"\t\t"+sym_macro_value)
 
 		cog.outl()
 
@@ -303,10 +306,10 @@ for message in msgs:
 			for i, piece in enumerate(message.pieces):
 				sym_macro_name = sym_msg_init_vals_piece+str(i)+"_"+message.name
 				if next_shifting > 0:
-					sym_macro_value = "(("+cg.get_dtv(piece)+")(("+sym_msg_init_macro_name+" >> " + str(next_shifting) + "u) & " + cg.get_bit_mask_str_hex(piece) + ")"
+					sym_macro_value = "(("+cg.get_dtv(piece)+")((("+msg_base_type+")"+sym_msg_init_macro_name+" >> " + str(next_shifting) + "u) & " + cg.get_bit_mask_str_hex(piece) + "))"
 				else:
-					sym_macro_value = "(("+cg.get_dtv(piece)+")("+sym_msg_init_macro_name+" & " + cg.get_bit_mask_str_hex(piece) + ")"
-				cog.outl("#define "+sym_macro_name+chr(9)+chr(9)+sym_macro_value)
+					sym_macro_value = "(("+cg.get_dtv(piece)+")(("+msg_base_type+")"+sym_msg_init_macro_name+" & " + cg.get_bit_mask_str_hex(piece) + "))"
+				cog.outl("#define "+sym_macro_name+"\t\t"+sym_macro_value)
 				next_shifting += piece
 
 		cog.outl()
@@ -320,23 +323,23 @@ for message in msgs:
 			# Clear data
 			byte_idx = 0
 			for i, piece in enumerate(message.pieces):
-				sym_macro_value += "("+cg.get_dtv(piece)+")(((uint8_t *)data_buffer)["+str(byte_idx)+"]) &= "+sym_msg_clr_init_piece+str(i)+"_"+message.name+";"
-				sym_macro_value += " \\"+chr(13)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)
+				sym_macro_value += "*("+cg.get_dtv(piece)+"*)(&data_buffer["+str(byte_idx)+"]) &= "+sym_msg_clr_init_piece+str(i)+"_"+message.name+";"
+				sym_macro_value += " \\\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t"
 				byte_idx += int(piece/8)
 
 			# Write init data
 			byte_idx = 0
 			for i, piece in enumerate(message.pieces):
-				sym_macro_value += "("+cg.get_dtv(piece)+")(((uint8_t *)data_buffer)["+str(byte_idx)+"]) |= "+sym_msg_init_vals_piece+str(i)+"_"+message.name+";"
+				sym_macro_value += "*("+cg.get_dtv(piece)+"*)(&data_buffer["+str(byte_idx)+"]) |= "+sym_msg_init_vals_piece+str(i)+"_"+message.name+";"
 				if i < len(message.pieces)-1:
-					sym_macro_value += " \\"+chr(13)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)
+					sym_macro_value += " \\\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t"
 				byte_idx += int(piece/8)
 		else:
-			sym_macro_value += "("+cg.get_dtv(message.len*8)+")(((uint8_t *)data_buffer)[0]) &= "+sym_msg_clr_init+message.name+";"
-			sym_macro_value += " \\"+chr(13)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)+chr(9)
-			sym_macro_value += "("+cg.get_dtv(message.len*8)+")(((uint8_t *)data_buffer)[0]) |= "+sym_msg_init_vals+message.name+";"
+			sym_macro_value += "*("+cg.get_dtv(message.len*8)+"*)(&data_buffer[0]) &= "+sym_msg_clr_init+message.name+";"
+			sym_macro_value +=  " \\\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t"
+			sym_macro_value += "*("+cg.get_dtv(message.len*8)+"*)(&data_buffer[0]) |= "+sym_msg_init_vals+message.name+";"
 
-		cog.outl("#define "+sym_macro_name+chr(9)+chr(9)+sym_macro_value)
+		cog.outl("#define "+sym_macro_name+"\t\t"+sym_macro_value)
 
 
 

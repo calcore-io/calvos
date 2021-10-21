@@ -160,7 +160,7 @@ def get_write_init_header(message_name):
 	return return_str[1:]
 
 def get_write_init_call(message_name):
-	return_str = write_init_function_prefix + message_name + "(void)"
+	return_str = write_init_function_prefix + message_name + "()"
 	return return_str
 
 def get_write_init_signature(message_name):
@@ -289,7 +289,10 @@ if len(list_of_rx_msgs) > 0:
 		# Msg timeout callback
 		array_data.append("&" + callback_prefix + msg_name + callback_tout_sufix)
 		# Msg write inits function
-		array_data.append("&" + write_init_function_prefix + msg_name)
+		if network.message_has_init_values(msg_name) is True:
+			array_data.append("&" + write_init_function_prefix + msg_name)
+		else:
+			array_data.append("NULL")
 		# Data Buffer
 		array_data.append(" \\\n\t\t\t\t&" + sym_rx_data_name + "["+ str(data_idx) +"]")
 		data_idx += subnet.messages[msg_name].len
@@ -319,7 +322,7 @@ if len(list_of_rx_msgs) > 0:
 			array_data.append("NULL")
 
 		ALL_DATA_END = len(array_data)-1
-		SUB_STRUCT_BEGIN = 8
+		SUB_STRUCT_BEGIN = 9
 		SUB_STRUCT_END = SUB_STRUCT_BEGIN + 1
 		code_string = "{"
 		for j, piece_str in enumerate(array_data):

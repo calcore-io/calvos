@@ -219,9 +219,9 @@ sym_hal_confirm_tx_body="""
 	// Get ID of the message just transmitted
 	txd_msg_id = """+sym_get_tx_id_name+"""();
 	// Confirm TX message if ID matches
-	can_commonConfirmTxMsg("""+sym_txing_msg_name+""", kTrue, txd_msg_id);
+	can_commonConfirmTxMsg(&"""+sym_txing_msg_name+""", kTrue, txd_msg_id);
 #else
-	can_commonConfirmTxMsg("""+sym_txing_msg_name+""", kFalse, NULL);
+	can_commonConfirmTxMsg(&"""+sym_txing_msg_name+""", kFalse, NULL);
 #endif
 """
 sym_hal_confirm_tx_body = sym_hal_confirm_tx_body[1:]+"}"

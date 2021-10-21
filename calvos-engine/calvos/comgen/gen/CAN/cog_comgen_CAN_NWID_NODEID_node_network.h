@@ -6,6 +6,7 @@ import time
 import sys
 import pickle as pic
 import pathlib as plib
+import json
 
 import calvos.comgen.CAN as nw
 import calvos.common.codegen as cg
@@ -81,6 +82,15 @@ subnet = network.get_subnetwork([node_name])
 
 #include "calvos.h"
 #include <string.h>
+/* [[[cog
+# Generate include statements if required
+
+if 'include_var' in locals():
+	includes = json.loads(include_var)
+	for include in includes:
+		cog.outl("#include \"" + include + "\"")
+ ]]] */
+// [[[end]]]
 
 /* -------------------------------------------------------------------------- */
 // 		Network Messages
