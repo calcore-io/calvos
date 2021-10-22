@@ -143,9 +143,22 @@ sym_msg_clr_init = "kCAN_" + net_name_str + "MSG_CLR_INITS_"
 sym_msg_clr_init_piece = "kCAN_" + net_name_str + "MSG_CLR_INITS"
 
 sym_msg_init_vals = "kCAN_" + net_name_str + "MSG_INIT_VALS_"
-sym_msg_init_vals_piece = "kCAN_" + net_name_str + "MSG_INIT_VALS_"
+sym_msg_init_vals_piece = "kCAN_" + net_name_str + "MSG_INIT_VALS"
 
 sym_set_msg_inits = "CAN_" + net_name_str + "write_msg_init_vals_"
+
+
+sym_fail_value = "kCAN_" + net_name_str + "SIG_FAIL_VAL_"
+
+sym_msg_clr_fail = "kCAN_" + net_name_str + "MSG_CLR_FAILS_"
+sym_msg_clr_fail_piece = "kCAN_" + net_name_str + "MSG_CLR_FAILS"
+
+sym_msg_fail_vals = "kCAN_" + net_name_str + "MSG_FAIL_VALS_"
+sym_msg_fail_vals_piece = "kCAN_" + net_name_str + "MSG_FAIL_VALS"
+
+sym_set_msg_fails = "CAN_" + net_name_str + "write_msg_fail_vals_"
+
+
 
 #for i in range(1,65):
 #	if i == i:
@@ -247,13 +260,33 @@ for message in msgs:
 
 			cog.outl("#define "+sym_init_value+name+"\t\t"+"("+sig_init_val+")")
 
+		if signal_obj.fail_value is not None:
+			sig_fail_val = "#error 'wrong signal fail value'"
+			if signal_obj.is_enum_type is True:
+				sig_fail_val = datat_symb_prfx + signal_obj.fail_value
+			elif signal_obj.is_scalar() is True:
+				sig_fail_val = cg.to_hex_string_with_suffix(signal_obj.fail_value, signal_obj.len)
+			elif signal_obj.is_array() is True:
+				byte_val = hex(signal_obj.fail_value)
+				byte_val = byte_val[2:]
+				if len(byte_val) == 1:
+					byte_val = "0" + byte_val
+				sig_fail_val = "0x"
+				for i in range(int(signal_obj.len/8)):
+					sig_fail_val = sig_fail_val + byte_val
+				sig_fail_val = cg.to_hex_string_with_suffix(sig_fail_val, signal_obj.len)
+
+			cog.outl("#define "+sym_fail_value+name+"\t\t"+"("+sig_fail_val+")")
+
 		cog.outl()
+
+	#------ Init values ------
+	#-------------------------
 
 	if network.message_has_init_values(message.name) is True:
 		# Msg clear init macro
 		sym_msg_clr_macro_name = sym_msg_clr_init+message.name
 		sym_macro_value = "("
-		sig_with_init_idx = 0
 
 		init_signals = network.get_signals_with_init_values(message.name)
 		for i, init_signal in enumerate(init_signals):
@@ -338,6 +371,101 @@ for message in msgs:
 			sym_macro_value += "*("+cg.get_dtv(message.len*8)+"*)(&data_buffer[0]) &= "+sym_msg_clr_init+message.name+";"
 			sym_macro_value +=  " \\\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t"
 			sym_macro_value += "*("+cg.get_dtv(message.len*8)+"*)(&data_buffer[0]) |= "+sym_msg_init_vals+message.name+";"
+
+		cog.outl("#define "+sym_macro_name+"\t\t"+sym_macro_value)
+		cog.outl()
+
+	#------ Fail-safe values ------
+	#------------------------------
+
+	if network.message_has_fail_values(message.name) is True:
+		# Msg clear fail values macro
+		sym_msg_clr_macro_name = sym_msg_clr_fail+message.name
+		sym_macro_value = "("
+
+		fail_signals = network.get_signals_with_fail_values(message.name)
+		for i, fail_signal in enumerate(fail_signals):
+			if i > 0:
+				sym_macro_value += "| "
+			sym_macro_value += sym_mask_sig_clr_in_msg + fail_signal.name
+			if i < len(fail_signals)-1:
+				sym_macro_value += " \\\n\t\t\t\t\t\t\t\t\t\t\t"
+		sym_macro_value += ")"
+
+		cog.outl("#define "+sym_msg_clr_macro_name+"\t\t"+sym_macro_value)
+
+		cog.outl()
+
+		# Msg clear fail-safe macro pieces
+		if len(message.pieces) > 1:
+			next_shifting = 0
+			for i, piece in enumerate(message.pieces):
+				sym_macro_name = sym_msg_clr_fail_piece+str(i)+"_"+message.name
+				if next_shifting > 0:
+					sym_macro_value = "(("+cg.get_dtv(piece)+")((("+msg_base_type+")"+sym_msg_clr_macro_name+" >> " + str(next_shifting) + "u) & " + cg.get_bit_mask_str_hex(piece) + "))"
+				else:
+					sym_macro_value = "(("+cg.get_dtv(piece)+")(("+msg_base_type+")"+sym_msg_clr_macro_name+" & " + cg.get_bit_mask_str_hex(piece) + "))"
+				cog.outl("#define "+sym_macro_name+"\t\t"+sym_macro_value)
+				next_shifting += piece
+
+		cog.outl()
+
+		# Msg fail-safe vals macro
+		sym_msg_fail_macro_name = sym_msg_fail_vals+message.name
+		sym_macro_value = "( "
+		for i, fail_signal in enumerate(fail_signals):
+			if i > 0:
+				sym_macro_value += "| "
+			if fail_signal.get_abs_start_bit() > 0:
+				sym_macro_value += "(("+msg_base_type+")" + sym_fail_value + fail_signal.name + " << " + sym_abs_bit_prefix + fail_signal.name + ")"
+			else:
+				sym_macro_value += "("+msg_base_type+")"+sym_fail_value + fail_signal.name
+			if i < len(fail_signals)-1:
+				sym_macro_value += " \\\n\t\t\t\t\t\t\t\t\t\t\t"
+		sym_macro_value += ")"
+
+		cog.outl("#define "+sym_msg_fail_macro_name+"\t\t"+sym_macro_value)
+
+		cog.outl()
+
+		# Msg fail-safe values macro pieces
+		if len(message.pieces) > 1:
+			next_shifting = 0
+			for i, piece in enumerate(message.pieces):
+				sym_macro_name = sym_msg_fail_vals_piece+str(i)+"_"+message.name
+				if next_shifting > 0:
+					sym_macro_value = "(("+cg.get_dtv(piece)+")((("+msg_base_type+")"+sym_msg_fail_macro_name+" >> " + str(next_shifting) + "u) & " + cg.get_bit_mask_str_hex(piece) + "))"
+				else:
+					sym_macro_value = "(("+cg.get_dtv(piece)+")(("+msg_base_type+")"+sym_msg_fail_macro_name+" & " + cg.get_bit_mask_str_hex(piece) + "))"
+				cog.outl("#define "+sym_macro_name+"\t\t"+sym_macro_value)
+				next_shifting += piece
+
+		cog.outl()
+
+
+		# Write Msg Fail-safe values
+		sym_macro_name = sym_set_msg_fails + message.name + "(data_buffer)"
+
+		sym_macro_value = ""
+		if len(message.pieces) > 1:
+			# Clear fail-safe data
+			byte_idx = 0
+			for i, piece in enumerate(message.pieces):
+				sym_macro_value += "*("+cg.get_dtv(piece)+"*)(&data_buffer["+str(byte_idx)+"]) &= "+sym_msg_clr_fail_piece+str(i)+"_"+message.name+";"
+				sym_macro_value += " \\\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t"
+				byte_idx += int(piece/8)
+
+			# Write fail-safe data
+			byte_idx = 0
+			for i, piece in enumerate(message.pieces):
+				sym_macro_value += "*("+cg.get_dtv(piece)+"*)(&data_buffer["+str(byte_idx)+"]) |= "+sym_msg_fail_vals_piece+str(i)+"_"+message.name+";"
+				if i < len(message.pieces)-1:
+					sym_macro_value += " \\\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t"
+				byte_idx += int(piece/8)
+		else:
+			sym_macro_value += "*("+cg.get_dtv(message.len*8)+"*)(&data_buffer[0]) &= "+sym_msg_clr_fail+message.name+";"
+			sym_macro_value +=  " \\\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t"
+			sym_macro_value += "*("+cg.get_dtv(message.len*8)+"*)(&data_buffer[0]) |= "+sym_msg_fail_vals+message.name+";"
 
 		cog.outl("#define "+sym_macro_name+"\t\t"+sym_macro_value)
 

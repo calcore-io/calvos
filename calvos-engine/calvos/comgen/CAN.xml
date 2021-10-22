@@ -179,9 +179,21 @@ Use ${DATATYPE} to indicate the Data_Type name.
 			<clv:Default>True</clv:Default>
 		</clv:ParamDefinition>
 		<clv:ParamDefinition type="boolean"
+			id="CAN_write_signals_init" category="catCAN_messages">
+			<clv:Title>Write signal intializations</clv:Title>
+			<clv:Desc>If set to True, signals will be initialized as specified in the CAN network. If set to False signals won't be individually initilized. They will all have the value in parameters CAN_rx_data_init_val and CAN_tx_data_init_val.</clv:Desc>
+			<clv:Default>True</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="boolean"
 			id="CAN_optimize_signals_init" category="catCAN_messages">
 			<clv:Title>Optimize signal intializations</clv:Title>
 			<clv:Desc>If set to True, code for initializing signals with init value equal to the one in parameter CAN_rx_data_init_val won't be generated. If set to False code will be generated as long as the signal has any valid defined init value.</clv:Desc>
+			<clv:Default>True</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="boolean"
+			id="CAN_write_signals_fails" category="catCAN_messages">
+			<clv:Title>Write signal fail-safe values</clv:Title>
+			<clv:Desc>If set to True, signals will get the specified fail-safe value upon timeout. If set to False, no change in signals data will be made upon timeout.</clv:Desc>
 			<clv:Default>True</clv:Default>
 		</clv:ParamDefinition></clv:ParamsDefinitions>
 </clv:ComponentDefinition>

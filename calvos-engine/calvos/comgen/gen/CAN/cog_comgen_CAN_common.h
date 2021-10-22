@@ -154,11 +154,11 @@ typedef struct CANrxMsgStaticData{
 	uint32_t timeout; /* Given in base time ticks */
 	Callback rx_callback;
 	Callback timeout_callback;
-	Callback write_inits_func;
+	Callback write_fails_func; /* TODO: if write fail-safes are not required don't generate this field */
 	uint8_t* data;
 	uint8_t * sig_avlbl_flags;
 	uint8_t sig_avlbl_buf_len;
-	CANrxMsgDynamicData* dyn;	/* TODO: evaluate removing this pointer to dyn data and instead use the dyn data array directly. */
+	CANrxMsgDynamicData* dyn;
 	CANrxMsgStaticFields fields;
 	const struct CANrxMsgStaticData* searchPrev;
 	const struct CANrxMsgStaticData* searchNext;

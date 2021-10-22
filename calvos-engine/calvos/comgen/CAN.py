@@ -619,7 +619,7 @@ class Network_CAN:
         return return_value
         
     #===============================================================================================
-    def message_has_fail_safe_values(self, message_name):
+    def message_has_fail_values(self, message_name):
         """ Returns True if any signal of the given message has a defined fail-safe value.
         """
         
@@ -641,6 +641,19 @@ class Network_CAN:
         signals = self.get_signals_of_message(message_name)
         for signal in signals:
             if signal.init_value is not None:
+                return_value.append(signal)
+        
+        return return_value
+    
+    #===============================================================================================
+    def get_signals_with_fail_values(self, message_name):
+        """ Returns a list of signal objects for a given message that have defined fail-safe values.
+        """
+        
+        return_value = []
+        signals = self.get_signals_of_message(message_name)
+        for signal in signals:
+            if signal.fail_value is not None:
                 return_value.append(signal)
         
         return return_value

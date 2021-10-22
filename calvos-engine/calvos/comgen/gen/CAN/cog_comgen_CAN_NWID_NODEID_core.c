@@ -145,6 +145,9 @@ sym_tx_stat_data_name = "can_" + net_name_str + node_name_str + "txMsgStaticData
 sym_tx_stat_data_type = "const CANtxMsgStaticData"
 sym_tx_stat_data_len = "kCAN_" + net_name_str + node_name_str + "nOfTxMsgs"
 
+#------ Inital values ---------
+#------------------------------
+
 sym_set_msg_inits = "CAN_" + net_name_str + "write_msg_init_vals_"
 
 write_init_function_prefix = "can_"+net_name_str+node_name_str+"write_initial_values_"
@@ -175,16 +178,60 @@ def get_write_init_body(message_name, buffer_name, msg_idx):
 	return return_str
 
 # Print local function prototypes
-if len(list_of_rx_msgs) > 0:
-	for message_name in list_of_rx_msgs:
-		if network.message_has_init_values(message_name):
-			# Generate write init values function
-			cog.outl(get_write_init_signature(message_name)+";")
-if len(list_of_tx_msgs) > 0:
-	for message_name in list_of_tx_msgs:
-		if network.message_has_init_values(message_name):
-			# Generate write init values function
-			cog.outl(get_write_init_signature(message_name)+";")
+write_inits = network.get_simple_param("CAN_write_signals_init")
+if write_inits is True:
+	if len(list_of_rx_msgs) > 0:
+		for message_name in list_of_rx_msgs:
+			if network.message_has_init_values(message_name):
+				# Generate write init values function
+				cog.outl(get_write_init_signature(message_name)+";")
+	if len(list_of_tx_msgs) > 0:
+		for message_name in list_of_tx_msgs:
+			if network.message_has_init_values(message_name):
+				# Generate write init values function
+				cog.outl(get_write_init_signature(message_name)+";")
+
+#------ Fail-safe values ---------
+#---------------------------------
+
+sym_set_msg_fails = "CAN_" + net_name_str + "write_msg_fail_vals_"
+
+write_fail_function_prefix = "can_"+net_name_str+node_name_str+"write_fail_values_"
+
+def get_write_fail_header(message_name):
+	return_str = """
+/"""+chr(42)+""" ==========================================================================="""+chr(42)+"""/
+/"""+chr(42)+chr(42)+""" Function for writing fail-safe values of message """+message_name+""".
+ """+chr(42)+"""
+ """+chr(42)+""" This function writes all configured fail-safe values in the data buffer for
+ """+chr(42)+""" message """+message_name+""".
+ """+chr(42)+""" ==========================================================================="""+chr(42)+"""/"""
+	return return_str[1:]
+
+def get_write_fail_call(message_name):
+	return_str = write_fail_function_prefix + message_name + "()"
+	return return_str
+
+def get_write_fail_signature(message_name):
+	return_str = "void " + write_fail_function_prefix + message_name + "(void)"
+	return return_str
+
+def get_write_fail_body(message_name, buffer_name, msg_idx):
+	return_str = chr(9)
+	return_str += "CALVOS_CRITICAL_ENTER();"+chr(13)+chr(9)
+	return_str += sym_set_msg_fails+message_name+"("+buffer_name+"["+msg_idx+"].data);"
+	return_str += chr(13)+chr(9)+"CALVOS_CRITICAL_EXIT();"
+	return return_str
+
+# Print local function prototypes
+write_fails = network.get_simple_param("CAN_write_signals_fails")
+if write_fails is True:
+	if len(list_of_rx_msgs) > 0:
+		for message_name in list_of_rx_msgs:
+			if network.message_has_fail_values(message_name):
+				# Generate write fail values function
+				cog.outl(get_write_fail_signature(message_name)+";")
+
 ]]] */
 // [[[end]]]
 
@@ -288,9 +335,9 @@ if len(list_of_rx_msgs) > 0:
 		array_data.append("&" + callback_prefix + msg_name + callback_rx_sufix)
 		# Msg timeout callback
 		array_data.append("&" + callback_prefix + msg_name + callback_tout_sufix)
-		# Msg write inits function
-		if network.message_has_init_values(msg_name) is True:
-			array_data.append("&" + write_init_function_prefix + msg_name)
+		# Msg write fails function
+		if network.message_has_fail_values(msg_name) is True and write_fails is True:
+			array_data.append("&" + write_fail_function_prefix + msg_name)
 		else:
 			array_data.append("NULL")
 		# Data Buffer
@@ -548,11 +595,14 @@ if len(list_of_rx_msgs) > 0:
 					// Set timeout flag
 					CALVOS_CRITICAL_ENTER();
 					"""+sym_rx_stat_data_name+"""[i].dyn->timedout = kTrue;
-					CALVOS_CRITICAL_EXIT();
-					// Call write initial values function if not NULL
-					if("""+sym_rx_stat_data_name+"""[i].write_inits_func != NULL){
-						("""+sym_rx_stat_data_name+"""[i].write_inits_func)();
-					}
+					CALVOS_CRITICAL_EXIT();"""
+	if write_fails is True:
+		code_strs += """
+					// Call write fail-safe values function if not NULL
+					if("""+sym_rx_stat_data_name+"""[i].write_fails_func != NULL){
+						("""+sym_rx_stat_data_name+"""[i].write_fails_func)();
+					}"""
+	code_strs += """
 					// Call timeout callback if not NULL
 					if("""+sym_rx_stat_data_name+"""[i].timeout_callback != NULL){
 						("""+sym_rx_stat_data_name+"""[i].timeout_callback)();
@@ -801,23 +851,43 @@ if len(list_of_tx_msgs) > 0:
 ]]] */
 // [[[end]]]
 
+/* Write signal inital values functions */
+/* ------------------------------------ */
 
 /* [[[cog
-if len(list_of_rx_msgs) > 0:
-	for message_name in list_of_rx_msgs:
-		if network.message_has_init_values(message_name):
-			# Generate write init values function
-			cog.outl(get_write_init_header(message_name))
-			cog.outl(get_write_init_signature(message_name)+"{")
-			cog.outl(get_write_init_body(message_name,sym_rx_stat_data_name,sym_rx_msg_idx_prefix+message_name)+chr(13)+"}")
-			cog.outl("")
-if len(list_of_tx_msgs) > 0:
-	for message_name in list_of_tx_msgs:
-		if network.message_has_init_values(message_name):
-			# Generate write init values function
-			cog.outl(get_write_init_header(message_name))
-			cog.outl(get_write_init_signature(message_name)+"{")
-			cog.outl(get_write_init_body(message_name,sym_tx_stat_data_name,sym_tx_msg_idx_prefix+message_name)+chr(13)+"}")
-			cog.outl("")
+if write_inits is True:
+	if len(list_of_rx_msgs) > 0:
+		for message_name in list_of_rx_msgs:
+			if network.message_has_init_values(message_name):
+				# Generate write init values function
+				cog.outl(get_write_init_header(message_name))
+				cog.outl(get_write_init_signature(message_name)+"{")
+				cog.outl(get_write_init_body(message_name,sym_rx_stat_data_name,sym_rx_msg_idx_prefix+message_name)+chr(13)+"}")
+				cog.outl("")
+	if len(list_of_tx_msgs) > 0:
+		for message_name in list_of_tx_msgs:
+			if network.message_has_init_values(message_name):
+				# Generate write init values function
+				cog.outl(get_write_init_header(message_name))
+				cog.outl(get_write_init_signature(message_name)+"{")
+				cog.outl(get_write_init_body(message_name,sym_tx_stat_data_name,sym_tx_msg_idx_prefix+message_name)+chr(13)+"}")
+				cog.outl("")
 ]]] */
 // [[[end]]]
+
+/* Write fail-safe values functions */
+/* -------------------------------- */
+
+/* [[[cog
+if write_fails is True:
+	if len(list_of_rx_msgs) > 0:
+		for message_name in list_of_rx_msgs:
+			if network.message_has_fail_values(message_name):
+				# Generate write fail values function
+				cog.outl(get_write_fail_header(message_name))
+				cog.outl(get_write_fail_signature(message_name)+"{")
+				cog.outl(get_write_fail_body(message_name,sym_rx_stat_data_name,sym_rx_msg_idx_prefix+message_name)+chr(13)+"}")
+				cog.outl("")
+]]] */
+// [[[end]]]
+
