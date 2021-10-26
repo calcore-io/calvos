@@ -22,6 +22,7 @@ import pathlib as pl
 import math
 
 import calvos.common.logsys as lg
+import calvos.__version__ as ver
 
 # --------------------------------------------------------------------------------------------------
 # Definitions for the logging system
@@ -914,6 +915,10 @@ def resolve_wildcards(in_str, wildcards):
         
     return out_str
 
+def get_calvos_version_str():
+    return_str = str(ver.__version__)
+    return return_str
+
 def C_license():
     """ Returns a string with the license in C comment format. """
     return_str = """/*  This file is part of calvOS project <https://github.com/calcore-io/calvos>.
@@ -929,7 +934,10 @@ def C_license():
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with calvOS.  If not, see <https://www.gnu.org/licenses/>. */"""
+ *  along with calvOS.  If not, see <https://www.gnu.org/licenses/>. 
+ *
+ * [ calvOS engine version: """+get_calvos_version_str()+" ]%s*/""" \
+    % (" " * (48 - len(get_calvos_version_str())))
     return return_str
 
 class GenParam():
