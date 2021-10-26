@@ -2016,7 +2016,7 @@ class Network_CAN:
         else:
             myfile = open(output_file, "w")
             myfile.write(XML_string)
-        print("INFO: XML generation done")
+            print("INFO: XML generation done")
         #TODO: save XML to file if output_file is different than None
     
     #===============================================================================================    
@@ -2024,7 +2024,8 @@ class Network_CAN:
                  gen_messages = True, gen_signals = True):
         """ Generates a DBC filedescribing the Network modeled by this object. """
         
-         
+        tmp_output_file = output_file.with_suffix(".dbctmp")
+        
         can_dbc = canmatrix.CanMatrix()
         
         # Add attributes
@@ -2155,15 +2156,20 @@ class Network_CAN:
 
          
         if output_file is not None:
-            print("----- Write file: ", output_file)
-#             canmatrix.formats.dump(can_dbc, str(output_file))
-            with open(output_file, 'wb') as fout:
+            with open(tmp_output_file, 'wb') as fout:
                 canmatrix.formats.dump(can_dbc, fout, "dbc")
-                print("INFO: DBC generation done")
-        else:
-            pass
-        
-        #TODO: save XML to file if output_file is different than None
+            # Update "VERSION" field in the DBC
+            version_str = "VERSION \"Network: '" + str(self.id_string) + "', version: '" + str(self.version) + "', Date: '" + str(self.date) +"'\""
+            with open(tmp_output_file, "r") as fin, open(output_file, "w") as fout:
+                fout.write(version_str) 
+                for i, line_str in enumerate(fin):
+                    if i > 0:
+                        fout.write(line_str)
+                        
+            # Remove temp file
+            cg.delete_file(tmp_output_file)
+            
+            print("INFO: DBC generation done")
         
     #===============================================================================================        
     def update_cog_sources(self):
@@ -3300,8 +3306,12 @@ def generate(input_object, out_path, working_path, calvos_path, params = {}):
     xml_output_file = out_path / (str(input_object.input_file.stem) + ".xml")
     input_object.gen_XML(xml_output_file)
     
-    dbc_output_file = out_path / (str(input_object.input_file.stem) + ".dbc")
-    input_object.gen_DBC(dbc_output_file)
+    try:
+        dbc_output_file = out_path / (str(input_object.input_file.stem) + ".dbc")
+        input_object.gen_DBC(dbc_output_file)
+    except Exception as e:
+        log_error('Failed to generate DBC file "%s". Reason: %s' % (str(dbc_output_file), e))
+    
 #     except Exception as e:
 #         log_error('Failed to generate code. Reason: %s' % e)
         
