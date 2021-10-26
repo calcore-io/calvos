@@ -2026,6 +2026,10 @@ class Network_CAN:
         
          
         can_dbc = canmatrix.CanMatrix()
+        
+        # Add attributes
+        can_dbc.add_frame_defines("GenMsgSendType",'ENUM "cyclic","triggered","cyclicIfActive","cyclicAndTriggered","cyclicIfActiveAndTriggered","none"')
+        can_dbc.frame_defines["GenMsgSendType"].set_default("none")
      
         if gen_nodes is True:
             #Generate nodes
@@ -2034,6 +2038,9 @@ class Network_CAN:
                 can_dbc.add_ecu(ecu_dbc)
     
         if gen_signals is True:
+            
+            local_dbc_signals = []
+            
             for signal in self.signals.values():
                 
                 dbc_signal = canmatrix.Signal(name = signal.name, 
@@ -2041,23 +2048,50 @@ class Network_CAN:
                                               size = signal.len)
                 if signal.description is not None:
                     dbc_signal.add_comment(signal.description)
+                    
+                # For now only supporting unsigned signals
+                dbc_signal.is_signed = False
                 
                 # Add enumeration if defined
-                
                 if signal.is_enum_type is True:
-                    print("signal.name, ",signal.name, "signal.is_enum_type, ", signal.is_enum_type)
                     if signal.data_type in self.enum_types:
                         signal_enum = self.enum_types[signal.data_type]
-                        print("signal_enum, ",signal_enum.enum_entries)
                         resolved_enum = signal_enum.get_resolved_values()
-                        print("resolved_enum, ",resolved_enum.enum_entries)
                         for entry in resolved_enum.enum_entries:
                             number = str(resolved_enum.enum_entries[entry])
                             val_name = entry
                             dbc_signal.add_values(number, val_name)
-                            print("dbc_signal, ", dbc_signal.name, "number, ", number, "val_name", val_name)
+                        # Add initial value
+                        if signal.init_value is not None:
+                            dbc_signal.initial_value = \
+                                int(resolved_enum.enum_entries[str(signal.init_value)])
+                        
+                        # Add min and max
+#                         dbc_signal.set_min(signal_enum.get_min())
+#                         dbc_signal.set_max(signal_enum.get_max()) 
+                        dbc_signal.set_min()
+                        dbc_signal.set_max()
+                        
+                elif signal.is_array() is True:
+                    # Add initial value
+                    if signal.init_value is not None:
+                        init_val_array = 0
+                        for i in range(int(signal.len / 8)):
+                            factor = pow(2,i*8)
+                            init_val_array += signal.init_value * factor
+                        dbc_signal.initial_value = int(init_val_array)
+                        
+                    dbc_signal.set_min()
+                    dbc_signal.set_max()
+                else:
+                    # Add initial value
+                    if signal.init_value is not None:
+                        dbc_signal.initial_value = int(signal.init_value)
                     
-                can_dbc.add_signal(dbc_signal)
+                    dbc_signal.set_min()
+                    dbc_signal.set_max()
+                    
+                local_dbc_signals.append(dbc_signal)
         
         if gen_messages is True:
             for message in self.messages.values():
@@ -2076,7 +2110,7 @@ class Network_CAN:
                 signals = self.get_signals_of_message(message.name)
                 # Get canmatrix signal object
                 for signal in signals:
-                    for signal_obj in can_dbc.signals:
+                    for signal_obj in local_dbc_signals:
                         if signal_obj.name == signal.name:
                             dbc_signals.append(signal_obj)
                             break
@@ -2093,24 +2127,25 @@ class Network_CAN:
                     for dbc_signal in dbc_message.signals:
                         dbc_signal.add_receiver(subscriber)
                     
+
+                # Set tx type
+                if message.tx_type == tx_type_list[SPONTAN]:
+                    dbc_message.add_attribute("GenMsgSendType", "triggered")
+                elif message.tx_type == tx_type_list[CYCLIC]:
+                    dbc_message.add_attribute("GenMsgSendType", "cyclic")
+                elif message.tx_type == tx_type_list[CYCLIC_SPONTAN]:
+                    dbc_message.add_attribute("GenMsgSendType", "cyclicAndTriggered")
+                elif message.tx_type == tx_type_list[BAF]:
+                    dbc_message.add_attribute("GenMsgSendType", "cyclicIfActive")
+                else:
+                    dbc_message.add_attribute("GenMsgSendType", "none")
                 
+                # Set cycle time
+                if message.tx_period is not None:
+                    dbc_message.cycle_time = message.tx_period
                 
+                # Add frame to dbc
                 can_dbc.add_frame(dbc_message)
-                
-#     """
-#     Represents a Signal in CAN Matrix.
-# 
-#     Signal has following attributes:
-# 
-#     * name
-#     * start_bit (internal start_bit, see get/set_startbit also)
-#     * size (in Bits)
-#     * is_little_endian (1: Intel, 0: Motorola)
-#     * is_signed (bool)
-#     * factor, offset, min, max
-#     * receivers  (ECU Name)
-#     * attributes, _values, unit, comment
-#     * _multiplex ('Multiplexor' or Number of Multiplex)
         
         if gen_messages is True:
             #Generate nodes
@@ -2853,6 +2888,7 @@ class Network_CAN:
                 log_warn(("enum symbol \"" + enum_symbol + \
                       "\" doesn't exist"))
         
+        #===========================================================================================
         def get_resolved_values(self):
             """ Returns an EnumType will all symbols assigned to a numeric value.
             
@@ -2883,7 +2919,40 @@ class Network_CAN:
             
             return return_value
             
-    
+        #===========================================================================================
+        def get_min(self):
+            """ return the minimum numeric value for the symbols """
+            
+            return_value = None
+            
+            resolved_enum = self.get_resolved_values();
+            for i, entry in enumerate(resolved_enum.enum_entries):
+                value = resolved_enum.enum_entries[entry]
+                if i == 0:
+                    return_value = value
+                else:
+                    if value < return_value:
+                        return_value = value
+            
+            return return_value
+            
+        #===========================================================================================
+        def get_max(self):
+            """ return the maximum numeric value for the symbols """
+            
+            return_value = None
+            
+            resolved_enum = self.get_resolved_values();
+            for i, entry in enumerate(resolved_enum.enum_entries):
+                value = resolved_enum.enum_entries[entry]
+                if i == 0:
+                    return_value = value
+                else:
+                    if value > return_value:
+                        return_value = value
+            
+            return return_value  
+        
     #===============================================================================================
     class Node:
         """ Class to model a network node. """
