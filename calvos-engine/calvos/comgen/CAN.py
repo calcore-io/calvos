@@ -22,6 +22,7 @@ import pathlib as pl
 import importlib
 import json
 import copy
+import canmatrix
 
 import calvos.common.codegen as cg
 import calvos.common.logsys as lg
@@ -549,7 +550,7 @@ class Network_CAN:
 
     #===============================================================================================
     def get_messages_of_node(self, node_name):
-        """ Gets the direction ('Tx', 'Rx' or None) for the given node. """
+        """ Gets the messages names for the given node. """
         return_value = [] # List of node names
         if node_name in self.nodes:
             for message in self.messages.values():
@@ -557,6 +558,16 @@ class Network_CAN:
                     return_value.append(message.name)
             for message_name in self.nodes[node_name].subscribed_messages.keys():
                 return_value.append(message_name)  
+        return return_value 
+    
+    #===============================================================================================
+    def get_message_subscribers(self, message_name):
+        """ Gets the subscribers names of the given message. """
+        return_value = [] # List of node names
+        if message_name in self.messages:
+            for node in self.nodes.values():
+                if message_name in node.subscribed_messages:
+                    return_value.append(node.name) 
         return return_value          
     
     #===============================================================================================
@@ -2007,7 +2018,118 @@ class Network_CAN:
             myfile.write(XML_string)
         print("INFO: XML generation done")
         #TODO: save XML to file if output_file is different than None
+    
+    #===============================================================================================    
+    def gen_DBC(self, output_file = None, gen_types = True, gen_nodes = True, \
+                 gen_messages = True, gen_signals = True):
+        """ Generates a DBC filedescribing the Network modeled by this object. """
+        
+         
+        can_dbc = canmatrix.CanMatrix()
+     
+        if gen_nodes is True:
+            #Generate nodes
+            for node in self.nodes.values():
+                ecu_dbc = canmatrix.Ecu(node.name, node.description)
+                can_dbc.add_ecu(ecu_dbc)
+    
+        if gen_signals is True:
+            for signal in self.signals.values():
+                
+                dbc_signal = canmatrix.Signal(name = signal.name, 
+                                              start_bit = signal.get_abs_start_bit(),
+                                              size = signal.len)
+                if signal.description is not None:
+                    dbc_signal.add_comment(signal.description)
+                
+                # Add enumeration if defined
+                
+                if signal.is_enum_type is True:
+                    print("signal.name, ",signal.name, "signal.is_enum_type, ", signal.is_enum_type)
+                    if signal.data_type in self.enum_types:
+                        signal_enum = self.enum_types[signal.data_type]
+                        print("signal_enum, ",signal_enum.enum_entries)
+                        resolved_enum = signal_enum.get_resolved_values()
+                        print("resolved_enum, ",resolved_enum.enum_entries)
+                        for entry in resolved_enum.enum_entries:
+                            number = str(resolved_enum.enum_entries[entry])
+                            val_name = entry
+                            dbc_signal.add_values(number, val_name)
+                            print("dbc_signal, ", dbc_signal.name, "number, ", number, "val_name", val_name)
+                    
+                can_dbc.add_signal(dbc_signal)
+        
+        if gen_messages is True:
+            for message in self.messages.values():
+                
+                dbc_message = canmatrix.Frame(name = message.name, arbitration_id = message.id,
+                                              size = message.len)
+                
+                if message.get_publisher() is not None:
+                    dbc_message.add_transmitter(message.get_publisher())
+                
+                if message.description is not None:
+                    dbc_message.add_comment(message.description)
+                
+                # Get signals for this message
+                dbc_signals = []
+                signals = self.get_signals_of_message(message.name)
+                # Get canmatrix signal object
+                for signal in signals:
+                    for signal_obj in can_dbc.signals:
+                        if signal_obj.name == signal.name:
+                            dbc_signals.append(signal_obj)
+                            break
+                        
+                for dbc_signal in dbc_signals:
+                    dbc_message.add_signal(dbc_signal)
+                    
+                # Get message subscribers
+                msg_subscribers = self.get_message_subscribers(message.name)
+                for subscriber in msg_subscribers:
+                    dbc_message.add_receiver(subscriber)
+                    # Add all signals to the same receiver.
+                    # Currently, calvos doesn't support partial reception of signals of messages
+                    for dbc_signal in dbc_message.signals:
+                        dbc_signal.add_receiver(subscriber)
+                    
+                
+                
+                can_dbc.add_frame(dbc_message)
+                
+#     """
+#     Represents a Signal in CAN Matrix.
+# 
+#     Signal has following attributes:
+# 
+#     * name
+#     * start_bit (internal start_bit, see get/set_startbit also)
+#     * size (in Bits)
+#     * is_little_endian (1: Intel, 0: Motorola)
+#     * is_signed (bool)
+#     * factor, offset, min, max
+#     * receivers  (ECU Name)
+#     * attributes, _values, unit, comment
+#     * _multiplex ('Multiplexor' or Number of Multiplex)
+        
+        if gen_messages is True:
+            #Generate nodes
+            for message in self.messages.values():
+                ecu_dbc = canmatrix.Ecu(node.name, node.description)
+                can_dbc.add_ecu(ecu_dbc)     
 
+         
+        if output_file is not None:
+            print("----- Write file: ", output_file)
+#             canmatrix.formats.dump(can_dbc, str(output_file))
+            with open(output_file, 'wb') as fout:
+                canmatrix.formats.dump(can_dbc, fout, "dbc")
+                print("INFO: DBC generation done")
+        else:
+            pass
+        
+        #TODO: save XML to file if output_file is different than None
+        
     #===============================================================================================        
     def update_cog_sources(self):
         """ Updates the list of cog file(s) for this module. """
@@ -2711,12 +2833,13 @@ class Network_CAN:
     #===============================================================================================        
     class EnumType:
         """ Class to model an enumerated data type. """
-        def __init__(self, name, enum_string, description = ""):
+        def __init__(self, name, enum_string = None, description = ""):
             self.name = str(name)
             self.enum_entries = {} # {enum symbol, enum value|None}
-            self._temporal_entries = cg.parse_special_string( str(enum_string))
-            if len(self._temporal_entries) > 0:
-                self.enum_entries = self._temporal_entries
+            if enum_string is not None:
+                self._temporal_entries = cg.parse_special_string( str(enum_string))
+                if len(self._temporal_entries) > 0:
+                    self.enum_entries = self._temporal_entries
 
             self.description = description
         
@@ -2729,6 +2852,37 @@ class Network_CAN:
             else:
                 log_warn(("enum symbol \"" + enum_symbol + \
                       "\" doesn't exist"))
+        
+        def get_resolved_values(self):
+            """ Returns an EnumType will all symbols assigned to a numeric value.
+            
+            This mimics the numeric assignment in C if no explicit numeric value was given
+            to a symbol.
+            """
+            return_value = Network_CAN.EnumType(self.name)
+            
+            check_duplicates = {}
+            current_value = 0
+            
+            for entry in self.enum_entries:
+                entry_key = entry
+                entry_value = None
+                if self.enum_entries[entry] is None:
+                    entry_value = int(current_value)
+                    if str(current_value) not in check_duplicates:
+                        check_duplicates.update({str(current_value):int(current_value)})
+                    else:
+                        log_warn(("Duplicated resolved value(s) in enum type \"" + self.name + \
+                                  "\". This may cause problems when compiling generated files."))
+                    current_value += 1
+                else:
+                    entry_value = int(self.enum_entries[entry])
+                    # If explicit value, then next empty symbol will continue from this number
+                    current_value = int(self.enum_entries[entry]) + 1
+                return_value.enum_entries.update({entry_key : entry_value})
+            
+            return return_value
+            
     
     #===============================================================================================
     class Node:
@@ -3076,6 +3230,9 @@ def generate(input_object, out_path, working_path, calvos_path, params = {}):
     # Generate XML
     xml_output_file = out_path / (str(input_object.input_file.stem) + ".xml")
     input_object.gen_XML(xml_output_file)
+    
+    dbc_output_file = out_path / (str(input_object.input_file.stem) + ".dbc")
+    input_object.gen_DBC(dbc_output_file)
 #     except Exception as e:
 #         log_error('Failed to generate code. Reason: %s' % e)
         
