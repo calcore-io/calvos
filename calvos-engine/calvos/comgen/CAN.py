@@ -2159,7 +2159,13 @@ class Network_CAN:
             with open(tmp_output_file, 'wb') as fout:
                 canmatrix.formats.dump(can_dbc, fout, "dbc")
             # Update "VERSION" field in the DBC
-            version_str = "VERSION \"Network: '" + str(self.id_string) + "', version: '" + str(self.version) + "', Date: '" + str(self.date) +"'\""
+            try:
+                version_str = "VERSION \"Network: '" + str(self.id_string) + "', version: '" \
+                    + str(self.version) + "', Date: '" + str(self.date) +"'\""
+            except Exception as e:
+                print('Failed to create DBC VERSION string. Reason: %s' % e)
+                version_str = ""
+
             with open(tmp_output_file, "r") as fin, open(output_file, "w") as fout:
                 fout.write(version_str) 
                 for i, line_str in enumerate(fin):
@@ -3298,10 +3304,8 @@ def generate(input_object, out_path, working_path, calvos_path, params = {}):
     """
     del params # Unused parameter
     #TODO: Check for required parameters
-#     try:
-    #cog_files_path = calvos_path / "comgen" / "gen" / "CAN"
-    
     input_object.gen_code()
+    
     # Generate XML
     xml_output_file = out_path / (str(input_object.input_file.stem) + ".xml")
     input_object.gen_XML(xml_output_file)
