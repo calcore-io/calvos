@@ -30,7 +30,7 @@ __all__ = []
 __date__ = '2021-10-08'
 __updated__ = '2020-10-08'
 
-DEBUG = 0
+DEBUG = 1
 TESTRUN = 0
 PROFILE = 0
 
@@ -477,8 +477,8 @@ if __name__ == "__main__":
         sys.argv.append(str(debug_demo_path))
         
         sys.argv.append("-e")
-        sys.argv.append("C:\\diplomado_udg\\s32ds_workspace\\DCU_2020B_EquipoX_3\\src\\DCU\\Communication\\Calvos")
-        
+        sys.argv.append("C:\\diplomado_udg\\s32ds_workspace\\DCU_2020B_EquipoX_3_7_test_0_0_5\\src\\DCU\\Communication\\Calvos")
+         
         sys.argv.append("-b")
         sys.argv.append("C:\\diplomado_udg\\s32ds_workspace\\bkup")
     if TESTRUN:

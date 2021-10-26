@@ -450,7 +450,8 @@ if len(list_of_rx_msgs) > 0:
 			// Set Message available flags
 			msg_static_data->dyn->available.all = kAllOnes32;
 
-			// clear timeout flag
+			// clear timeout flag and reset timeout timer
+			msg_static_data->dyn->timeout_timer = 0;
 			msg_static_data->dyn->timedout = kFalse;
 			// Invoke rx callback
 			if(msg_static_data->rx_callback != NULL){
