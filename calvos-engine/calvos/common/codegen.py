@@ -936,8 +936,8 @@ def C_license():
  *  You should have received a copy of the GNU General Public License
  *  along with calvOS.  If not, see <https://www.gnu.org/licenses/>. 
  *
- * [ calvOS engine version: """+get_calvos_version_str()+" ]%s*/""" \
-    % (" " * (48 - len(get_calvos_version_str())))
+ * [calvOS engine version: """+get_calvos_version_str()+"]%s*/""" \
+    % (" " * (50 - len(get_calvos_version_str())))
     return return_str
 
 class GenParam():

@@ -1786,6 +1786,10 @@ class Network_CAN:
                  gen_messages = True, gen_signals = True):
         """ Generates an XML describing the Network modeled by this object. """
         
+        
+        print("INFO: Generating CAN Network XML...")
+        log_info("Generating CAN Network XML...")
+        
         #GEnerate Network root node and its information
         XML_root = ET.Element("Network")
         XML_root.set("protocol","CAN")
@@ -2005,39 +2009,72 @@ class Network_CAN:
             
         XML_root.append(XML_level_1)
         
-        print("INFO: Generating CAN Network XML...")
         XML_string = ET.tostring(XML_root)
         
         XML_string = xml.dom.minidom.parseString(XML_string)
         XML_string = XML_string.toprettyxml()
+        
+        print("INFO: XML generation done")
+        log_info("CAN Network XML generation done")
 
         if output_file is None:
+            log_debug("CAN Network XML file name not specified. File not created")
             print(XML_string)
         else:
             myfile = open(output_file, "w")
             myfile.write(XML_string)
-            print("INFO: XML generation done")
-        #TODO: save XML to file if output_file is different than None
+            print("INFO: XML file creation successful")
+            log_info("CAN Network XML file creation successful")
     
     #===============================================================================================    
     def gen_DBC(self, output_file = None, gen_types = True, gen_nodes = True, \
                  gen_messages = True, gen_signals = True):
-        """ Generates a DBC filedescribing the Network modeled by this object. """
+        """ Generates a DBC file describing the Network modeled by this Network_CAN object. """
+        
+        print("INFO: Generating CAN Network DBC...")
+        log_info("Generating CAN Network DBC...")
         
         tmp_output_file = output_file.with_suffix(".dbctmp")
         
         can_dbc = canmatrix.CanMatrix()
+
+        tx_type_name = self.get_simple_param("CAN_dbc_tx_type_name")
+        tx_type_values = self.get_simple_param("CAN_dbc_tx_type_values")
+        tx_type_default = self.get_simple_param("CAN_dbc_tx_type_value_default")
+        
+        # Quick integrity check for tx_type_values
+        if len(tx_type_values) < 4:
+            log_warn("Wrong length of param 'tx_type_values'. Expected at least 4, actual %d." \
+                     % len(tx_type_values))
+        # Form ENUM string for tx_type_values
+        tx_type_values_str = "ENUM "
+        for i, value in enumerate(tx_type_values):
+            if i == 0:
+                tx_type_values_str += "\"" + str(value) + "\""
+            else:
+                tx_type_values_str += ",\"" + str(value) + "\""
         
         # Add attributes
-        can_dbc.add_frame_defines("GenMsgSendType",'ENUM "cyclic","triggered","cyclicIfActive","cyclicAndTriggered","cyclicIfActiveAndTriggered","none"')
-        can_dbc.frame_defines["GenMsgSendType"].set_default("none")
+        # --------------
+        
+        # Add attribute for Network name
+        can_dbc.add_global_defines("DBName",'STRING')
+        can_dbc.global_defines["DBName"].set_default("")
+        
+        # Add attribute for tx types
+        can_dbc.add_frame_defines(tx_type_name,tx_type_values_str)
+        can_dbc.frame_defines[tx_type_name].set_default(tx_type_default)
      
+        # Add nodes
+        # ---------
         if gen_nodes is True:
             #Generate nodes
             for node in self.nodes.values():
                 ecu_dbc = canmatrix.Ecu(node.name, node.description)
                 can_dbc.add_ecu(ecu_dbc)
     
+        # Add signals
+        # -----------
         if gen_signals is True:
             
             local_dbc_signals = []
@@ -2053,6 +2090,8 @@ class Network_CAN:
                 # For now only supporting unsigned signals
                 dbc_signal.is_signed = False
                 
+                # Add enumerated types
+                # --------------------
                 # Add enumeration if defined
                 if signal.is_enum_type is True:
                     if signal.data_type in self.enum_types:
@@ -2094,6 +2133,8 @@ class Network_CAN:
                     
                 local_dbc_signals.append(dbc_signal)
         
+        # Add messages
+        # ------------
         if gen_messages is True:
             for message in self.messages.values():
                 
@@ -2127,19 +2168,18 @@ class Network_CAN:
                     # Currently, calvos doesn't support partial reception of signals of messages
                     for dbc_signal in dbc_message.signals:
                         dbc_signal.add_receiver(subscriber)
-                    
 
                 # Set tx type
                 if message.tx_type == tx_type_list[SPONTAN]:
-                    dbc_message.add_attribute("GenMsgSendType", "triggered")
+                    dbc_message.add_attribute(tx_type_name, tx_type_values[SPONTAN])
                 elif message.tx_type == tx_type_list[CYCLIC]:
-                    dbc_message.add_attribute("GenMsgSendType", "cyclic")
+                    dbc_message.add_attribute(tx_type_name, tx_type_values[CYCLIC])
                 elif message.tx_type == tx_type_list[CYCLIC_SPONTAN]:
-                    dbc_message.add_attribute("GenMsgSendType", "cyclicAndTriggered")
+                    dbc_message.add_attribute(tx_type_name, tx_type_values[CYCLIC_SPONTAN])
                 elif message.tx_type == tx_type_list[BAF]:
-                    dbc_message.add_attribute("GenMsgSendType", "cyclicIfActive")
+                    dbc_message.add_attribute(tx_type_name, tx_type_values[BAF])
                 else:
-                    dbc_message.add_attribute("GenMsgSendType", "none")
+                    dbc_message.add_attribute(tx_type_name, tx_type_default)
                 
                 # Set cycle time
                 if message.tx_period is not None:
@@ -2152,12 +2192,17 @@ class Network_CAN:
             #Generate nodes
             for message in self.messages.values():
                 ecu_dbc = canmatrix.Ecu(node.name, node.description)
-                can_dbc.add_ecu(ecu_dbc)     
+                can_dbc.add_ecu(ecu_dbc)
+        
+        can_dbc.add_attribute("DBName", self.name)   
 
-         
+        print("INFO: DBC generation done")
+        log_info("CAN Network DBC generation done") 
+        
         if output_file is not None:
             with open(tmp_output_file, 'wb') as fout:
                 canmatrix.formats.dump(can_dbc, fout, "dbc")
+            
             # Update "VERSION" field in the DBC
             try:
                 version_str = "VERSION \"Network: '" + str(self.id_string) + "', version: '" \
@@ -2175,7 +2220,12 @@ class Network_CAN:
             # Remove temp file
             cg.delete_file(tmp_output_file)
             
-            print("INFO: DBC generation done")
+            print("INFO: DBC file creation successful")
+            log_info("CAN Network DBC file creation successful")
+        else:
+            log_debug("CAN Network DBC file name not specified. File not created")
+            
+            
         
     #===============================================================================================        
     def update_cog_sources(self):
@@ -2876,6 +2926,255 @@ class Network_CAN:
                 
                 if str(signal_unit) != "":
                     self.signals[signal_name].uint = signal_unit
+
+    #===============================================================================================    
+    def parse_dbc(self,input_file):
+        """ parses a CAN DBC file to generate this network. """
+        book = pe.get_book(file_name=str(input_file))
+        self.metadata_gen_source_file = str(input_file)
+        
+        self.input_file = cg.string_to_path(input_file)
+        
+        log_debug("Loading CAN information from file: '%s'..." % input_file)
+        
+        # -----------------------
+        # Parse Parameters
+        # -----------------------
+        log_debug("Parsing parameters data.")
+        CONFIG_TITLE_ROW = 1 # Row number with titles
+        working_sheet = book["Config"]
+        working_sheet.name_columns_by_row(CONFIG_TITLE_ROW)
+        
+        for idx, row in enumerate(working_sheet):
+            # Ignore rows that are before the "config's" title row
+            if idx >= CONFIG_TITLE_ROW:
+                param_id = row[working_sheet.colnames.index("Parameter")]
+                param_value = row[working_sheet.colnames.index("User Value")]
+                if param_id != "" \
+                and self.project_obj.simple_param_exists(self.module, param_id) is True:
+                    read_only = self.project_obj.simple_param_is_read_only(self.module, param_id)
+                    if read_only is False and param_value != "":
+                        # Add parameter user's value to this object
+                        param_type = self.project_obj.get_simple_param_type(self.module, param_id)
+                        # Force read value from ODS to be a string and substitute quotes characters
+                        # out of utf-8 if present.
+                        param_value = str(param_value)
+                        param_value = param_value.encode(encoding='utf-8')
+                        param_value = param_value.replace(b'\xe2\x80\x9c', b'\"')
+                        param_value = param_value.replace(b'\xe2\x80\x9d', b'\"')
+                        param_value = param_value.decode('utf-8')
+                        log_debug("Processing parameter '%s' with value '%s'..." \
+                                  % (param_id, param_value))
+                        param_value = grl.process_simple_param(param_type, param_value)
+                        
+                        # Check if validation is required
+                        validator = \
+                            self.project_obj.get_simple_param_validator(self.module, param_id)
+                        if validator is not None:
+                            # Validate parameter
+                            valid = self.project_obj.validate_simple_param(self.module, param_id, \
+                                                                           validator[0], \
+                                                                           validator[1])
+                        else:
+                            # If no validator is defined assume data is valid.
+                            valid = True
+                        
+                        if valid is True:
+                            param_obj = grl.SimpleParam(param_id, param_type, param_value)
+                            self.simple_params.update({param_id: param_obj})
+                            log_debug("Added CAN user parameter '%s', type '%s' with value '%s'" \
+                                      % (param_id, param_type, param_value))
+                        else:
+                            log_warn(("Parameter '%s:%s' is invalid as per its " \
+                                     + "validator '%s:%s''. Parameter ignored.") \
+                                     % (self.module, param_id, validator[0], validator[1]))
+                    elif param_value != "":
+                        log_warn("Parameter '%s' is read-only. Ignored user value." % param_id)
+                    else:
+                        pass
+                elif param_id != "":
+                    log_warn("Parameter '%s' is meaningless for component '%s'. Parameter ignored." \
+                             % (param_id, self.module))
+                else:
+                    pass
+                
+        # -----------------------
+        # Parse Network Data
+        # -----------------------
+        log_debug("Parsing network data.")
+        working_sheet = book["Network_and_Nodes"]
+                
+        self.name = working_sheet[0,1]
+        self.id_string = working_sheet[1,1]
+        self.description = working_sheet[2,1]
+        self.version = working_sheet[3,1]
+        self.date = working_sheet[4,1]
+
+        # -----------------------
+        # Parse Network Nodes
+        # -----------------------
+        log_debug("Parsing nodes data.")
+        NODES_TITLE_ROW = 6 # Row where the node's titles are located
+        working_sheet.name_columns_by_row(NODES_TITLE_ROW)
+        
+        for idx, row in enumerate(working_sheet):
+            # Ignore rows that are before the "node's" title row
+            if idx >= NODES_TITLE_ROW:
+                name = row[working_sheet.colnames.index("Node Name")]
+                # Skip rows with no node defined
+                if str(name) != "": 
+                    description = row[working_sheet.colnames.index("Description")]
+                    self.add_node(name, description)  
+        
+        # -----------------------
+        # Parse Enum Types
+        # -----------------------
+        log_debug("Parsing enums type data.")
+        working_sheet = book["Data_Types"]
+        working_sheet.name_columns_by_row(0)
+        
+        for row in working_sheet:
+            name = row[working_sheet.colnames.index("Type Name")]
+            #Skip rows with no type defined
+            if cg.is_valid_identifier(str(name)):
+                enum_string = row[working_sheet.colnames.index("Enum Values")]
+                self.add_enum_type(name, enum_string)
+        
+        # -----------------------
+        # Parse Messages
+        # -----------------------
+        log_debug("Parsing messages data.")
+        working_sheet = book["Messages"]
+        working_sheet.name_columns_by_row(0)
+        
+        for row in working_sheet:
+            message_name = row[working_sheet.colnames.index("Message Name")]
+            #Skip rows with no message defined
+            if cg.is_valid_identifier(str(message_name)):  
+                message_id = row[working_sheet.colnames.index("Message ID")]
+                message_extended = row[working_sheet.colnames.index("Extended Frame?")]
+                message_lenght = row[working_sheet.colnames.index("Data Length (bytes)")]
+                message_desc = row[working_sheet.colnames.index("Description")]
+                message_publisher = row[working_sheet.colnames.index("Publisher")]
+                message_subscribers = row[working_sheet.colnames.index("Subscribers")]
+                message_tx_type = row[working_sheet.colnames.index("Tx Type")]
+                message_period = row[working_sheet.colnames.index("Period (ms)")]
+                message_repetitions = \
+                    row[working_sheet.colnames.index("Repetitions (only for BAF)")]
+                
+                self.add_message(message_name, message_id, message_lenght, \
+                                    message_extended, message_tx_type, message_period, \
+                                    message_repetitions, message_desc)
+                
+                if str(message_publisher) != "":
+                    self.add_tx_message_to_node(message_publisher,message_name)
+                else:
+                    log_warn(("Message \"" + message_name 
+                                  + "\" doesn't have a defined publisher."))
+                
+                if str(message_subscribers) != "":
+                    self.add_rx_message_to_subscribers(message_name, message_subscribers)
+                else:
+                    log_warn(("Message \"" + message_name 
+                                  + "\" doesn't have subscribers."))
+        
+        # -----------------------
+        # Parse Signals
+        # -----------------------
+        log_debug("Parsing signals data.")
+        working_sheet = book["Signals"]
+        working_sheet.name_columns_by_row(0)
+        
+        for row in working_sheet:
+            signal_name = row[working_sheet.colnames.index("Signal Name")]   
+            #Skip rows with no signal defined
+            if  cg.is_valid_identifier(str(signal_name)):
+                signal_len = row[working_sheet.colnames.index("Lenght (bits)")]
+                signal_type = row[working_sheet.colnames.index("Data Type")]
+                signal_desc = row[working_sheet.colnames.index("Description")]
+                signal_conv_msg = row[working_sheet.colnames.index("Conveyor Message")]
+                signal_start_byte = row[working_sheet.colnames.index("Start Byte")]
+                signal_start_bit = row[working_sheet.colnames.index("Start Bit")]
+                signal_init_val = row[working_sheet.colnames.index("Initial Value")]
+                signal_fail_val = row[working_sheet.colnames.index("Fail Safe Value")]
+                signal_offset = row[working_sheet.colnames.index("Offset")]
+                signal_resolution = row[working_sheet.colnames.index("Resolution")]
+                signal_unit = row[working_sheet.colnames.index("Unit")]
+                #Add signal object to the network
+                self.add_signal(signal_name, signal_len, signal_desc)
+                #Add data type to the signal
+                if signal_type != "":
+                    self.set_signal_data_type(signal_name, signal_type)
+                else:
+                    log_info(("Signal \"" + signal_name 
+                              + "\" doesn't have a defined data type."))
+                # Add signal to the specified message if any
+                if signal_conv_msg != "":
+                    if cg.is_valid_identifier(str(signal_conv_msg)):
+                        #Set signal's conveyor message
+                        self.add_signal_to_message(signal_conv_msg, signal_name, \
+                                                signal_start_byte, signal_start_bit)
+                    else:
+                        log_warn(("Wrong conveyor message \"" + signal_conv_msg \
+                            + "\" for signal \"" + signal_name + "\"."))
+                else:
+                    log_warn(("Signal \"" + signal_name 
+                                  + "\" doesn't have a defined coveyor message."))        
+                # Add extra information parameters of the signal (no warnings if empty)
+                
+                optimize_init = self.get_simple_param("CAN_optimize_signals_init")
+                default_init_value = \
+                    cg.get_valid_number(self.get_simple_param("CAN_rx_data_init_val"))
+                
+                if str(signal_init_val) != "":
+                    self.signals[signal_name].init_value = None
+                    valid_init_value = \
+                        self.get_valid_signal_value(signal_name, signal_init_val)
+                    if valid_init_value is not None:
+                        # If CAN_optimize_signals_init parameter is True, then set init value only 
+                        # if it is different than the default one in CAN_rx_data_init_val
+                        if optimize_init is True:
+                            optimize = False
+                            # If enum type, check if initial symbol numeric value is equal or not
+                            # to the default init value.
+                            if self.signals[signal_name].is_enum_type:
+                                init_enum_type=self.enum_types[self.signals[signal_name].data_type]
+                                init_enum_value = init_enum_type.enum_entries[valid_init_value]
+                                if init_enum_value is not None:
+                                    if int(init_enum_value) == int(default_init_value):
+                                        optimize = True
+                            else:
+                                if cg.get_valid_number(valid_init_value) is not None \
+                                and cg.get_valid_number(valid_init_value) == default_init_value:
+                                    optimize = True
+                                    
+                            if optimize is False:
+                                self.signals[signal_name].init_value = valid_init_value
+                        else:
+                            self.signals[signal_name].init_value = valid_init_value
+                    else:
+                        log_warn(("Invalid initial value '"+str(signal_init_val)+"' for signal '" \
+                                  +signal_name+"'. Assumed initial value 'None'."))
+                        
+                if str(signal_fail_val) != "":
+                    self.signals[signal_name].fail_value = None
+                    valid_fail_value = \
+                        self.get_valid_signal_value(signal_name, signal_fail_val)
+                    if valid_fail_value is not None:
+                        self.signals[signal_name].fail_value = valid_fail_value
+                    else:
+                        log_warn(("Invalid fail-safe value '"+str(signal_init_val) \
+                                  +"' for signal '"+signal_name+"'. Assumed value 'None'."))
+                
+                if str(signal_offset) != "":
+                    self.signals[signal_name].offset = signal_offset
+                
+                if str(signal_resolution) != "":
+                    self.signals[signal_name].resolution = signal_resolution
+                
+                if str(signal_unit) != "":
+                    self.signals[signal_name].uint = signal_unit
+                    
 
     #===============================================================================================        
     class EnumType:

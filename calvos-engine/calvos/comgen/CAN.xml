@@ -195,5 +195,29 @@ Use ${DATATYPE} to indicate the Data_Type name.
 			<clv:Title>Write signal fail-safe values</clv:Title>
 			<clv:Desc>If set to True, signals will get the specified fail-safe value upon timeout. If set to False, no change in signals data will be made upon timeout.</clv:Desc>
 			<clv:Default>True</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="str" id="CAN_dbc_tx_type_name"
+			category="catCAN_messages" is_read_only="false" is_advanced="true">
+			<clv:Title>DBC send type attribute name</clv:Title>
+			<clv:Desc>
+				DBC send type attribute name to be used for the
+				generation of the DBC file.
+			</clv:Desc>
+			<clv:Default>GenMsgSendType</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="list" id="CAN_dbc_tx_type_values"
+			category="catCAN_messages" is_read_only="false" is_advanced="true">
+			<clv:Title>DBC send type attribute values</clv:Title>
+			<clv:Desc>DBC send type attribute values to be used for the generation of the DBC file. The list needs to be at least of 4 elements with following order -> [triggered, cyclic, cyclicAndTriggered, cyclicIfActive, ...] </clv:Desc>
+			<clv:Default>["triggered", "cyclic", "cyclicAndTriggered", "cyclicIfActive", "cyclicIfActiveAndTriggered", "none"]</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="str" id="CAN_dbc_tx_type_value_default"
+			category="catCAN_messages" is_read_only="false" is_advanced="true"
+			validator='["comgen.CAN", "CAN_dbc_tx_type_values"]'>
+			<clv:Title>DBC send type attribute default value</clv:Title>
+			<clv:Desc>
+				DBC send type attribute default value. Needs to be one of the values of parameter CAN_dbc_tx_type_values.
+			</clv:Desc>
+			<clv:Default>none</clv:Default>
 		</clv:ParamDefinition></clv:ParamsDefinitions>
 </clv:ComponentDefinition>

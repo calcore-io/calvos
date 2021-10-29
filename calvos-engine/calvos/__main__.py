@@ -456,10 +456,35 @@ USAGE
             
             log.info("main","============== Finished calvOS project processing. ==============")
             print("INFO: ============== Finished calvOS project processing. ==============")
+            
+            color_log_str = False
+            
             for counter_name, counts in log.counters.items():
                 log.info("main", "\"" + counter_name + "\" messages : " + str(counts))
-                print("INFO: \"" + counter_name + "\" messages : " + str(counts))
-            print("INFO: See log file '%s' for details." % str(log_output_file))
+                color_chrs = ""
+                color_chrs_end = ""
+                if counter_name == "warning"  and counts > 0:
+                    color_chrs = '\033[33m'
+                    color_chrs_end = '\033[0m'
+                    color_log_str = True
+                elif counter_name == "error" and counts > 0:
+                    color_chrs = '\033[91m'
+                    color_chrs_end = '\033[0m'
+                    color_log_str = True
+                elif counter_name == "critical" and counts > 0:
+                    color_chrs = '\033[91m'
+                    color_chrs_end = '\033[0m'
+                    color_log_str = True
+                print(color_chrs+"INFO: \"" + counter_name + "\" messages : " \
+                      + str(counts)+color_chrs_end)
+            if color_log_str is True:
+                color_chrs = '\033[33m'
+                color_chrs_end = '\033[0m'
+            else:
+                color_chrs = ""
+                color_chrs_end = ""
+            print(color_chrs+"INFO: See log file '"+str(log_output_file)+"' for details." \
+                  +color_chrs_end)
               
             logging.shutdown()
    
