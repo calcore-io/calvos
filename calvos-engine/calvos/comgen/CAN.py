@@ -437,7 +437,7 @@ class Network_CAN:
     #===============================================================================================        
     def add_message(self, name, msg_id, length, extended_id = False, \
                      tx_type = None, tx_period = None, tx_baf_repeats = None, \
-                     description = ""):
+                     description = "", timeout = None):
         """ Adds a new message to the network """
         if cg.is_valid_identifier(name):
             #Verify that message to be added is not already existing
@@ -455,7 +455,7 @@ class Network_CAN:
                         #Create new message object in the network
                         self.messages.update( {name : \
                             self.Message(name, msg_id, length, extended_id, tx_type, \
-                                         tx_period, tx_baf_repeats, description)} )
+                                         tx_period, tx_baf_repeats, description, timeout)} )
                     else:
                         log_warn(("Duplicated Message Id: \"" + str(msg_id) \
                               + "\". Message \"" + name + "\" not added to the network."))
@@ -511,9 +511,16 @@ class Network_CAN:
                                 published_by_this_node = True
                                 break
                         if not published_by_this_node:    
+                            # Determine timeout value to use
+                            timeout_per_node = self.get_simple_param("CAN_timeout_per_node")
+                            if timeout_per_node:
+                                # Use timeout defined at subscriber-level
+                                timeout_val = temporal_entries[node] 
+                            else:
+                                # Use timeout defined at message-level
+                                timeout_val = self.messages[message_name].timeout
                             #Add subscribed message and its timeout
-                            self.nodes[node].add_subscriber(message_name, \
-                                      temporal_entries[node])
+                            self.nodes[node].add_subscriber(message_name, timeout_val)
                         else:
                             log_warn(("Message \"" + message_name + \
                                       "\" already published by node \"" + node \
@@ -2078,7 +2085,7 @@ class Network_CAN:
         can_dbc.frame_defines[tx_type_name].set_default(tx_type_default)
         
         # Add attribute(s) for timeouts
-        timeout_per_node = self.get_simple_param("CAN_dbc_timeout_per_node")
+        timeout_per_node = self.get_simple_param("CAN_timeout_per_node")
         timeout_default = self.get_simple_param("CAN_dbc_timeout_default")
         timoeut_max_value = self.get_simple_param("CAN_dbc_timeout_max_value")
         if not timeout_per_node:
@@ -2101,7 +2108,6 @@ class Network_CAN:
                 enum_values_dbc = {}
                 for key, value in enum_values.items():
                     enum_values_dbc.update({str(value) : str(key)})
-                print("enum_values_dbc, ", enum_values_dbc)
                 if enum_values_dbc:
                     can_dbc.add_value_table(enum_name, enum_values_dbc)
      
@@ -2209,7 +2215,7 @@ class Network_CAN:
                     for dbc_signal in dbc_message.signals:
                         dbc_signal.add_receiver(subscriber)
                         
-                    # Generate timeout attribute if parameter CAN_dbc_timeout_per_node is set to
+                    # Generate timeout attribute if parameter CAN_timeout_per_node is set to
                     # True
                     if timeout_per_node:
                         # Check if subscriber has a defined timeout
@@ -2222,6 +2228,14 @@ class Network_CAN:
                             can_dbc.add_frame_defines(timeout_name_str,"INT 0 "+str(timoeut_max_value))
                             can_dbc.frame_defines[timeout_name_str].set_default(str(timeout_default))
                             dbc_message.add_attribute(timeout_name_str, msg_timeout)
+                
+                # Generate timeout attribute per-message if parameter CAN_timeout_per_node is set to
+                # False
+                if not timeout_per_node:
+                    # Generate message-level timeout
+                    if message.timeout is not None:
+                        timeout_name = self.get_simple_param("CAN_dbc_timeout_name")
+                        dbc_message.add_attribute(timeout_name, message.timeout)
 
                 # Set tx type
                 if message.tx_type == tx_type_list[SPONTAN]:
@@ -2865,12 +2879,18 @@ class Network_CAN:
                 message_subscribers = row[working_sheet.colnames.index("Subscribers")]
                 message_tx_type = row[working_sheet.colnames.index("Tx Type")]
                 message_period = row[working_sheet.colnames.index("Period (ms)")]
+                message_timeout = row[working_sheet.colnames.index("Msg-level Timeout")]
+                if str(message_timeout) == "":
+                    message_timeout = None
+                else:
+                    message_timeout = int(str(message_timeout),0)
+                    
                 message_repetitions = \
                     row[working_sheet.colnames.index("Repetitions (only for BAF)")]
                 
                 self.add_message(message_name, message_id, message_lenght, \
                                     message_extended, message_tx_type, message_period, \
-                                    message_repetitions, message_desc)
+                                    message_repetitions, message_desc, message_timeout)
                 
                 if str(message_publisher) != "":
                     self.add_tx_message_to_node(message_publisher,message_name)
@@ -3396,7 +3416,7 @@ class Network_CAN:
     
         def __init__(self, name, msg_id, length, extended_id = False, \
                      tx_type = None, tx_period = None, tx_baf_repeats = None, \
-                     description = ""):
+                     description = "", timeout = None):
             """ Constructor for the class """
             self.name = str(name)
             
@@ -3453,6 +3473,8 @@ class Network_CAN:
                                     + tx_type_list[DEFAULT]))
                     #Sef default tx type
                     self.tx_type = tx_type_list[DEFAULT]
+            
+            self.timeout = timeout
             
             #If message is defined as cyclic or BAF then validate period value
             if self.tx_type == tx_type_list[CYCLIC] \

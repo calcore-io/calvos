@@ -184,7 +184,7 @@ Use ${DATATYPE} to indicate the Data_Type name.
 		<clv:ParamDefinition type="boolean"
 			id="CAN_write_signals_init" category="catCAN_messages">
 			<clv:Title>Write signal intializations</clv:Title>
-			<clv:Desc>If set to True, signals will be initialized as specified in the CAN network. If set to False signals won't be individually initilized. They will all have the value in parameters CAN_rx_data_init_val and CAN_tx_data_init_val.</clv:Desc>
+			<clv:Desc>If set to True, signals will be initialized as specified in the CAN network. If set to False signals won't be individually initialized. They will all have the value in parameters CAN_rx_data_init_val and CAN_tx_data_init_val.</clv:Desc>
 			<clv:Default>True</clv:Default>
 		</clv:ParamDefinition>
 		<clv:ParamDefinition type="boolean"
@@ -197,6 +197,13 @@ Use ${DATATYPE} to indicate the Data_Type name.
 			id="CAN_write_signals_fails" category="catCAN_messages">
 			<clv:Title>Write signal fail-safe values</clv:Title>
 			<clv:Desc>If set to True, signals will get the specified fail-safe value upon timeout. If set to False, no change in signals data will be made upon timeout.</clv:Desc>
+			<clv:Default>True</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="boolean" id="CAN_timeout_per_node"
+			category="catCAN_messages" is_read_only="false" is_advanced="true">
+			<clv:Title>Message timeout per node?</clv:Title>
+			<clv:Desc>If set to true, timeout will be defined for each node as per the "Subscribers" node string.
+			If set to false, timeout value will be generated per message (not per subscribed node) based on the "Message-level Timeout" input.</clv:Desc>
 			<clv:Default>True</clv:Default>
 		</clv:ParamDefinition>
 		<clv:ParamDefinition type="str" id="CAN_dbc_tx_type_name"
@@ -223,18 +230,11 @@ Use ${DATATYPE} to indicate the Data_Type name.
 			</clv:Desc>
 			<clv:Default>none</clv:Default>
 		</clv:ParamDefinition>
-		<clv:ParamDefinition type="boolean" id="CAN_dbc_timeout_per_node"
-			category="catCAN_DBC" is_read_only="false" is_advanced="true">
-			<clv:Title>DBC message timeout attribute per node?</clv:Title>
-			<clv:Desc>If set to true, an attribute for each node with defined timeout will be generated. Name of the attribute will be determined by parameter CAN_dbc_timeout_node_name.
-			If set to false, only 1 timeout attribute will be generated per message (not per subscribed node). This timeout will be valid for all subscribers and the attribute name will be determined by parameter CAN_dbc_timeout_name.</clv:Desc>
-			<clv:Default>True</clv:Default>
-		</clv:ParamDefinition>
 		<clv:ParamDefinition type="str" id="CAN_dbc_timeout_name"
 			category="catCAN_DBC" is_read_only="false" is_advanced="true">
 			<clv:Title>DBC attribute name for message-level timeouts.</clv:Title>
 			<clv:Desc>
-				DBC attribute name for message-level timeouts. Only used if CAN_dbc_timeout_per_node is set to false.
+				DBC attribute name for message-level timeouts. Only used if CAN_timeout_per_node is set to false.
 			</clv:Desc>
 			<clv:Default>GenMsgTimeoutTime</clv:Default>
 		</clv:ParamDefinition>
@@ -243,7 +243,7 @@ Use ${DATATYPE} to indicate the Data_Type name.
 			<clv:Title>DBC attribute name for subscriber node-level timeouts.</clv:Title>
 			<clv:Desc>
 				DBC attribute name for subscriber node-level timeouts. Use ${NODEID} to indicate the node name.
-				Only used if CAN_dbc_timeout_per_node is set to true.
+				Only used if CAN_timeout_per_node is set to true.
 			</clv:Desc>
 			<clv:Default>GenMsgTimeoutTime_${NODEID}</clv:Default>
 		</clv:ParamDefinition>
