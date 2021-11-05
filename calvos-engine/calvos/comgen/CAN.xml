@@ -18,6 +18,9 @@
 			<clv:Category id="catCAN_messages">
 				<clv:Title>Messages</clv:Title>
 			</clv:Category>
+			<clv:Category id="catCAN_DBC">
+				<clv:Title>Messages</clv:Title>
+			</clv:Category>
 		</clv:Categories>
 		<clv:ParamDefinition id="CAN_gen_nodes" type="list"
 			category="catCAN_network" subtype="str">
@@ -197,7 +200,7 @@ Use ${DATATYPE} to indicate the Data_Type name.
 			<clv:Default>True</clv:Default>
 		</clv:ParamDefinition>
 		<clv:ParamDefinition type="str" id="CAN_dbc_tx_type_name"
-			category="catCAN_messages" is_read_only="false" is_advanced="true">
+			category="catCAN_DBC" is_read_only="false" is_advanced="true">
 			<clv:Title>DBC send type attribute name</clv:Title>
 			<clv:Desc>
 				DBC send type attribute name to be used for the
@@ -206,18 +209,66 @@ Use ${DATATYPE} to indicate the Data_Type name.
 			<clv:Default>GenMsgSendType</clv:Default>
 		</clv:ParamDefinition>
 		<clv:ParamDefinition type="list" id="CAN_dbc_tx_type_values"
-			category="catCAN_messages" is_read_only="false" is_advanced="true">
+			category="catCAN_DBC" is_read_only="false" is_advanced="true">
 			<clv:Title>DBC send type attribute values</clv:Title>
 			<clv:Desc>DBC send type attribute values to be used for the generation of the DBC file. The list needs to be at least of 4 elements with following order -> [triggered, cyclic, cyclicAndTriggered, cyclicIfActive, ...] </clv:Desc>
 			<clv:Default>["triggered", "cyclic", "cyclicAndTriggered", "cyclicIfActive", "cyclicIfActiveAndTriggered", "none"]</clv:Default>
 		</clv:ParamDefinition>
 		<clv:ParamDefinition type="str" id="CAN_dbc_tx_type_value_default"
-			category="catCAN_messages" is_read_only="false" is_advanced="true"
+			category="catCAN_DBC" is_read_only="false" is_advanced="true"
 			validator='["comgen.CAN", "CAN_dbc_tx_type_values"]'>
 			<clv:Title>DBC send type attribute default value</clv:Title>
 			<clv:Desc>
 				DBC send type attribute default value. Needs to be one of the values of parameter CAN_dbc_tx_type_values.
 			</clv:Desc>
 			<clv:Default>none</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="boolean" id="CAN_dbc_timeout_per_node"
+			category="catCAN_DBC" is_read_only="false" is_advanced="true">
+			<clv:Title>DBC message timeout attribute per node?</clv:Title>
+			<clv:Desc>If set to true, an attribute for each node with defined timeout will be generated. Name of the attribute will be determined by parameter CAN_dbc_timeout_node_name.
+			If set to false, only 1 timeout attribute will be generated per message (not per subscribed node). This timeout will be valid for all subscribers and the attribute name will be determined by parameter CAN_dbc_timeout_name.</clv:Desc>
+			<clv:Default>True</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="str" id="CAN_dbc_timeout_name"
+			category="catCAN_DBC" is_read_only="false" is_advanced="true">
+			<clv:Title>DBC attribute name for message-level timeouts.</clv:Title>
+			<clv:Desc>
+				DBC attribute name for message-level timeouts. Only used if CAN_dbc_timeout_per_node is set to false.
+			</clv:Desc>
+			<clv:Default>GenMsgTimeoutTime</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="str" id="CAN_dbc_timeout_node_name"
+			category="catCAN_DBC" is_read_only="false" is_advanced="true">
+			<clv:Title>DBC attribute name for subscriber node-level timeouts.</clv:Title>
+			<clv:Desc>
+				DBC attribute name for subscriber node-level timeouts. Use ${NODEID} to indicate the node name.
+				Only used if CAN_dbc_timeout_per_node is set to true.
+			</clv:Desc>
+			<clv:Default>GenMsgTimeoutTime_${NODEID}</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="int" id="CAN_dbc_timeout_max_value"
+			category="catCAN_DBC" is_read_only="false" is_advanced="true">
+			<clv:Title>Maximum allowed timoeut value</clv:Title>
+			<clv:Desc>
+				Maximum allowed timoeut value in milliseconds for the DBC generation.
+			</clv:Desc>
+			<clv:Default>60000</clv:Default>
+		</clv:ParamDefinition>
+		<clv:ParamDefinition type="int" id="CAN_dbc_timeout_default"
+			category="catCAN_DBC" is_read_only="false" is_advanced="true">
+			<clv:Title>DBC default timeout value. </clv:Title>
+			<clv:Desc>Default timeout value to use for cyclic and cyclic_spontan messages if none is specified.
+			
+			Use format [period_times, fixed_time], where:
+			 * period_times: integer value that indicates a multiplier of the message cycle time (msg_cycle_time)
+			 * fixed_time: integer value that indicates a time in milliseconds.
+			 
+			 The actual default timeout in milliseconds will be determined as follows:
+			 
+			 timeout_ms = (period_times * msg_cycle_time) + fixed_time
+			 
+			 It timoeut_ms is zero then it means no timeout will be defined.</clv:Desc>
+			<clv:Default>0</clv:Default>
 		</clv:ParamDefinition></clv:ParamsDefinitions>
 </clv:ComponentDefinition>
