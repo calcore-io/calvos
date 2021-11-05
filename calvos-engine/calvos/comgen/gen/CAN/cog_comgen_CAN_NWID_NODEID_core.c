@@ -322,6 +322,9 @@ if len(list_of_rx_msgs) > 0:
 	sym_avlbl_buff_idx_pfx = "kCAN_" + net_name_str + node_name_str + "avlbl_buffer_idx_"
 	sym_avlbl_size_idx_pfx = "kCAN_" + net_name_str + node_name_str + "avlbl_slot_len_"
 
+	# Get timeout type
+	timeout_per_node = network.get_simple_param("CAN_timeout_per_node")
+
 	array_data = []
 	data_idx = 0
 	for i, msg_name in enumerate(sorted_rx_msgs.keys()):
@@ -334,7 +337,14 @@ if len(list_of_rx_msgs) > 0:
 		# Msg rx callback
 		array_data.append("&" + callback_prefix + msg_name + callback_rx_sufix)
 		# Msg timeout callback
-		array_data.append("&" + callback_prefix + msg_name + callback_tout_sufix)
+		if timeout_per_node:
+			timeout = subnet.get_message_timeout(node_name, msg_name)
+		else:
+			timeout = subnet.messages[msg_name].timeout
+		if timeout is not None:
+			array_data.append("&" + callback_prefix + msg_name + callback_tout_sufix)
+		else:
+			array_data.append("NULL")
 		# Msg write fails function
 		if network.message_has_fail_values(msg_name) is True and write_fails is True:
 			array_data.append("&" + write_fail_function_prefix + msg_name)
@@ -551,8 +561,10 @@ if len(list_of_rx_msgs) > 0:
 			msg_static_data->dyn->available.all = kAllOnes32;
 
 			// clear timeout flag and reset timeout timer
-			msg_static_data->dyn->timeout_timer = 0;
-			msg_static_data->dyn->timedout = kFalse;
+			if(msg_static_data->timeout > 0){
+				msg_static_data->dyn->timeout_timer = 0;
+				msg_static_data->dyn->timedout = kFalse;
+			}
 			// Invoke rx callback
 			if(msg_static_data->rx_callback != NULL){
 				(msg_static_data->rx_callback)();

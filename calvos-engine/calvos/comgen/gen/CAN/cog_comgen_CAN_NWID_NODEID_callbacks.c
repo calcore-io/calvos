@@ -164,11 +164,18 @@ if len(list_of_rx_msgs) > 0:
 /* [[[cog
 if len(list_of_rx_msgs) > 0:
 	for message_name in list_of_rx_msgs:
-		# Generate timeout callback
-		cog.outl(get_timeout_callback_header(message_name,node_name,network_name))
-		callback_name = callback_prefix + message_name + callback_tout_sufix
-		code_str = "void "+callback_name+"(void){\n\t/"+chr(42)+" User code goes here... "+chr(42)+"/\n}"
-		cog.outl(code_str)
+		# Generate timeout callback if timeout is defined
+		timeout_per_node = network.get_simple_param("CAN_timeout_per_node")
+		if timeout_per_node:
+			timeout = subnet.get_message_timeout(node_name, message_name)
+		else:
+			timeout = subnet.messages[message_name].timeout
+
+		if timeout is not None:
+			cog.outl(get_timeout_callback_header(message_name,node_name,network_name))
+			callback_name = callback_prefix + message_name + callback_tout_sufix
+			code_str = "void "+callback_name+"(void){\n\t/"+chr(42)+" User code goes here... "+chr(42)+"/\n}"
+			cog.outl(code_str)
 ]]] */
 // [[[end]]]
 
