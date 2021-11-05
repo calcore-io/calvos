@@ -1913,6 +1913,12 @@ class Network_CAN:
                 XML_level_3.append(XML_level_4)
                 
                 XML_level_2.append(XML_level_3)
+                
+                if message.timeout is not None:
+                    XML_level_3 = ET.Element("MsgTimeout")
+                    XML_level_3.text = str(message.timeout)
+                    XML_level_2.append(XML_level_3)
+                
                 XML_level_1.append(XML_level_2)
             
             XML_root.append(XML_level_1)    
@@ -3304,6 +3310,54 @@ class Network_CAN:
             self.cyclic_spontan = kwargs.get('cyclic_spontan', 'cyclic_spontan') 
             self.BAF  = kwargs.get('spontan', 'BAF')
             self.default = kwargs.get('default', None)
+        
+        #===========================================================================================
+        def value_doesnt_exist(self, value):
+            """ Returns True if the input value string hasn't been used for this object. """
+            return_val = False
+            
+            value = str(value)
+            
+            members = \
+                [attr for attr in dir(self) if not callable(getattr(self, attr)) \
+                 and not attr.startswith("__")]
+            
+            for member in members:
+                attribute = getattr(self, member)
+                if attribute != "name" and attribute != "default":
+                    if (type(attribute) is str and value == attribute) \
+                    or (type(attribute) is list and value in attribute):
+                        return_val = True
+                        break
+            
+            return return_val
+        
+        #===========================================================================================    
+        def is_of_type(self, value_str, type_str):
+            """ Return True if the TX type in value_str is of type_str for code-generation. 
+            
+            Returns None if type_str is not defined and returns False if the value_str is not
+            of the type in type_str.
+            
+            For example:
+              ... is_of_type("cyclic_msg", "cyclic") will return True if self.cyclic has
+              the string value "cyclic_msg".
+            """
+            return_val = None
+            
+            value_str = str(value_str)
+             
+            if hasattr(self, type_str):
+                attribute = getattr(self, type_str)
+                if ( type(attribute) is str and value_str == attribute) \
+                or ( type(attribute) is list and value_str in attribute):
+                    return_val = True
+                else:
+                    return_val = True
+            else:
+                log_debug("Class TxTypeStrings doesn't have attribute '%s'" % type_str)
+            
+            return return_val
     
     #===============================================================================================        
     class EnumType:
