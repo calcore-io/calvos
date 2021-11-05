@@ -3578,8 +3578,7 @@ class Network_CAN:
             self.base_type_len = base_type_len
             self.is_cannonical = is_cannonical #TODO: see if this is needed
             
-            self.signals = []  # [ SignalStructure object1, 
-                               # SignalStructure object2, ... ]
+            self.signals = []  # [ SignalStructure object1, SignalStructure object2, ... ]
         
         #===========================================================================================
         class SignalStructure:
@@ -3703,7 +3702,7 @@ class Network_CAN:
                 self.shift_outer = shift_outer
                 self.mask_inner = mask_inner
                 self.mask_outer = mask_outer
-                self.mask_3 = mask_outer
+                self.mask_3 = mask_3
 
 #===================================================================================================
 class CodeGen():
@@ -3801,7 +3800,7 @@ def generate(input_object, out_path, working_path, calvos_path, params = {}):
         This function produced C-code for the corresponding module. This code
         is generated in the provided out_path.
     """
-    del params # Unused parameter
+    del params, calvos_path # Unused parameter
     #TODO: Check for required parameters
     input_object.gen_code()
     

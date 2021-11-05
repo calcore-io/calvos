@@ -12,7 +12,6 @@ __date__ = '2020-12-20'
 __updated__ = '2020-12-20'
 
 import json
-import re
 
 import calvos.common.codegen as cg
 import calvos.common.logsys as lg

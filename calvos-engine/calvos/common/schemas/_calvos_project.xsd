@@ -77,17 +77,16 @@
     <xsd:element name="CalvosProject" type="t_calvosProject"></xsd:element>
 
     <xsd:complexType name="t_componentInput">
-    	<xsd:simpleContent>
-    		<xsd:extension base="xsd:string">
-    			<xsd:attribute name="type" use="required">
-    				<xsd:simpleType>
-    					<xsd:restriction base="xsd:string">
-    						<xsd:enumeration value="ods"></xsd:enumeration>
-    						<xsd:enumeration value="xml"></xsd:enumeration>
-    					</xsd:restriction>
-    				</xsd:simpleType>
-    			</xsd:attribute>
-    		</xsd:extension>
-    	</xsd:simpleContent>
+    	<xsd:sequence>
+    		<xsd:element name="Params" type="t_projectParams" minOccurs="0" maxOccurs="unbounded"></xsd:element>
+    	</xsd:sequence>
+    	<xsd:attribute name="type" use="required">
+    		<xsd:simpleType>
+    			<xsd:restriction base="xsd:string">
+    				<xsd:enumeration value="ods"></xsd:enumeration>
+    				<xsd:enumeration value="xml"></xsd:enumeration>
+    			</xsd:restriction>
+    		</xsd:simpleType>
+    	</xsd:attribute>
     </xsd:complexType>
 </xsd:schema>

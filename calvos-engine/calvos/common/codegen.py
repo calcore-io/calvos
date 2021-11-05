@@ -495,6 +495,9 @@ def parse_codegen_spreadsheet(input_file):
         MCU_name = row[working_sheet.colnames.index("MCU")]
         settings_name = row[working_sheet.colnames.index("Settings")]
         
+        #TODO: implement compiler dependencies
+        del compiler_name, MCU_name, settings_name
+        
         # -----------------------
         # Parse Parameters
         # -----------------------
@@ -973,7 +976,7 @@ class GenParam():
         """ Get param data value. """
         return_value = None
         if index == None:
-            index == self.DEFAULT
+            index = self.DEFAULT
             
         if self.type == 0:
             return_value = self.pg
@@ -1084,10 +1087,10 @@ class CogSources():
             self.source_id = source_id
 
 class TreeNode:
-    def __init__(self, val, prev = None, next = None):
+    def __init__(self, val, prev_in = None, next_in = None):
         self.val = val
-        self.prev = prev
-        self.next = next
+        self.prev = prev_in
+        self.next = next_in
 
 def inorderTree(root, result = []): 
     return_val = []

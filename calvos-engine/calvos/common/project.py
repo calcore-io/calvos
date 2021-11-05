@@ -13,11 +13,8 @@ __date__ = '2020-11-12'
 __updated__ = '2020-11-12'
 
 import xml.etree.ElementTree as ET
-import xml.dom.minidom
 import shutil
-import pathlib
 import importlib
-import json
 import re
 import pickle
 
@@ -461,18 +458,6 @@ class Project:
                           % (component.name, e) )
 
         log_info("============== Generating components code. ==============")
-        
-        
-        test_str = ["rew ert wer\"$v:calvos_path$\" wert ewr", \
-"wert er\"$d:test_dict,hola1$\"  erte rt \"$d:test_dict,hola1$\" tre w", \
-" wert \"$func:function_name$\" tttt", \
-"trey rt\"$d:test_dict,hola2$\" ttt", \
-" rtyert \"$l:test_list,3$\"ttttt", \
-"rrty \"$d:test_dict,hola1$\"asda\"$v:calvos_path$\"sdasd\"$l:test_list,4$\"asaaa asd  sa a dsa da\"$d:test_dict,hola4$\"", \
-"hello \"$project_working$\""]
-        
-#        for string in test_str:
-#            self.expand_all_tokens(string)
   
         # Create a pickle of all project object to be available for source generators.
         pickle_full_file_name = self.get_simple_param_val(self.module, "project_path_working") / \
