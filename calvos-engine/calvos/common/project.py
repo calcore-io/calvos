@@ -305,7 +305,7 @@ class Project:
             valid = self.validate_simple_params_defaults()
             if valid is False:
                 log_warn("Invalid data found during parameters validation.")
-                #TODO. determine wheter or not to continue processing, success = True/False? 
+                #TODO. determine whether or not to continue processing, success = True/False? 
         
         if success is True:
             # Load project components
@@ -339,7 +339,7 @@ class Project:
                     # Get input file, remove trailing/leading quotes
                     component_input = str(component.findtext("Input")).strip('"')
                     component_input = cg.string_to_path(component_input)
-                    # Check if path is relative and make it aboslute based on project path
+                    # Check if path is relative and make it absolute based on project path
                     if component_input.is_absolute() is False:
                         component_input = self.paths["project_path"] / component_input
                         
@@ -1073,7 +1073,8 @@ class Project:
                 # Parse XML with component definitions
                 defs_XML_tree = ET.parse(comp_xml)
                 defs_XML_root = defs_XML_tree.getroot()
-                self.load_component_definitions(defs_XML_root, self.components_definitions[comp_name])
+                self.load_component_definitions(defs_XML_root, \
+                                                self.components_definitions[comp_name])
             
             log_info('Loaded project parameters and component definitions.')
             

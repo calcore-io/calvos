@@ -234,8 +234,7 @@ USAGE
                 
             print("INFO: Don't provide argument -d if a project needs to be processed.")
             
-            project = str(demo_path / "calvos_project.xml")
-            #return 0    
+            project = str(demo_path / "calvos_project.xml")   
         
         #==============================================================================
         # Start project processing if argument -d was not provided
@@ -523,18 +522,18 @@ if __name__ == "__main__":
         sys.argv.append(str(debug_demo_project_path))
         
         sys.argv.append("-l")
-        sys.argv.append("0")
+        sys.argv.append("1")
   
 #         sys.argv.append("-d")
 #         sys.argv.append(str(debug_demo_path))
-        
-        sys.argv.append("-e")
-        sys.argv.append("C:\\diplomado_udg\\s32ds_workspace\\DCU_2020B_EquipoX_3_test_0_1_0\\src\\DCU\\Communication\\Calvos")
-#          
-        sys.argv.append("-b")
-        sys.argv.append("C:\\diplomado_udg\\s32ds_workspace\\bkup")
-#          
-        sys.argv.append("--dont-export-user")
+#         
+#         sys.argv.append("-e")
+#         sys.argv.append("C:\\diplomado_udg\\s32ds_workspace\\DCU_2020B_EquipoX_3_test_0_1_0\\src\\DCU\\Communication\\Calvos")
+# #          
+#         sys.argv.append("-b")
+#         sys.argv.append("C:\\diplomado_udg\\s32ds_workspace\\bkup")
+# #          
+#         sys.argv.append("--dont-export-user")
     if TESTRUN:
         import doctest
         doctest.testmod()
