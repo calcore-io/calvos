@@ -214,7 +214,7 @@ def get_write_array_header(signal_name):
 	return return_str[1:]
 
 def get_write_array_signature(signal_name):
-	return_str = "void " + write_array_function_prefix + signal_name + "(uint8_t * src_array)"
+	return_str = "void " + write_array_function_prefix + signal_name + "(const uint8_t * src_array)"
 	return return_str
 
 def get_write_array_body(signal_name):
